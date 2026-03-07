@@ -44,7 +44,7 @@ cfg = {
     "project_name":       "eig-wagesubsidy-policy-sim",
     "audience":           "Public — interactive web simulation + blog post",
     "project_scope_tier": 1,   # 1=Descriptive/Blog  2=Analytical Brief  3=Full Research Paper
-    "currency_base_year": 2024,
+    "currency_base_year": 2025,
     "fig_width":          6.5,
     "fig_height":         3.5,
     "fig_dpi":            300,
@@ -53,7 +53,8 @@ cfg = {
     "ws_median_hourly_wage":  25.00,  # current national median hourly wage
     "ws_target_pct":          0.80,   # target wage = 80% of median
     "ws_subsidy_pct":         0.80,   # subsidy covers 80% of gap
-    "ws_base_wage":           7.25,   # federal minimum wage (base wage floor)
+    "ws_base_wage":           7.25,   # federal minimum wage — NOT state minimums (base wage floor)
+    "ws_simulation_year":     2025,   # PolicyEngine simulation year
     # Derived (convenience)
     "ws_target_wage":         20.00,  # 0.80 * 25.00
     "ws_max_subsidy":         10.20,  # 0.80 * (20.00 - 7.25)
