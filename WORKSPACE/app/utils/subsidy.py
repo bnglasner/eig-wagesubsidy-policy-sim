@@ -17,7 +17,7 @@ from __future__ import annotations
 
 # Default policy parameters
 DEFAULT_PARAMS = {
-    "median_hourly_wage": 25.00,  # current national median hourly wage → target = $20.00
+    "median_hourly_wage": 21.00,  # median hourly wage among hourly workers (excludes salaried)
     "target_pct":         0.80,
     "subsidy_pct":        0.80,
     "base_wage":          7.25,

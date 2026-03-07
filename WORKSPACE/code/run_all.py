@@ -72,6 +72,7 @@ RUN_STAGE_05_FIGURES_TABLES = True
 # Script flags
 # Default FALSE because baseline ships with R stage placeholders only.
 RUN_01A_DATA_INGEST = False
+RUN_01B_PRECOMPUTE_INDIVIDUAL = False   # set True to regenerate individual_schedules/
 RUN_02A_DESCRIPTIVE_STATS = False
 RUN_03A_MAIN_MODEL = False
 RUN_04A_ROBUSTNESS_CHECKS = False
@@ -102,6 +103,7 @@ print(f"  RUN_STAGE_04_ROBUSTNESS = {RUN_STAGE_04_ROBUSTNESS}")
 print(f"  RUN_STAGE_05_FIGURES_TABLES = {RUN_STAGE_05_FIGURES_TABLES}")
 print("Script flags:")
 print(f"  RUN_01A_DATA_INGEST = {RUN_01A_DATA_INGEST}")
+print(f"  RUN_01B_PRECOMPUTE_INDIVIDUAL = {RUN_01B_PRECOMPUTE_INDIVIDUAL}")
 print(f"  RUN_02A_DESCRIPTIVE_STATS = {RUN_02A_DESCRIPTIVE_STATS}")
 print(f"  RUN_03A_MAIN_MODEL = {RUN_03A_MAIN_MODEL}")
 print(f"  RUN_04A_ROBUSTNESS_CHECKS = {RUN_04A_ROBUSTNESS_CHECKS}")
@@ -200,6 +202,15 @@ run_script(
     label="Data ingest",
     run_stage_flag=RUN_STAGE_01_DATA_PREPARATION,
     run_script_flag=RUN_01A_DATA_INGEST,
+)
+
+run_script(
+    script_id="01b",
+    stage="01",
+    script_path="WORKSPACE/code/01_data_preparation/01b_precompute_individual.py",
+    label="Pre-compute individual calculator schedules",
+    run_stage_flag=RUN_STAGE_01_DATA_PREPARATION,
+    run_script_flag=RUN_01B_PRECOMPUTE_INDIVIDUAL,
 )
 
 run_script(

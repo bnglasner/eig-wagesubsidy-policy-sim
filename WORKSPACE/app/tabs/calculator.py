@@ -1,10 +1,10 @@
 """
 Tab 1: Individual wage calculator.
-Users adjust their hourly wage and policy parameters; sees subsidy and take-home.
+Section 1: quick subsidy metrics and wage-sweep chart.
+Section 2: budget constraint figure (continuous hours axis) + difference table.
 """
 
 import numpy as np
-import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
@@ -16,7 +16,133 @@ from utils.subsidy import (
     take_home_wage,
     target_wage,
 )
+from utils.states import DEFAULT_STATE_OPTION, STATE_OPTIONS, parse_state_code
+from utils.household_sim import (
+    COMPONENTS,
+    FAMILY_TYPES,
+    TABLE_HOURS,
+    TRANSFER_KEYS,
+    run_from_precomputed,
+    schedules_available,
+)
+from utils.eig_style import eig_plotly_layout
 
+
+# ── Cached PolicyEngine wrapper ───────────────────────────────────────────────
+
+@st.cache_data(show_spinner="Running PolicyEngine simulation (first load only)...")
+def _cached_sim(
+    employer_wage: float,
+    family_type: str,
+    state_code: str,
+    subsidy_params_tuple: tuple,
+) -> "pd.DataFrame":
+    subsidy_params = dict(subsidy_params_tuple)
+    return run_from_precomputed(employer_wage, family_type, state_code, subsidy_params)
+
+
+# ── Budget constraint figure ──────────────────────────────────────────────────
+
+def _make_budget_figure(df: "pd.DataFrame", scenario: str) -> go.Figure:
+    """Single-panel stacked bar chart: annual hours on x-axis, income components on y-axis."""
+    import numpy as np
+
+    panel = df[df["scenario"] == scenario].sort_values("annual_hours")
+
+    # Compute y-axis bounds across BOTH scenarios so toggling doesn't rescale
+    component_keys = [key for key, *_ in COMPONENTS]
+    pos_cols = [k for k, _, _, is_pos in COMPONENTS if is_pos]
+    neg_cols = [k for k, _, _, is_pos in COMPONENTS if not is_pos]
+
+    y_max = df.groupby("annual_hours")[pos_cols].sum().max().max()
+    y_min = df.groupby("annual_hours")[neg_cols].sum().min().min()
+
+    # Add 5% padding
+    y_range_pad = (y_max - y_min) * 0.05
+    y_axis_min = y_min - y_range_pad
+    y_axis_max = y_max + y_range_pad
+
+    fig = go.Figure()
+
+    for key, label, color, _ in COMPONENTS:
+        fig.add_trace(go.Bar(
+            name=label,
+            x=panel["annual_hours"],
+            y=panel[key],
+            marker_color=color,
+            marker_line_width=0,
+        ))
+
+    fig.add_trace(go.Scatter(
+        name="Net income",
+        x=panel["annual_hours"],
+        y=panel["net_income"],
+        mode="lines",
+        line=dict(color="#111111", width=2, dash="dash"),
+        showlegend=True,
+    ))
+
+    fig.add_hline(
+        y=0,
+        line=dict(color="#000000", width=1.5),
+    )
+
+    fig.update_layout(**eig_plotly_layout(
+        barmode="relative",
+        bargap=0,
+        height=500,
+        xaxis=dict(
+            title="Annual hours worked",
+            showgrid=False,
+            tickvals=[0, 520, 1040, 1560, 2080, 2600, 3120],
+            ticktext=["0\n(0/wk)", "520\n(10/wk)", "1,040\n(20/wk)",
+                      "1,560\n(30/wk)", "2,080\n(40/wk)", "2,600\n(50/wk)", "3,120\n(60/wk)"],
+        ),
+        yaxis=dict(
+            title="Annual dollars ($)",
+            showgrid=True,
+            gridcolor="#D9D9D9",
+            tickprefix="$",
+            tickformat=",.0f",
+            range=[y_axis_min, y_axis_max],
+        ),
+        legend=dict(orientation="h", yanchor="top", y=-0.25, x=0),
+        margin=dict(t=30, b=140),
+    ))
+    return fig
+
+
+# ── Difference table ──────────────────────────────────────────────────────────
+
+def _make_diff_table(df: "pd.DataFrame") -> "pd.DataFrame":
+    """
+    Difference table: (With Subsidy) − (Baseline) at the 4 reference hour bins.
+    Rows = income/tax components + net income + total transfer spending change.
+    Columns = 0 hrs/wk, 20 hrs/wk, 40 hrs/wk, 60 hrs/wk.
+    """
+    import pandas as pd
+
+    col_data: dict[str, dict] = {}
+
+    for annual_hours, col_label in TABLE_HOURS.items():
+        base = df[(df["annual_hours"] == annual_hours) & (df["scenario"] == "Baseline")].iloc[0]
+        sub  = df[(df["annual_hours"] == annual_hours) & (df["scenario"] == "With Subsidy")].iloc[0]
+
+        col: dict[str, float] = {}
+        for key, label, _, _ in COMPONENTS:
+            col[label] = sub[key] - base[key]
+
+        col["Net income change"] = sub["net_income"] - base["net_income"]
+
+        # Total transfer spending = all government-funded transfer programs
+        col["Δ Total transfer spending"] = sum(sub[k] - base[k] for k in TRANSFER_KEYS)
+
+        col_data[col_label] = col
+
+    return pd.DataFrame(col_data)
+
+
+# ── Main render ───────────────────────────────────────────────────────────────
 
 def render() -> None:
     st.header("Individual Wage Calculator")
@@ -85,6 +211,19 @@ def render() -> None:
                 step=0.25,
             )
 
+        st.subheader("Budget Constraint Options")
+        family_type = st.selectbox(
+            "Family composition",
+            options=list(FAMILY_TYPES.keys()),
+            index=0,
+        )
+        state_option = st.selectbox(
+            "State",
+            options=STATE_OPTIONS,
+            index=STATE_OPTIONS.index(DEFAULT_STATE_OPTION),
+        )
+        state_code = parse_state_code(state_option)
+
     params = dict(
         median_hourly_wage=median_wage,
         target_pct=target_pct,
@@ -93,10 +232,10 @@ def render() -> None:
     )
     hours_per_year = hours_per_week * weeks_per_year
 
-    subsidy_hr  = hourly_subsidy(employer_wage, **params)
-    takehome_hr = take_home_wage(employer_wage, **params)
-    pct_boost   = pct_raise(employer_wage, **params)
-    ann_sub     = annual_subsidy(employer_wage, hours_per_year=hours_per_year, **params)
+    subsidy_hr   = hourly_subsidy(employer_wage, **params)
+    takehome_hr  = take_home_wage(employer_wage, **params)
+    pct_boost    = pct_raise(employer_wage, **params)
+    ann_sub      = annual_subsidy(employer_wage, hours_per_year=hours_per_year, **params)
     ann_employer = employer_wage * hours_per_year
     ann_total    = ann_employer + ann_sub
     t_wage       = target_wage(median_wage, target_pct)
@@ -115,30 +254,91 @@ def render() -> None:
         m6.metric("Annual take-home", f"${ann_total:,.0f}")
 
         # ── Wage sweep chart ──────────────────────────────────────────────
-        wages = np.arange(base_wage, t_wage + 0.05, 0.25)
+        wages     = np.arange(base_wage, t_wage + 0.05, 0.25)
         subsidies = [hourly_subsidy(w, **params) for w in wages]
         takehouses = [take_home_wage(w, **params) for w in wages]
 
-        fig = go.Figure()
-        fig.add_trace(go.Bar(
+        fig_sweep = go.Figure()
+        fig_sweep.add_trace(go.Bar(
             x=wages, y=subsidies,
-            name="Wage subsidy", marker_color="#00857A",
+            name="Wage subsidy", marker_color="#19644D",  # eig_green_700
         ))
-        fig.add_trace(go.Scatter(
+        fig_sweep.add_trace(go.Scatter(
             x=wages, y=takehouses,
             name="Take-home wage", mode="lines+markers",
-            line=dict(color="#1A4D8F", width=2),
+            line=dict(color="#194F8B", width=2),          # eig_blue_800
         ))
-        fig.add_vline(
-            x=employer_wage, line_dash="dash", line_color="#CC4400",
+        fig_sweep.add_vline(
+            x=employer_wage, line_dash="dash", line_color="#D34917",  # eig_seq_red
             annotation_text=f"Your wage: ${employer_wage:.2f}",
             annotation_position="top right",
         )
-        fig.update_layout(
-            title="Subsidy and Take-Home Wage by Employer-Paid Wage",
+        fig_sweep.update_layout(**eig_plotly_layout(
+            title_text="Subsidy and Take-Home Wage by Employer-Paid Wage",
             xaxis_title="Employer-paid hourly wage ($)",
             yaxis_title="Dollars per hour ($)",
             legend=dict(orientation="h", yanchor="bottom", y=1.02),
             height=380,
+        ))
+        st.plotly_chart(fig_sweep, use_container_width=True)
+
+    # ── Section 2: Budget Constraint Figure ───────────────────────────────────
+    st.divider()
+    st.subheader("Budget Constraint: Income by Hours Worked")
+    st.markdown(
+        "Annual income decomposed by source as hours worked increases — "
+        "taxes are shown as negative bars, net income as the dashed line. "
+        "Use the toggle to compare scenarios."
+    )
+
+    scenario = st.radio(
+        "Scenario",
+        options=["Baseline", "With Subsidy"],
+        horizontal=True,
+    )
+
+    if not schedules_available(family_type, state_code):
+        st.info(
+            "Pre-computed schedules not found — running PolicyEngine live. "
+            "First load takes 1–3 minutes; subsequent loads are instant. "
+            "Run `python WORKSPACE/code/01_data_preparation/01b_precompute_individual.py` "
+            "to generate schedules for instant loading.",
+            icon="⏳",
         )
-        st.plotly_chart(fig, use_container_width=True)
+
+    subsidy_params_tuple = tuple(sorted(params.items()))
+    df_sim = _cached_sim(employer_wage, family_type, state_code, subsidy_params_tuple)
+
+    fig_budget = _make_budget_figure(df_sim, scenario)
+    st.plotly_chart(fig_budget, use_container_width=True)
+
+    # ── Difference table ──────────────────────────────────────────────────────
+    with st.expander("Difference table: With Subsidy vs. Baseline"):
+        st.markdown(
+            "Each cell shows **(With Subsidy) − (Baseline)** at four hours-worked levels. "
+            "Positive = gain for worker or increase in program spending. "
+            "Negative = reduction. "
+            "The **Δ Total transfer spending** row sums all government-funded transfers "
+            "(including the wage subsidy itself, less any reductions in existing programs)."
+        )
+        diff_df = _make_diff_table(df_sim)
+
+        # Separate summary rows from component rows for styling
+        component_labels = [label for _, label, _, _ in COMPONENTS]
+        summary_labels   = ["Net income change", "Δ Total transfer spending"]
+
+        st.dataframe(
+            diff_df.loc[component_labels + summary_labels]
+                   .style
+                   .format("${:+,.0f}")
+                   .apply(
+                       lambda col: [
+                           "color: #2E8B57" if v > 0
+                           else "color: #C0392B" if v < 0
+                           else ""
+                           for v in col
+                       ],
+                       axis=0,
+                   ),
+            use_container_width=True,
+        )

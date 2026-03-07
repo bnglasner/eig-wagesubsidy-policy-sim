@@ -1,0 +1,17 @@
+[theme]
+# EIG brand colors — keep in sync with INFRA/style/tokens/eig-style-tokens.v1.json
+
+# Forest Green (eig_green_700) — primary EIG brand color
+primaryColor = "#19644D"
+
+# White background
+backgroundColor = "#FFFFFF"
+
+# Cream (eig_cream_100) — warm accent for sidebar and secondary panels
+secondaryBackgroundColor = "#FEECD6"
+
+# Near-black body text
+textColor = "#000000"
+
+# Sans-serif fallback (Galaxie Polaris is not available as a web font in Streamlit)
+font = "sans serif"

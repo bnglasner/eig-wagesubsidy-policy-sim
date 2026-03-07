@@ -50,14 +50,14 @@ cfg = {
     "fig_dpi":            300,
     "seed":               1234,
     # Wage subsidy policy parameters (EIG 80-80 Rule)
-    "ws_median_hourly_wage":  25.00,  # current national median hourly wage
+    "ws_median_hourly_wage":  21.00,  # median hourly wage among hourly workers (excludes salaried)
     "ws_target_pct":          0.80,   # target wage = 80% of median
     "ws_subsidy_pct":         0.80,   # subsidy covers 80% of gap
     "ws_base_wage":           7.25,   # federal minimum wage — NOT state minimums (base wage floor)
     "ws_simulation_year":     2025,   # PolicyEngine simulation year
     # Derived (convenience)
-    "ws_target_wage":         20.00,  # 0.80 * 25.00
-    "ws_max_subsidy":         10.20,  # 0.80 * (20.00 - 7.25)
+    "ws_target_wage":         16.80,  # 0.80 * 21.00
+    "ws_max_subsidy":          7.64,  # 0.80 * (16.80 - 7.25)
     "ws_hours_per_year":      2000,   # 40 hrs/wk * 50 wks
 }
 
