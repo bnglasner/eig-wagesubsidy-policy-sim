@@ -1,0 +1,497 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>[PROJECT_NAME] â€” Analytic Output Summary</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      font-family: 'Galaxie Polaris', Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.65;
+      color: #222;
+      background: #f4f7f9;
+      max-width: 1060px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem 4rem;
+    }
+
+    /* â”€â”€ Report header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .report-header {
+      background: #0b4f6c;
+      color: #fff;
+      padding: 1.5rem 1.75rem 1.25rem;
+      border-radius: 4px;
+      margin-bottom: 1.25rem;
+    }
+    .report-header h1 {
+      font-family: 'Tiempos Headline', Georgia, serif;
+      font-size: 1.55rem;
+      margin: 0 0 0.25rem;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+    .report-header .analysis-title {
+      font-family: 'Tiempos Headline', Georgia, serif;
+      font-size: 1rem;
+      font-style: italic;
+      opacity: 0.85;
+      margin: 0 0 0.85rem;
+    }
+    .report-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.2rem 2rem;
+      font-size: 11.5px;
+      opacity: 0.85;
+    }
+    .report-meta div { display: flex; gap: 0.4rem; }
+    .report-meta dt { font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+    .report-meta dd { margin: 0; }
+
+    /* â”€â”€ Research brief â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .research-brief {
+      background: #fff;
+      border: 1px solid #ccdde5;
+      border-radius: 4px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .research-brief h2 {
+      font-family: 'Tiempos Headline', Georgia, serif;
+      font-size: 1rem;
+      color: #0b4f6c;
+      margin: 0 0 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 700;
+      border-bottom: 2px solid #0b4f6c;
+      padding-bottom: 0.35rem;
+    }
+    .brief-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem 2rem;
+    }
+    @media (max-width: 680px) { .brief-grid { grid-template-columns: 1fr; } }
+    .brief-block h3 {
+      font-family: 'Tiempos Headline', Georgia, serif;
+      font-size: 0.9rem;
+      color: #0b4f6c;
+      margin: 0 0 0.4rem;
+      font-weight: 700;
+    }
+    .brief-block p, .brief-block li { font-size: 13px; margin: 0 0 0.3rem; }
+    .brief-block ul { margin: 0; padding-left: 1.2rem; }
+    .brief-block.full-width { grid-column: 1 / -1; }
+
+    .findings-note {
+      font-size: 11px;
+      color: #e8a020;
+      font-style: italic;
+      margin-top: 0.35rem;
+      display: block;
+    }
+
+    /* â”€â”€ Section label â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .outputs-label {
+      font-family: 'Tiempos Headline', Georgia, serif;
+      font-size: 1rem;
+      color: #0b4f6c;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 700;
+      margin: 0 0 0.75rem;
+      border-bottom: 2px solid #0b4f6c;
+      padding-bottom: 0.35rem;
+    }
+
+    /* â”€â”€ Output cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    details.output-card {
+      background: #fff;
+      border: 1px solid #ccdde5;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+    }
+    details.output-card[open] > summary {
+      border-bottom: 1px solid #ccdde5;
+      border-radius: 4px 4px 0 0;
+    }
+    details.output-card > summary {
+      padding: 0.75rem 1rem;
+      background: #eef5f8;
+      cursor: pointer;
+      list-style: none;
+      border-radius: 4px;
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+    details.output-card > summary::-webkit-details-marker { display: none; }
+    details.output-card > summary::before { content: 'â–¶\00a0'; font-size: 0.7em; color: #0b4f6c; }
+    details.output-card[open] > summary::before { content: 'â–¼\00a0'; }
+
+    .card-id {
+      font-size: 11px;
+      font-weight: 700;
+      color: #5a7a88;
+      font-family: monospace;
+      white-space: nowrap;
+    }
+    .card-title {
+      font-family: 'Tiempos Headline', Georgia, serif;
+      font-size: 0.97rem;
+      font-weight: 700;
+      color: #0b4f6c;
+      flex: 1;
+    }
+
+    /* â”€â”€ Badges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .badge {
+      display: inline-block;
+      padding: 1px 8px;
+      border-radius: 10px;
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+    .badge-figure  { background: #d4edda; color: #155724; }
+    .badge-table   { background: #cce5ff; color: #004085; }
+    .badge-main    { background: #fff3cd; color: #856404; }
+    .badge-appendix{ background: #e2e3e5; color: #383d41; }
+
+    /* â”€â”€ Card body â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .card-body { padding: 1rem 1.25rem 0; }
+
+    .card-subtitle {
+      font-size: 13px;
+      color: #444;
+      font-style: italic;
+      margin: 0 0 0.85rem;
+    }
+
+    /* Figure display */
+    .figure-container {
+      background: #f6fafb;
+      border: 1px solid #d5e3ea;
+      border-radius: 3px;
+      padding: 0.75rem;
+      margin-bottom: 0.85rem;
+      text-align: center;
+    }
+    .figure-container img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+    .figure-container img[src=""] {
+      display: none;
+    }
+    .figure-missing {
+      color: #aaa;
+      font-style: italic;
+      font-size: 12.5px;
+      padding: 1.5rem 0;
+    }
+    .figure-note {
+      font-size: 12px;
+      color: #555;
+      font-style: italic;
+      margin: 0.5rem 0 0;
+      text-align: left;
+    }
+
+    /* Table placeholder */
+    .table-ref {
+      background: #f0f6f9;
+      border: 1px dashed #9fc5d5;
+      border-radius: 3px;
+      padding: 0.6rem 0.9rem;
+      margin-bottom: 0.85rem;
+      font-size: 12.5px;
+      color: #3a6a7f;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .table-ref a { color: #0b4f6c; font-weight: 600; }
+    .table-ref .table-icon { font-size: 1.1rem; }
+
+    /* Description blocks */
+    .output-description {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem 1.5rem;
+      margin-bottom: 0.85rem;
+    }
+    @media (max-width: 640px) { .output-description { grid-template-columns: 1fr; } }
+
+    .desc-block h4 {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #0b4f6c;
+      margin: 0 0 0.3rem;
+    }
+    .desc-block p {
+      font-size: 13px;
+      margin: 0;
+      color: #333;
+    }
+    .desc-block.not-shown h4 { color: #7a5000; }
+    .desc-block.not-shown p  { color: #555; }
+
+    /* Methodology bar */
+    .method-bar {
+      background: #f0f6f9;
+      border-top: 1px solid #d5e3ea;
+      padding: 0.6rem 1.25rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 0.3rem 1.5rem;
+      margin: 0 -1.25rem;
+    }
+    .method-bar dt {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #5a7a88;
+      margin-bottom: 1px;
+    }
+    .method-bar dd {
+      margin: 0 0 0.1rem;
+      font-size: 12px;
+      color: #333;
+    }
+    .method-bar code {
+      font-size: 11px;
+      background: #e0ecf2;
+      padding: 0 3px;
+      border-radius: 2px;
+    }
+
+    /* â”€â”€ Open items â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .open-items {
+      border-left: 3px solid #e8a020;
+      background: #fffbf0;
+      padding: 0.6rem 0.9rem;
+      margin-top: 1.25rem;
+      font-size: 12.5px;
+      border-radius: 0 4px 4px 0;
+    }
+    .open-items strong { color: #7a5000; }
+    .open-items ul { margin: 0.25rem 0 0; padding-left: 1.25rem; }
+
+    /* â”€â”€ Placeholder text â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .ph { color: #aaa; font-style: italic; }
+
+    /* â”€â”€ Footer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .report-footer {
+      margin-top: 1.5rem;
+      font-size: 11px;
+      color: #999;
+      border-top: 1px solid #d5e3ea;
+      padding-top: 0.6rem;
+    }
+  </style>
+</head>
+<body>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- HEADER: replace all [PLACEHOLDER] values with project-specific content -->
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<div class="report-header">
+  <h1><!-- PROJECT_NAME --><span class="ph">[PROJECT_NAME]</span></h1>
+  <p class="analysis-title"><!-- ANALYSIS_TITLE --><span class="ph">[Full descriptive title of the analysis]</span></p>
+  <dl class="report-meta">
+    <div><dt>Generated</dt><dd><!-- GENERATED_DATE --><span class="ph">[YYYY-MM-DD]</span></dd></div>
+    <div><dt>Tier</dt><dd><!-- TIER --><span class="ph">[1 / 2 / 3] â€” [Descriptive/Blog | Analytical Brief | Full Research Paper]</span></dd></div>
+    <div><dt>Primary language</dt><dd><!-- PRIMARY_LANG --><span class="ph">[R / Python / Stata]</span></dd></div>
+    <div><dt>Outputs summarized</dt><dd><!-- N_OUTPUTS --><span class="ph">[N figures, N tables]</span></dd></div>
+  </dl>
+</div>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- RESEARCH BRIEF: populate from PROJECT_DECISIONS.md and project context -->
+<!-- Primary Findings must be reviewed and confirmed by a human author.     -->
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<div class="research-brief">
+  <h2>Research Brief</h2>
+  <div class="brief-grid">
+
+    <div class="brief-block">
+      <h3>Research Question</h3>
+      <!-- RESEARCH_QUESTION -->
+      <p class="ph">[State the primary research question exactly as defined in PROJECT_DECISIONS.md]</p>
+    </div>
+
+    <div class="brief-block">
+      <h3>Analytic Scope</h3>
+      <!-- ANALYTIC_SCOPE -->
+      <p class="ph">[Time period, geography, unit of analysis, and population covered by this analysis]</p>
+    </div>
+
+    <div class="brief-block full-width">
+      <h3>Primary Findings</h3>
+      <!-- PRIMARY_FINDINGS: scaffold from catalog/script descriptions; human must review and confirm all bullets -->
+      <ul>
+        <li class="ph">[Key finding 1 â€” requires human editorial review]</li>
+        <li class="ph">[Key finding 2 â€” requires human editorial review]</li>
+        <li class="ph">[Key finding 3 â€” requires human editorial review]</li>
+      </ul>
+      <span class="findings-note">
+        &#9888; Agent-scaffolded from project documentation. All finding statements require human review and confirmation before publication.
+      </span>
+    </div>
+
+    <div class="brief-block full-width">
+      <h3>What This Analysis Does Not Address</h3>
+      <!-- SCOPE_LIMITS -->
+      <p class="ph">[Explicitly state what is out of scope: causal identification, subgroup analyses not conducted, data limitations affecting interpretation, etc.]</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- OUTPUT CARDS: one <details> block per output artifact.                 -->
+<!-- Figures: populate <img src> with relative path from INFRA/quality_reports/.  -->
+<!-- Tables: use .table-ref block with a link; do not embed raw file.       -->
+<!-- Duplicate the appropriate card template for each additional output.    -->
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<p class="outputs-label">Analytic Outputs</p>
+
+<!-- OUTPUT_CARDS_SECTION -->
+
+<!-- â”€â”€â”€ FIGURE CARD TEMPLATE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<details class="output-card" open>
+  <summary>
+    <span class="card-id"><!-- OUT_ID --><span class="ph">[OUT001]</span></span>
+    <span class="badge badge-figure">Figure</span>
+    <span class="badge badge-main">Main</span>
+    <span class="card-title"><!-- CARD_TITLE --><span class="ph">[Figure title â€” concise, publication-ready]</span></span>
+  </summary>
+
+  <div class="card-body">
+
+    <p class="card-subtitle"><!-- CARD_SUBTITLE --><span class="ph">[Subtitle providing additional context â€” e.g., geographic scope, time period, unit]</span></p>
+
+    <!-- Figure display: set src to relative path from INFRA/quality_reports/ to the figure file.  -->
+    <!-- If figure does not yet exist, use src="" and the image will be hidden.              -->
+    <div class="figure-container">
+      <img src="<!-- FIGURE_SRC -->../WORKSPACE/output/figures/main/[filename.ext]"
+           alt="<!-- FIGURE_ALT -->[Descriptive alt text for accessibility]">
+      <p class="figure-missing ph">[Figure not yet generated â€” run pipeline to produce this output]</p>
+      <p class="figure-note"><!-- FIGURE_NOTE --><span class="ph">[Contextual note for the reader: what to look for, how to read the axes, any annotation callouts]</span></p>
+    </div>
+
+    <div class="output-description">
+      <div class="desc-block">
+        <h4>What this shows</h4>
+        <!-- WHAT_SHOWN -->
+        <p class="ph">[Sentence to paragraph describing the analysis performed and what the output illustrates. Include key patterns or comparisons the figure is designed to reveal.]</p>
+      </div>
+      <div class="desc-block not-shown">
+        <h4>What this does not show</h4>
+        <!-- WHAT_NOT_SHOWN -->
+        <p class="ph">[Explicit statement of what is excluded, not estimated, or not identifiable from this output â€” e.g., causal direction, subgroups not shown, suppressed cells, pre-trend validation not depicted here]</p>
+      </div>
+    </div>
+
+  </div>
+
+  <dl class="method-bar">
+    <div><dt>Analytic sample</dt><dd class="ph"><!-- METHOD_SAMPLE -->[description of sample used for this specific output â€” may be a subset of the main analytic sample]</dd></div>
+    <div><dt>Data source(s)</dt><dd class="ph"><!-- METHOD_SOURCE -->[Source ID(s) and name(s) from catalog]</dd></div>
+    <div><dt>Script / section</dt><dd><code class="ph"><!-- METHOD_SCRIPT -->[WORKSPACE/code/05_figures_tables/XX_script.ext â€” section or function name if identifiable]</code></dd></div>
+    <div><dt>Output-specific filters</dt><dd class="ph"><!-- METHOD_FILTERS -->[any filters applied beyond the main sample restrictions â€” e.g., year == 2019, state == "TX"; or "None beyond main sample"]</dd></div>
+  </dl>
+
+</details>
+
+<!-- â”€â”€â”€ TABLE CARD TEMPLATE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<details class="output-card" open>
+  <summary>
+    <span class="card-id"><!-- OUT_ID_TBL --><span class="ph">[OUT002]</span></span>
+    <span class="badge badge-table">Table</span>
+    <span class="badge badge-main">Main</span>
+    <span class="card-title"><!-- CARD_TITLE_TBL --><span class="ph">[Table title â€” concise, publication-ready]</span></span>
+  </summary>
+
+  <div class="card-body">
+
+    <p class="card-subtitle"><!-- CARD_SUBTITLE_TBL --><span class="ph">[Subtitle providing additional context]</span></p>
+
+    <!-- Table reference: link to the output file; do not embed raw file content -->
+    <div class="table-ref">
+      <span class="table-icon">&#128196;</span>
+      File: <a href="<!-- TABLE_HREF -->../WORKSPACE/output/tables/main/[filename.ext]">
+        <!-- TABLE_FILENAME --><span class="ph">[filename.ext]</span>
+      </a>
+      &nbsp;&middot;&nbsp;
+      <!-- TABLE_DIMS --><span class="ph">[N rows &times; N columns â€” or "[PIPELINE NOT YET RUN]"]</span>
+    </div>
+
+    <div class="output-description">
+      <div class="desc-block">
+        <h4>What this shows</h4>
+        <!-- WHAT_SHOWN_TBL -->
+        <p class="ph">[Sentence to paragraph describing what the table reports. Include the estimator, dependent variable, key independent variables, and what each row/column represents.]</p>
+      </div>
+      <div class="desc-block not-shown">
+        <h4>What this does not show</h4>
+        <!-- WHAT_NOT_SHOWN_TBL -->
+        <p class="ph">[Explicit statement of excluded comparisons, suppressed columns, models not run, or interpretation limits for this table]</p>
+      </div>
+    </div>
+
+  </div>
+
+  <dl class="method-bar">
+    <div><dt>Analytic sample</dt><dd class="ph"><!-- METHOD_SAMPLE_TBL -->[sample for this specific output]</dd></div>
+    <div><dt>Data source(s)</dt><dd class="ph"><!-- METHOD_SOURCE_TBL -->[Source ID(s) and name(s)]</dd></div>
+    <div><dt>Script / section</dt><dd><code class="ph"><!-- METHOD_SCRIPT_TBL -->[WORKSPACE/code/05_figures_tables/XX_script.ext â€” section or function name]</code></dd></div>
+    <div><dt>Output-specific filters</dt><dd class="ph"><!-- METHOD_FILTERS_TBL -->[filters beyond main sample, or "None beyond main sample"]</dd></div>
+  </dl>
+
+</details>
+
+<!-- ADDITIONAL_OUTPUT_CARDS: duplicate the appropriate card template above for each additional output -->
+
+<!-- /OUTPUT_CARDS_SECTION -->
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- OPEN ITEMS: agent populates with any gaps requiring human input.       -->
+<!-- Remove this block if there are no open items.                          -->
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- OPEN_ITEMS_SECTION -->
+<div class="open-items">
+  <strong>Open Items â€” requires human input before this report is complete:</strong>
+  <ul>
+    <!-- OPEN_ITEMS_LIST -->
+    <li class="ph">[e.g., Primary Findings â€” all bullets require human editorial review and confirmation]</li>
+    <li class="ph">[e.g., OUT001: figure file not yet generated â€” run pipeline stage 05]</li>
+    <li class="ph">[e.g., OUT002: table dimensions unavailable â€” pipeline not yet run]</li>
+    <!-- /OPEN_ITEMS_LIST -->
+  </ul>
+</div>
+<!-- /OPEN_ITEMS_SECTION -->
+
+<div class="report-footer">
+  Generated by the EIG output-report-agent &middot;
+  Template: <code>INFRA/templates/output_report.html</code> &middot;
+  Last updated: <!-- LAST_UPDATED --><span class="ph">[YYYY-MM-DD HH:MM]</span>
+</div>
+
+</body>
+</html>
+
+
+

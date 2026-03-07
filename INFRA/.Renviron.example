@@ -1,0 +1,9 @@
+# Copy to .Renviron and fill values as needed
+
+# Example API keys
+# CENSUS_API_KEY=
+# FRED_API_KEY=
+# IPUMS_API_KEY=
+
+# Optional explicit project root override
+# EIG_PROJECT_ROOT=/absolute/path/to/repo

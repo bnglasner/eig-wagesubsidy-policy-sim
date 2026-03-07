@@ -1,0 +1,27 @@
+name: Baseline Validation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure scripts are executable
+        run: chmod +x INFRA/scripts/validate_structure.sh INFRA/scripts/validate_agent_parity.sh INFRA/scripts/validate_stage_contracts.sh
+
+      - name: Validate baseline structure
+        run: ./INFRA/scripts/validate_structure.sh
+
+      - name: Validate Claude/Codex parity
+        run: ./INFRA/scripts/validate_agent_parity.sh
+
+      - name: Validate stage contracts (template warn mode)
+        run: STAGE_CONTRACT_MODE=warn ./INFRA/scripts/validate_stage_contracts.sh

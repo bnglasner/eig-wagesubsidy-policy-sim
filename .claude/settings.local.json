@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"C:/Users/Research/Documents/GitHub/EIG Baseline Folder\" && bash INFRA/scripts/validate_structure.sh 2>&1 && echo \"===\" && bash INFRA/scripts/validate_agent_parity.sh 2>&1)",
+      "Bash(cd:*)"
+    ]
+  }
+}

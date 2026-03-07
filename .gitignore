@@ -1,0 +1,72 @@
+﻿# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# R session
+.Rhistory
+.RData
+.Rproj.user/
+.Renviron
+*.Rproj
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+.env
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# PolicyEngine cache
+policyengine_us_cache/
+*.h5
+
+# Quarto
+.quarto/
+
+# Data boundaries
+/WORKSPACE/data/raw/*
+!/WORKSPACE/data/raw/README.md
+/WORKSPACE/data/processed/*
+!/WORKSPACE/data/processed/README.md
+
+# Output boundaries
+/WORKSPACE/output/data/intermediate_results/*
+!/WORKSPACE/output/data/intermediate_results/README.md
+/WORKSPACE/output/figures/main/*
+!/WORKSPACE/output/figures/main/.gitkeep
+/WORKSPACE/output/figures/appendix/*
+!/WORKSPACE/output/figures/appendix/.gitkeep
+/WORKSPACE/output/tables/main/*
+!/WORKSPACE/output/tables/main/.gitkeep
+/WORKSPACE/output/tables/appendix/*
+!/WORKSPACE/output/tables/appendix/.gitkeep
+
+# Sensitive artifact fallback patterns (defense in depth)
+/WORKSPACE/data/**/*.feather
+/WORKSPACE/data/**/*.fst
+/WORKSPACE/data/**/*.parquet
+/WORKSPACE/data/**/*.rds
+/WORKSPACE/data/**/*.sqlite
+/WORKSPACE/data/**/*.duckdb
+/WORKSPACE/data/**/*.log
+/WORKSPACE/output/data/**/*.feather
+/WORKSPACE/output/data/**/*.fst
+/WORKSPACE/output/data/**/*.parquet
+/WORKSPACE/output/data/**/*.rds
+/WORKSPACE/output/data/**/*.sqlite
+/WORKSPACE/output/data/**/*.duckdb
+/WORKSPACE/output/data/**/*.log
+
+
+

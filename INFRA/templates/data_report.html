@@ -1,0 +1,449 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>[PROJECT_NAME] â€” Data Report</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      font-family: 'Galaxie Polaris', Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #222;
+      background: #fff;
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem 4rem;
+    }
+
+    /* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .report-header {
+      background: #0b4f6c;
+      color: #fff;
+      padding: 1.25rem 1.75rem;
+      border-radius: 4px;
+      margin-bottom: 1.25rem;
+    }
+    .report-header h1 {
+      font-family: 'Tiempos Headline', Georgia, serif;
+      font-size: 1.5rem;
+      margin: 0 0 0.75rem;
+      font-weight: 700;
+    }
+    .report-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem 2rem;
+      margin: 0;
+      font-size: 12px;
+      opacity: 0.9;
+    }
+    .report-meta div { display: flex; gap: 0.4rem; align-items: baseline; }
+    .report-meta dt { font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+    .report-meta dd { margin: 0; }
+
+    /* â”€â”€ Collapsible sections â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    details {
+      border: 1px solid #ccdde5;
+      border-radius: 4px;
+      margin-bottom: 0.85rem;
+    }
+    details[open] > summary { border-bottom: 1px solid #ccdde5; border-radius: 4px 4px 0 0; }
+    summary {
+      background: #eef5f8;
+      padding: 0.65rem 1rem;
+      cursor: pointer;
+      list-style: none;
+      font-family: 'Tiempos Headline', Georgia, serif;
+      font-size: 0.97rem;
+      font-weight: 700;
+      color: #0b4f6c;
+      border-radius: 4px;
+      user-select: none;
+    }
+    summary::-webkit-details-marker { display: none; }
+    summary::before { content: 'â–¶\00a0'; font-size: 0.7em; }
+    details[open] summary::before { content: 'â–¼\00a0'; }
+
+    .section-body { padding: 0.9rem 1.1rem; }
+
+    /* â”€â”€ Tables â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 0.25rem; }
+    th {
+      background: #0b4f6c;
+      color: #fff;
+      padding: 0.45rem 0.7rem;
+      text-align: left;
+      font-weight: 600;
+      font-size: 11.5px;
+      letter-spacing: 0.025em;
+      white-space: nowrap;
+    }
+    td { padding: 0.38rem 0.7rem; border-bottom: 1px solid #e5edf1; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background: #f6fafb; }
+    tfoot td { background: #eef5f8 !important; font-weight: 600; border-top: 2px solid #ccdde5; }
+
+    /* â”€â”€ Source cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .source-cards { display: grid; gap: 0.85rem; }
+    .source-card {
+      border: 1px solid #ccdde5;
+      border-radius: 4px;
+      padding: 0.8rem 1rem;
+      background: #f6fafb;
+    }
+    .source-card h3 {
+      margin: 0 0 0.6rem;
+      font-size: 0.92rem;
+      color: #0b4f6c;
+      font-family: 'Tiempos Headline', Georgia, serif;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .source-meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 0.3rem 1.5rem;
+    }
+    .source-meta dt {
+      font-weight: 700;
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #5a7a88;
+      margin-bottom: 1px;
+    }
+    .source-meta dd { margin: 0 0 0.15rem; font-size: 12.5px; }
+
+    /* â”€â”€ Dataset metadata grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .dataset-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 0.6rem 1.5rem;
+      margin: 0;
+    }
+    .dataset-item dt {
+      font-weight: 700;
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #5a7a88;
+      margin-bottom: 2px;
+    }
+    .dataset-item dd { margin: 0; font-size: 12.5px; }
+
+    /* â”€â”€ Badges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .badge {
+      display: inline-block;
+      padding: 1px 8px;
+      border-radius: 10px;
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      font-family: 'Galaxie Polaris', Arial, sans-serif;
+    }
+    .badge-public     { background: #d4edda; color: #155724; }
+    .badge-licensed   { background: #fff3cd; color: #856404; }
+    .badge-restricted { background: #f8d7da; color: #721c24; }
+    .badge-sensitive  { background: #d1c4e9; color: #4a148c; }
+
+    /* â”€â”€ Open items notice â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .open-items {
+      border-left: 3px solid #e8a020;
+      background: #fffbf0;
+      padding: 0.6rem 0.9rem;
+      margin-top: 1rem;
+      font-size: 12.5px;
+      border-radius: 0 4px 4px 0;
+    }
+    .open-items strong { color: #7a5000; }
+    .open-items ul { margin: 0.25rem 0 0; padding-left: 1.25rem; }
+
+    /* â”€â”€ Placeholder text â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .ph { color: #aaa; font-style: italic; }
+
+    /* â”€â”€ Footer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .report-footer {
+      margin-top: 1.5rem;
+      font-size: 11px;
+      color: #999;
+      border-top: 1px solid #e5edf1;
+      padding-top: 0.6rem;
+    }
+  </style>
+</head>
+<body>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- HEADER: replace all [PLACEHOLDER] values with project-specific content -->
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<div class="report-header">
+  <h1><!-- PROJECT_NAME --><span class="ph">[PROJECT_NAME]</span> â€” Data Processing Report</h1>
+  <dl class="report-meta">
+    <div><dt>Generated</dt><dd><!-- GENERATED_DATE --><span class="ph">[YYYY-MM-DD]</span></dd></div>
+    <div><dt>Tier</dt><dd><!-- TIER --><span class="ph">[1 / 2 / 3] â€” [Descriptive/Blog | Analytical Brief | Full Research Paper]</span></dd></div>
+    <div><dt>Primary language</dt><dd><!-- PRIMARY_LANG --><span class="ph">[R / Python / Stata]</span></dd></div>
+    <div><dt>Secondary language</dt><dd><!-- SECONDARY_LANG --><span class="ph">[language or None]</span></dd></div>
+    <div><dt>Producing script</dt><dd><!-- HEADER_SCRIPT --><span class="ph">[WORKSPACE/code/01_data_preparation/XX_script.ext]</span></dd></div>
+  </dl>
+</div>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- SECTION 1: DATA SOURCES                                                -->
+<!-- One .source-card per source. Replace or duplicate the placeholder card. -->
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<details open>
+  <summary>1. Data Sources</summary>
+  <div class="section-body">
+    <!-- DATA_SOURCES_SECTION -->
+    <div class="source-cards">
+
+      <div class="source-card">
+        <h3>
+          <!-- SRC_ID --><span class="ph">[SRC001]</span> â€”
+          <!-- SRC_NAME --><span class="ph">[Source Name]</span>
+          <span class="badge badge-licensed"><!-- SRC_TIER --><span class="ph">[PUBLIC / LICENSED / RESTRICTED / HIGHLY_SENSITIVE]</span></span>
+        </h3>
+        <dl class="source-meta">
+          <div><dt>Acquisition method</dt><dd class="ph"><!-- SRC_ACQUISITION -->[API / URL / manual download / request contact]</dd></div>
+          <div><dt>File format</dt><dd class="ph"><!-- SRC_FORMAT -->[csv / parquet / dta / xlsx / API response]</dd></div>
+          <div><dt>Raw file size</dt><dd class="ph"><!-- SRC_SIZE -->[X MB / GB â€” or "streamed via API"]</dd></div>
+          <div><dt>N (raw observations)</dt><dd class="ph"><!-- SRC_N_RAW -->[N before any restriction]</dd></div>
+          <div><dt>Date range</dt><dd class="ph"><!-- SRC_DATE_RANGE -->[YYYY to YYYY â€” or "cross-section"]</dd></div>
+          <div><dt>Geographic coverage</dt><dd class="ph"><!-- SRC_GEO -->[national / state / county / tract / place]</dd></div>
+          <div><dt>Key identifiers</dt><dd class="ph"><!-- SRC_IDS -->[id field(s) used for joins and deduplication]</dd></div>
+          <div><dt>Known caveats</dt><dd class="ph"><!-- SRC_CAVEATS -->[quality issues, suppression rules, top-codes, etc.]</dd></div>
+          <div><dt>Retrieval date</dt><dd class="ph"><!-- SRC_RETRIEVAL -->[YYYY-MM-DD]</dd></div>
+          <div><dt>Owner / contact</dt><dd class="ph"><!-- SRC_OWNER -->[name or team]</dd></div>
+        </dl>
+      </div>
+
+      <!-- ADDITIONAL_SOURCE_CARDS: duplicate .source-card block above for each additional source -->
+
+    </div>
+    <!-- /DATA_SOURCES_SECTION -->
+  </div>
+</details>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- SECTION 2: SAMPLE RESTRICTIONS                                         -->
+<!-- One <tr> per restriction step; pull N counts from QC artifacts when    -->
+<!-- available, otherwise mark "[PIPELINE NOT YET RUN]".                    -->
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<details open>
+  <summary>2. Sample Restrictions</summary>
+  <div class="section-body">
+    <!-- SAMPLE_RESTRICTIONS_SECTION -->
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Description</th>
+          <th>Filter / Condition</th>
+          <th>N Before</th>
+          <th>N After</th>
+          <th>% Retained</th>
+          <th>Producing Script</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- RESTRICTION_ROWS: replace with one row per restriction step -->
+        <tr>
+          <td class="ph">1</td>
+          <td class="ph">[e.g., Restrict to wage and salary workers age 16+]</td>
+          <td class="ph">[e.g., CLASSWKR &gt;= 20 AND AGE &gt;= 16]</td>
+          <td class="ph">[N before]</td>
+          <td class="ph">[N after]</td>
+          <td class="ph">[XX.X%]</td>
+          <td class="ph">[script path]</td>
+        </tr>
+        <!-- /RESTRICTION_ROWS -->
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3">Final analysis N</td>
+          <td colspan="4"><!-- FINAL_N --><span class="ph">[final N â€” or "[PIPELINE NOT YET RUN]"]</span></td>
+        </tr>
+      </tfoot>
+    </table>
+    <!-- /SAMPLE_RESTRICTIONS_SECTION -->
+  </div>
+</details>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- SECTION 3: TRANSFORMATIONS                                             -->
+<!-- One row per variable created, recoded, cleaned, or dropped.           -->
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<details open>
+  <summary>3. Transformations</summary>
+  <div class="section-body">
+    <!-- TRANSFORMATIONS_SECTION -->
+    <table>
+      <thead>
+        <tr>
+          <th>Variable / Field</th>
+          <th>Type</th>
+          <th>Producing Script</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- TRANSFORMATION_ROWS: replace with one row per transformation -->
+        <tr>
+          <td class="ph">[variable_name]</td>
+          <td class="ph">[created / recoded / cleaned / dropped / renamed]</td>
+          <td class="ph">[WORKSPACE/code/01_data_preparation/XX_script.ext]</td>
+          <td class="ph">[what was done and why â€” include source variable(s) if derived]</td>
+        </tr>
+        <!-- /TRANSFORMATION_ROWS -->
+      </tbody>
+    </table>
+    <!-- /TRANSFORMATIONS_SECTION -->
+  </div>
+</details>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- SECTION 4: MERGES & JOINS                                              -->
+<!-- One row per merge step. Remove this section entirely if no merges      -->
+<!-- were performed (replace with a note in SECTION 5 if needed).           -->
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<details open>
+  <summary>4. Merges &amp; Joins</summary>
+  <div class="section-body">
+    <!-- MERGES_SECTION -->
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Left Source</th>
+          <th>Right Source</th>
+          <th>Merge Key(s)</th>
+          <th>Join Type</th>
+          <th>N Left</th>
+          <th>N Right</th>
+          <th>N Matched</th>
+          <th>N Unmatched (L)</th>
+          <th>N Unmatched (R)</th>
+          <th>Match Rate</th>
+          <th>Producing Script</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- MERGE_ROWS: replace with one row per merge step; if no merges, use a single row with "No merges performed" -->
+        <tr>
+          <td class="ph">1</td>
+          <td class="ph">[left dataset or source ID]</td>
+          <td class="ph">[right dataset or source ID]</td>
+          <td class="ph">[key field(s)]</td>
+          <td class="ph">[left / inner / full outer / many-to-one]</td>
+          <td class="ph">[N]</td>
+          <td class="ph">[N]</td>
+          <td class="ph">[N]</td>
+          <td class="ph">[N]</td>
+          <td class="ph">[N]</td>
+          <td class="ph">[XX.X%]</td>
+          <td class="ph">[script path]</td>
+        </tr>
+        <!-- /MERGE_ROWS -->
+      </tbody>
+    </table>
+    <!-- /MERGES_SECTION -->
+  </div>
+</details>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- SECTION 5: PROCESSED ANALYSIS DATASET                                  -->
+<!-- Fill from QC artifacts when pipeline has run; otherwise from catalog   -->
+<!-- and PROJECT_DECISIONS. Mark unknowns "[PIPELINE NOT YET RUN]".         -->
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<details open>
+  <summary>5. Processed Analysis Dataset</summary>
+  <div class="section-body">
+    <!-- PROCESSED_DATASET_SECTION -->
+    <dl class="dataset-grid">
+      <div class="dataset-item"><dt>File path</dt>      <dd class="ph"><!-- DS_PATH -->WORKSPACE/data/processed/analysis_dataset.[ext]</dd></div>
+      <div class="dataset-item"><dt>File format</dt>    <dd class="ph"><!-- DS_FORMAT -->[dta / parquet / csv / rds]</dd></div>
+      <div class="dataset-item"><dt>File size</dt>      <dd class="ph"><!-- DS_SIZE -->[X MB â€” or "[PIPELINE NOT YET RUN]"]</dd></div>
+      <div class="dataset-item"><dt>N observations</dt> <dd class="ph"><!-- DS_N_OBS -->[N â€” or "[PIPELINE NOT YET RUN]"]</dd></div>
+      <div class="dataset-item"><dt>N variables</dt>    <dd class="ph"><!-- DS_N_VARS -->[N â€” or "[PIPELINE NOT YET RUN]"]</dd></div>
+      <div class="dataset-item"><dt>Date range</dt>     <dd class="ph"><!-- DS_DATE_RANGE -->[YYYYâ€“YYYY â€” or "cross-section"]</dd></div>
+      <div class="dataset-item"><dt>Geographic scope</dt><dd class="ph"><!-- DS_GEO -->[national / state / county / tract]</dd></div>
+      <div class="dataset-item"><dt>Unit of analysis</dt><dd class="ph"><!-- DS_UNIT -->[person / firm / county-year / etc.]</dd></div>
+      <div class="dataset-item"><dt>Key variables</dt>  <dd class="ph"><!-- DS_KEY_VARS -->[comma-separated list of key fields]</dd></div>
+      <div class="dataset-item"><dt>Producing script</dt><dd class="ph"><!-- DS_SCRIPT -->[WORKSPACE/code/01_data_preparation/XX_script.ext]</dd></div>
+    </dl>
+    <!-- /PROCESSED_DATASET_SECTION -->
+  </div>
+</details>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- SECTION 6: PIPELINE OUTPUTS                                            -->
+<!-- One row per artifact listed in INFRA/docs/DATA_SOURCES_OUTPUTS_CATALOG.md.  -->
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<details open>
+  <summary>6. Pipeline Outputs</summary>
+  <div class="section-body">
+    <!-- OUTPUTS_SECTION -->
+    <table>
+      <thead>
+        <tr>
+          <th>Output ID</th>
+          <th>Name</th>
+          <th>Type</th>
+          <th>File Path</th>
+          <th>Producing Script</th>
+          <th>Sensitivity</th>
+          <th>Publication Approved?</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- OUTPUT_ROWS: replace with one row per output artifact -->
+        <tr>
+          <td class="ph">[OUT001]</td>
+          <td class="ph">[output name]</td>
+          <td class="ph">[figure / table / dataset / report]</td>
+          <td class="ph">[WORKSPACE/output/figures/main/fig01.png]</td>
+          <td class="ph">[WORKSPACE/code/05_figures_tables/01_main_figures.ext]</td>
+          <td class="ph">[PUBLIC / LICENSED / RESTRICTED]</td>
+          <td class="ph">[Yes / No / Pending]</td>
+          <td class="ph">[what this output shows; any suppression or redaction applied]</td>
+        </tr>
+        <!-- /OUTPUT_ROWS -->
+      </tbody>
+    </table>
+    <!-- /OUTPUTS_SECTION -->
+  </div>
+</details>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- OPEN ITEMS: agent populates this block with any undocumented fields    -->
+<!-- or items that require human follow-up. Remove block if none.           -->
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- OPEN_ITEMS_SECTION -->
+<div class="open-items">
+  <strong>Open Items â€” requires human input before this report is complete:</strong>
+  <ul>
+    <!-- OPEN_ITEMS_LIST -->
+    <li class="ph">[e.g., Source SRC001: retrieval date not documented in WORKSPACE/data/raw/README.md]</li>
+    <li class="ph">[e.g., Section 2: N counts unavailable â€” pipeline has not been run]</li>
+    <!-- /OPEN_ITEMS_LIST -->
+  </ul>
+</div>
+<!-- /OPEN_ITEMS_SECTION -->
+
+<div class="report-footer">
+  Generated by the EIG data-report-agent &middot;
+  Template: <code>INFRA/templates/data_report.html</code> &middot;
+  Last updated: <!-- LAST_UPDATED --><span class="ph">[YYYY-MM-DD HH:MM]</span>
+</div>
+
+</body>
+</html>
+
+
+
