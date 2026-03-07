@@ -50,13 +50,13 @@ cfg = {
     "fig_dpi":            300,
     "seed":               1234,
     # Wage subsidy policy parameters (EIG 80-80 Rule)
-    "ws_median_hourly_wage":  20.00,  # 2024 CPS median hourly wage for hourly workers
+    "ws_median_hourly_wage":  25.00,  # current national median hourly wage
     "ws_target_pct":          0.80,   # target wage = 80% of median
     "ws_subsidy_pct":         0.80,   # subsidy covers 80% of gap
     "ws_base_wage":           7.25,   # federal minimum wage (base wage floor)
     # Derived (convenience)
-    "ws_target_wage":         16.00,  # 0.80 * 20.00
-    "ws_max_subsidy":         7.00,   # 0.80 * (16.00 - 7.25) ≈ 7.00
+    "ws_target_wage":         20.00,  # 0.80 * 25.00
+    "ws_max_subsidy":         10.20,  # 0.80 * (20.00 - 7.25)
     "ws_hours_per_year":      2000,   # 40 hrs/wk * 50 wks
 }
 

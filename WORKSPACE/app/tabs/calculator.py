@@ -57,7 +57,7 @@ def render() -> None:
             median_wage = st.number_input(
                 "National median hourly wage ($)",
                 min_value=15.0,
-                max_value=35.0,
+                max_value=40.0,
                 value=DEFAULT_PARAMS["median_hourly_wage"],
                 step=0.50,
             )

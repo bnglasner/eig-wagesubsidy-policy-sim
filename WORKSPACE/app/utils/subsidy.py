@@ -15,13 +15,13 @@ Reference: Glasner & Ozimek (EIG), "How to End Low-Wage Work Forever"
 from __future__ import annotations
 
 
-# Default policy parameters (2024 calibration)
+# Default policy parameters
 DEFAULT_PARAMS = {
-    "median_hourly_wage": 20.00,
+    "median_hourly_wage": 25.00,  # current national median hourly wage → target = $20.00
     "target_pct":         0.80,
     "subsidy_pct":        0.80,
     "base_wage":          7.25,
-    "hours_per_year":     2000,  # 40 hrs/wk * 50 wks
+    "hours_per_year":     2000,   # 40 hrs/wk * 50 wks
 }
 
 
