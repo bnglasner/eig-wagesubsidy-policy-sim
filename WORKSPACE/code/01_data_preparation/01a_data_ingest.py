@@ -73,13 +73,20 @@ def _hourly_subsidy(employer_wage: float | np.ndarray) -> float | np.ndarray:
 
 # ── PolicyEngine helpers ───────────────────────────────────────────────────────
 
-def _safe_calc(sim, var: str) -> np.ndarray | None:
-    """Try to get a variable from the Microsimulation; return None on failure."""
+def _safe_calc(sim, var: str, expected_len: int | None = None) -> np.ndarray | None:
+    """
+    Try to get a variable from the Microsimulation; return None on failure.
+    If expected_len is given, returns None when the result length doesn't match
+    (variable is at a different entity level than expected).
+    """
     try:
         result = sim.calculate(var)
-        if hasattr(result, "values"):
-            return np.asarray(result.values)
-        return np.asarray(result)
+        arr = np.asarray(result.values if hasattr(result, "values") else result)
+        if expected_len is not None and len(arr) != expected_len:
+            print(f"  [warn] {var!r} has {len(arr)} records "
+                  f"(expected {expected_len} — likely a different entity level). Skipping.")
+            return None
+        return arr
     except Exception as exc:
         print(f"  [warn] Could not calculate {var!r}: {exc}")
         return None
@@ -102,63 +109,139 @@ def main() -> None:
     n_persons = len(employment_income)
     print(f"  Total CPS persons: {n_persons:,}")
 
-    age             = _safe_calc(sim, "age")
-    is_head         = _safe_calc(sim, "is_tax_unit_head")
-    person_weight   = _safe_calc(sim, "person_weight")
+    age             = _safe_calc(sim, "age",             expected_len=n_persons)
+    is_head         = _safe_calc(sim, "is_tax_unit_head", expected_len=n_persons)
+    person_weight   = _safe_calc(sim, "person_weight",   expected_len=n_persons)
     if person_weight is None:
-        person_weight = _safe_calc(sim, "household_weight")
+        person_weight = _safe_calc(sim, "household_weight", expected_len=n_persons)
     if person_weight is None:
         print("  [warn] No weight variable found; using weight=1 for all persons.")
         person_weight = np.ones(n_persons)
 
     # ── Annual hours ──────────────────────────────────────────────────────────
-    annual_hours = _safe_calc(sim, "annual_hours_worked")
+    _hours_vars = [
+        "annual_hours_worked", "hours_worked", "employment_hours",
+        "weekly_hours_worked", "usual_weekly_hours",
+    ]
+    annual_hours = None
+    for _hvar in _hours_vars:
+        annual_hours = _safe_calc(sim, _hvar, expected_len=n_persons)
+        if annual_hours is not None:
+            # If clearly weekly (median < 80), scale to annual
+            if np.median(annual_hours[annual_hours > 0]) < 80:
+                annual_hours = annual_hours * 52
+                print(f"  annual_hours derived from weekly {_hvar} × 52.")
+            else:
+                print(f"  annual_hours from {_hvar!r}.")
+            break
     if annual_hours is None:
-        # Try deriving from weeks × weekly hours
-        weeks   = _safe_calc(sim, "weeks_worked_last_year")
-        hrs_wk  = _safe_calc(sim, "usual_weekly_hours_worked")
-        if hrs_wk is None:
-            hrs_wk = _safe_calc(sim, "weekly_hours_worked")
-        if weeks is not None and hrs_wk is not None:
-            annual_hours = weeks * hrs_wk
-            print("  annual_hours derived from weeks_worked × weekly_hours.")
-        else:
-            annual_hours = np.full(n_persons, 2_080.0)
-            print("  [warn] Hours data unavailable — defaulting to 2,080 hrs/yr (40 hrs × 52 wks).")
+        annual_hours = np.full(n_persons, 2_080.0)
+        print("  [warn] Hours data unavailable — defaulting to 2,080 hrs/yr (40 hrs × 52 wks).")
 
     # Guard against zeros to avoid division errors
     annual_hours = np.where(annual_hours > 0, annual_hours, 2_080.0)
 
+    # ── Entity-level expansion helper ─────────────────────────────────────────
+    def _expand_to_person(entity_key: str, values: np.ndarray) -> np.ndarray | None:
+        """
+        Expand an entity-level array to person level using nb_persons().
+        Assumes persons are stored in entity order in the PE dataset (standard for CPS).
+        Returns None if the total person count doesn't match n_persons.
+        """
+        try:
+            sizes = np.array(sim.populations[entity_key].nb_persons())
+            if sizes.sum() != n_persons:
+                return None
+            return np.repeat(values, sizes)
+        except Exception as exc:
+            print(f"  [warn] Could not expand {entity_key} → person: {exc}")
+            return None
+
     # ── State code ────────────────────────────────────────────────────────────
-    state_raw = _safe_calc(sim, "state_code")
-    if state_raw is not None and len(state_raw) == n_persons:
-        state_arr = np.array([str(s) for s in state_raw])
-    else:
-        print("  [warn] state_code not available at person level — defaulting to 'TX'.")
+    # state_code is household-level; expand to person level via household sizes
+    state_arr: np.ndarray | None = None
+
+    # First try: direct person-level variable
+    for _svar in ("state_code", "state"):
+        _raw = _safe_calc(sim, _svar, expected_len=n_persons)
+        if _raw is not None:
+            state_arr = np.array([str(s) for s in _raw])
+            print(f"  state_code from {_svar!r} at person level.")
+            break
+
+    # Second try: expand household-level state_code to persons via group sizes
+    if state_arr is None:
+        _hh_state = _safe_calc(sim, "state_code")  # household level, any length
+        if _hh_state is not None:
+            _expanded = _expand_to_person("household", _hh_state)
+            if _expanded is not None:
+                state_arr = np.array([str(s) for s in _expanded])
+                print("  state_code expanded from household → person via nb_persons().")
+
+    if state_arr is None:
+        print("  [warn] state_code unavailable — defaulting to 'TX'.\n"
+              "         State-level breakdown will not be accurate.")
         state_arr = np.full(n_persons, "TX")
 
     # ── Family type indicators ────────────────────────────────────────────────
-    # Married: filing_status == "JOINT" or is_tax_unit_joint
-    filing_status = _safe_calc(sim, "filing_status")
-    is_married_arr: np.ndarray
-    if filing_status is not None:
-        is_married_arr = np.array([str(s).upper() in ("JOINT", "MARRIED_FILING_JOINTLY")
-                                   for s in filing_status])
-    else:
-        is_tax_joint = _safe_calc(sim, "tax_unit_is_joint")
-        if is_tax_joint is not None:
-            is_married_arr = is_tax_joint.astype(bool)
-        else:
-            print("  [warn] Marital status unavailable — treating all as single.")
-            is_married_arr = np.zeros(n_persons, dtype=bool)
+    # Married: try person-level first, then expand from tax_unit level
+    is_married_arr: np.ndarray | None = None
 
-    # Children: try several variable names
-    child_count: np.ndarray | None = None
-    for _var in ("count_qualifying_children_for_ctc", "child_count",
-                 "count_dependents", "tax_unit_children"):
-        child_count = _safe_calc(sim, _var)
-        if child_count is not None:
+    # Person-level attempts
+    for _mvar in ("filing_status", "tax_unit_is_joint", "is_tax_unit_joint", "is_married"):
+        _raw = _safe_calc(sim, _mvar, expected_len=n_persons)
+        if _raw is not None:
+            if _mvar == "filing_status":
+                is_married_arr = np.array([
+                    str(s).upper() in ("JOINT", "MARRIED_FILING_JOINTLY") for s in _raw
+                ])
+            else:
+                is_married_arr = _raw.astype(bool)
+            print(f"  married status from {_mvar!r} at person level.")
             break
+
+    # Tax-unit-level expansion
+    if is_married_arr is None:
+        for _mvar in ("filing_status", "tax_unit_is_joint"):
+            _raw = _safe_calc(sim, _mvar)  # any length
+            if _raw is not None:
+                _expanded = _expand_to_person("tax_unit", _raw)
+                if _expanded is not None:
+                    if _mvar == "filing_status":
+                        is_married_arr = np.array([
+                            str(s).upper() in ("JOINT", "MARRIED_FILING_JOINTLY")
+                            for s in _expanded
+                        ])
+                    else:
+                        is_married_arr = _expanded.astype(bool)
+                    print(f"  married status expanded from tax_unit via {_mvar!r}.")
+                    break
+
+    if is_married_arr is None:
+        print("  [warn] Marital status unavailable — treating all as single.")
+        is_married_arr = np.zeros(n_persons, dtype=bool)
+
+    # Children: try person-level then expand from tax_unit / household level
+    child_count: np.ndarray | None = None
+
+    for _var in ("count_qualifying_children_for_ctc", "child_count",
+                 "count_dependents", "spm_unit_children", "household_count_children"):
+        _raw = _safe_calc(sim, _var, expected_len=n_persons)
+        if _raw is not None:
+            child_count = _raw
+            print(f"  child count from {_var!r} at person level.")
+            break
+
+    if child_count is None:
+        for _var in ("tax_unit_children", "count_dependents", "child_count"):
+            _raw = _safe_calc(sim, _var)  # any length
+            if _raw is not None:
+                _expanded = _expand_to_person("tax_unit", _raw)
+                if _expanded is not None:
+                    child_count = _expanded
+                    print(f"  child count expanded from tax_unit via {_var!r}.")
+                    break
+
     if child_count is None:
         print("  [warn] Child count unavailable — treating all as no children.")
         child_count = np.zeros(n_persons)

@@ -43,19 +43,18 @@ def _cached_sim(
 
 # ── Budget constraint figure ──────────────────────────────────────────────────
 
-def _make_budget_figure(df: "pd.DataFrame", scenario: str) -> go.Figure:
+def _make_budget_figure(df: "pd.DataFrame", scenario: str, active_keys: "set[str]") -> go.Figure:
     """Single-panel stacked bar chart: annual hours on x-axis, income components on y-axis."""
     import numpy as np
 
     panel = df[df["scenario"] == scenario].sort_values("annual_hours")
 
-    # Compute y-axis bounds across BOTH scenarios so toggling doesn't rescale
-    component_keys = [key for key, *_ in COMPONENTS]
-    pos_cols = [k for k, _, _, is_pos in COMPONENTS if is_pos]
-    neg_cols = [k for k, _, _, is_pos in COMPONENTS if not is_pos]
+    # Compute y-axis bounds using only active components so toggling scenarios doesn't rescale
+    pos_cols = [k for k, _, _, is_pos in COMPONENTS if is_pos and k in active_keys]
+    neg_cols = [k for k, _, _, is_pos in COMPONENTS if not is_pos and k in active_keys]
 
-    y_max = df.groupby("annual_hours")[pos_cols].sum().max().max()
-    y_min = df.groupby("annual_hours")[neg_cols].sum().min().min()
+    y_max = df.groupby("annual_hours")[pos_cols].sum().max().max() if pos_cols else 0
+    y_min = df.groupby("annual_hours")[neg_cols].sum().min().min() if neg_cols else 0
 
     # Add 5% padding
     y_range_pad = (y_max - y_min) * 0.05
@@ -65,6 +64,8 @@ def _make_budget_figure(df: "pd.DataFrame", scenario: str) -> go.Figure:
     fig = go.Figure()
 
     for key, label, color, _ in COMPONENTS:
+        if key not in active_keys:
+            continue
         fig.add_trace(go.Bar(
             name=label,
             x=panel["annual_hours"],
@@ -114,10 +115,10 @@ def _make_budget_figure(df: "pd.DataFrame", scenario: str) -> go.Figure:
 
 # ── Difference table ──────────────────────────────────────────────────────────
 
-def _make_diff_table(df: "pd.DataFrame") -> "pd.DataFrame":
+def _make_diff_table(df: "pd.DataFrame", active_keys: "set[str]") -> "pd.DataFrame":
     """
     Difference table: (With Subsidy) − (Baseline) at the 4 reference hour bins.
-    Rows = income/tax components + net income + total transfer spending change.
+    Rows = active income/tax components + net income + total transfer spending change.
     Columns = 0 hrs/wk, 20 hrs/wk, 40 hrs/wk, 60 hrs/wk.
     """
     import pandas as pd
@@ -130,12 +131,15 @@ def _make_diff_table(df: "pd.DataFrame") -> "pd.DataFrame":
 
         col: dict[str, float] = {}
         for key, label, _, _ in COMPONENTS:
+            if key not in active_keys:
+                continue
             col[label] = sub[key] - base[key]
 
         col["Net income change"] = sub["net_income"] - base["net_income"]
 
-        # Total transfer spending = all government-funded transfer programs
-        col["Δ Total transfer spending"] = sum(sub[k] - base[k] for k in TRANSFER_KEYS)
+        # Total transfer spending: sum only active government-funded transfers
+        active_transfer_keys = [k for k in TRANSFER_KEYS if k in active_keys]
+        col["Δ Total transfer spending"] = sum(sub[k] - base[k] for k in active_transfer_keys)
 
         col_data[col_label] = col
 
@@ -224,6 +228,32 @@ def render() -> None:
         )
         state_code = parse_state_code(state_option)
 
+        # ── Program selection ─────────────────────────────────────────────
+        # employer_wages and wage_subsidy are always shown; everything else
+        # is selectable. Selection is shared with the population tab.
+        _ALWAYS_ON = {"employer_wages", "wage_subsidy"}
+        _SELECTABLE = [(key, label) for key, label, _, _ in COMPONENTS
+                       if key not in _ALWAYS_ON]
+        _label_to_key = {label: key for key, label, _, _ in COMPONENTS}
+
+        if "budget_active_keys" not in st.session_state:
+            st.session_state["budget_active_keys"] = (
+                _ALWAYS_ON | {key for key, _ in _SELECTABLE}
+            )
+
+        with st.expander("Programs shown in figure & table"):
+            selected_labels = st.multiselect(
+                "Include programs",
+                options=[label for _, label in _SELECTABLE],
+                default=[label for key, label in _SELECTABLE
+                         if key in st.session_state["budget_active_keys"]],
+                label_visibility="collapsed",
+            )
+            active_keys: set[str] = _ALWAYS_ON | {
+                _label_to_key[lbl] for lbl in selected_labels
+            }
+            st.session_state["budget_active_keys"] = active_keys
+
     params = dict(
         median_hourly_wage=median_wage,
         target_pct=target_pct,
@@ -309,7 +339,7 @@ def render() -> None:
     subsidy_params_tuple = tuple(sorted(params.items()))
     df_sim = _cached_sim(employer_wage, family_type, state_code, subsidy_params_tuple)
 
-    fig_budget = _make_budget_figure(df_sim, scenario)
+    fig_budget = _make_budget_figure(df_sim, scenario, active_keys)
     st.plotly_chart(fig_budget, use_container_width=True)
 
     # ── Difference table ──────────────────────────────────────────────────────
@@ -318,13 +348,13 @@ def render() -> None:
             "Each cell shows **(With Subsidy) − (Baseline)** at four hours-worked levels. "
             "Positive = gain for worker or increase in program spending. "
             "Negative = reduction. "
-            "The **Δ Total transfer spending** row sums all government-funded transfers "
+            "The **Δ Total transfer spending** row sums all selected government-funded transfers "
             "(including the wage subsidy itself, less any reductions in existing programs)."
         )
-        diff_df = _make_diff_table(df_sim)
+        diff_df = _make_diff_table(df_sim, active_keys)
 
         # Separate summary rows from component rows for styling
-        component_labels = [label for _, label, _, _ in COMPONENTS]
+        component_labels = [label for key, label, _, _ in COMPONENTS if key in active_keys]
         summary_labels   = ["Net income change", "Δ Total transfer spending"]
 
         st.dataframe(

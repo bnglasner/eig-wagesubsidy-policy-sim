@@ -71,12 +71,12 @@ RUN_STAGE_05_FIGURES_TABLES = True
 
 # Script flags
 # Default FALSE because baseline ships with R stage placeholders only.
-RUN_01A_DATA_INGEST = False
-RUN_01B_PRECOMPUTE_INDIVIDUAL = False   # set True to regenerate individual_schedules/
-RUN_02A_DESCRIPTIVE_STATS = False
+RUN_01A_DATA_INGEST = True             # CPS extraction → data/processed/hourly_workers.parquet
+RUN_01B_PRECOMPUTE_INDIVIDUAL = False  # set True to regenerate individual_schedules/
+RUN_02A_DESCRIPTIVE_STATS = True       # population aggregation → intermediate_results/population/
 RUN_03A_MAIN_MODEL = False
 RUN_04A_ROBUSTNESS_CHECKS = False
-RUN_05A_MAIN_OUTPUTS = False
+RUN_05A_MAIN_OUTPUTS = True            # verify outputs + print summary
 
 # Behavior flags
 STOP_ON_ERROR_ANY_STAGE = False
