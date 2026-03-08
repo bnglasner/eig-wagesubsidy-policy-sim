@@ -383,6 +383,22 @@ def render() -> None:
         f"geographically concentrated: the top three states by eligible workers are `{top3_states_txt}`, accounting "
         f"for about `{top3_share:.1f}%` of eligible workers in this run."
     )
+    st.markdown(
+        f"**Scale in context.** "
+        f"The gross cost of the 80-80 Rule (~${summary['gross_cost_bn']:.0f}B) is comparable to the Earned Income Tax Credit "
+        f"(EITC, ~$70-75B per year, ~23 million claimant households), but the two programs work very differently. "
+        f"The EITC is assessed against *household income* - it phases in and out based on total family earnings and is "
+        f"strongly shaped by household composition, with substantially larger credits for married filers and families "
+        f"with children. The 80-80 Rule targets the *wage rate* paid by the employer directly, making eligibility a "
+        f"function of the job itself rather than the worker's household circumstances - a distinction that broadens "
+        f"coverage to low-wage single workers and secondary earners who receive little or no EITC. "
+        f"For additional context on the scale of public investment in workers, "
+        f"[Bartik (2020)](https://research.upjohn.org/cgi/viewcontent.cgi?article=1034&context=up_policypapers) "
+        f"estimates that governments already spend roughly **$80 billion per year on job creation**, the majority of it "
+        f"in tax breaks for large businesses with limited evidence of effectiveness - "
+        f"particularly in the distressed communities where more than a third of Americans live and where job-finding "
+        f"lags the national average most severely."
+    )
     st.divider()
 
     # â"€â"€ Map + Wage bracket side by side â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
