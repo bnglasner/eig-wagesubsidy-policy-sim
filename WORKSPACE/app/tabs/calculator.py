@@ -137,7 +137,7 @@ def _make_budget_figure(df: "pd.DataFrame", scenario: str, active_keys: "set[str
 
 def _make_diff_table(df: "pd.DataFrame", active_keys: "set[str]") -> "pd.DataFrame":
     """
-    Difference table: (With Subsidy) âˆ’ (Baseline) at the 4 reference hour bins.
+    Difference table: (With Subsidy) - (Baseline) at the 4 reference hour bins.
     Rows = active income/tax components + net income + total transfer spending change.
     Columns = 0 hrs/wk, 20 hrs/wk, 40 hrs/wk, 60 hrs/wk.
     """
@@ -159,7 +159,7 @@ def _make_diff_table(df: "pd.DataFrame", active_keys: "set[str]") -> "pd.DataFra
 
         # Total transfer spending: sum only active government-funded transfers
         active_transfer_keys = [k for k in TRANSFER_KEYS if k in active_keys]
-        col["Î” Total transfer spending"] = sum(sub[k] - base[k] for k in active_transfer_keys)
+        col["Delta Total transfer spending"] = sum(sub[k] - base[k] for k in active_transfer_keys)
 
         col_data[col_label] = col
 
@@ -430,17 +430,17 @@ def render() -> None:
     # â”€â”€ Difference table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     with st.expander("Difference table: With Subsidy vs. Baseline"):
         st.markdown(
-            "Each cell shows **(With Subsidy) âˆ’ (Baseline)** at four hours-worked levels. "
+            "Each cell shows **(With Subsidy) - (Baseline)** at four hours-worked levels. "
             "Positive = gain for worker or increase in program spending. "
             "Negative = reduction. "
-            "The **Î” Total transfer spending** row sums all selected government-funded transfers "
+            "The **Delta Total transfer spending** row sums all selected government-funded transfers "
             "(including the wage subsidy itself, less any reductions in existing programs)."
         )
         diff_df = _make_diff_table(df_sim, active_keys)
 
         # Separate summary rows from component rows for styling
         component_labels = [label for key, label, _, _ in COMPONENTS if key in active_keys]
-        summary_labels   = ["Net income change", "Î” Total transfer spending"]
+        summary_labels   = ["Net income change", "Delta Total transfer spending"]
 
         st.dataframe(
             diff_df.loc[component_labels + summary_labels]
