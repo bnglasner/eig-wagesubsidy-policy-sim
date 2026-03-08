@@ -54,10 +54,17 @@ def _make_budget_figure(df: "pd.DataFrame", scenario: str, active_keys: "set[str
     pos_cols = [k for k, _, _, is_pos in COMPONENTS if is_pos and k in active_keys]
     neg_cols = [k for k, _, _, is_pos in COMPONENTS if not is_pos and k in active_keys]
 
+    # Display net income = sum of only the active component columns (so it moves with program toggles)
+    all_active_cols = [k for k, _, _, _ in COMPONENTS if k in active_keys]
+    panel["display_net_income"] = panel[all_active_cols].sum(axis=1)
+
     grouped = df.groupby(["annual_hours", "scenario"])
     y_max_pos = float(grouped[pos_cols].sum().sum(axis=1).max()) if pos_cols else 0.0
     y_min_neg = float(grouped[neg_cols].sum().sum(axis=1).min()) if neg_cols else 0.0
-    y_max_net = float(grouped["net_income"].sum().max())
+    # y_max_net: compute display net income for both scenarios, take the max
+    all_active_max = df.copy()
+    all_active_max["display_net_income"] = all_active_max[all_active_cols].sum(axis=1)
+    y_max_net = float(all_active_max.groupby(["annual_hours", "scenario"])["display_net_income"].sum().max())
 
     y_max = max(y_max_pos, y_max_net, 0.0)
     y_min = min(y_min_neg, 0.0)
@@ -83,7 +90,7 @@ def _make_budget_figure(df: "pd.DataFrame", scenario: str, active_keys: "set[str
     fig.add_trace(go.Scatter(
         name="Net income",
         x=panel["annual_hours"],
-        y=panel["net_income"],
+        y=panel["display_net_income"],
         mode="lines",
         line=dict(color="#111111", width=2, dash="dash"),
         showlegend=True,
@@ -161,7 +168,7 @@ def _make_diff_table(df: "pd.DataFrame", active_keys: "set[str]") -> "pd.DataFra
                 continue
             col[label] = sub[key] - base[key]
 
-        col["Net income change"] = sub["net_income"] - base["net_income"]
+        col["Net income change"] = sum(sub[k] - base[k] for k, _, _, _ in COMPONENTS if k in active_keys)
 
         # Total transfer spending: sum only active government-funded transfers
         active_transfer_keys = [k for k in TRANSFER_KEYS if k in active_keys]
@@ -399,7 +406,7 @@ def render() -> None:
         )
         transfer_keys = [k for k in TRANSFER_KEYS if k in active_keys]
         transfer_change = sum(sub[k] - base[k] for k in transfer_keys)
-        net_income_change = sub["net_income"] - base["net_income"]
+        net_income_change = sum(sub[k] - base[k] for k, _, _, _ in COMPONENTS if k in active_keys)
         return {
             "tax_change": float(tax_change),
             "transfer_change": float(transfer_change),
