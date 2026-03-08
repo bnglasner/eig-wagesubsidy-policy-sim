@@ -12,6 +12,10 @@ Output files  (WORKSPACE/output/data/intermediate_results/population/)
   by_wage_bracket.parquet  Distribution across $2 wage brackets
   by_family_type.parquet   Distribution across 4 family type categories
   program_interactions.parquet  Per-program net change in spending/revenue
+  by_sex.parquet           Distribution by sex (Male / Female)
+  by_race_ethnicity.parquet    Distribution by race/ethnicity group
+  by_education.parquet     Distribution by education attainment group
+  by_age_bin.parquet       Distribution by age bin (16-24 through 55-64)
 
 Safety net lookup
 -----------------
@@ -68,10 +72,10 @@ _INPUT_PATH = PATH_DATA_PROCESSED / "hourly_workers.parquet"
 
 # Wage brackets for distribution charts
 _WAGE_BRACKETS = [
-    ("$7.25–$9",    7.25,  9.00),
-    ("$9–$11",      9.00, 11.00),
-    ("$11–$13",    11.00, 13.00),
-    ("$13–$16.80", 13.00, 16.80),
+    ("$7.25-$9",    7.25,  9.00),
+    ("$9-$11",      9.00, 11.00),
+    ("$11-$13",    11.00, 13.00),
+    ("$13-$16.80", 13.00, 16.80),
 ]
 
 # Program labels for the interaction table (from COMPONENTS)
@@ -164,7 +168,44 @@ def _wage_bracket_label(wage: float) -> str:
     for label, lo, hi in _WAGE_BRACKETS:
         if lo <= wage < hi:
             return label
-    return "$13–$16.80"
+    return "$13-$16.80"
+
+
+def _agg_by_group(
+    workers: pd.DataFrame,
+    net_income_delta: np.ndarray,
+    total_weights: float,
+    gross_cost_bn: float,
+    col: str,
+    ordered_labels: list[str] | None = None,
+) -> pd.DataFrame:
+    """Generic weighted aggregation over a categorical column."""
+    if ordered_labels:
+        valid_mask = workers[col].isin(ordered_labels)
+    else:
+        valid_mask = workers[col].notna()
+    workers = workers[valid_mask]
+    net_income_delta = net_income_delta[valid_mask.values]
+    rows = []
+    groups = workers.groupby(col, observed=True)
+    for label, grp in groups:
+        w  = grp["weight"].values
+        gs = grp["subsidy_annual"].values
+        nd = net_income_delta[grp.index]
+        rows.append({
+            col:                  label,
+            "n_workers_k":        round(w.sum() / 1e3, 1),
+            "pct_workers":        round(w.sum() / total_weights * 100, 1),
+            "avg_annual_subsidy": round(_weighted_mean(gs, w), 0),
+            "avg_net_income_gain": round(_weighted_mean(nd, w), 0),
+            "gross_cost_mn":      round((gs * w).sum() / 1e6, 1),
+        })
+    df = pd.DataFrame(rows)
+    if ordered_labels:
+        df[col] = pd.Categorical(df[col], categories=ordered_labels, ordered=True)
+        df = df.sort_values(col).reset_index(drop=True)
+        df[col] = df[col].astype(str)
+    return df
 
 
 # ── Main ───────────────────────────────────────────────────────────────────────
@@ -305,12 +346,52 @@ def main() -> None:
     ], ignore_index=True)
     program_interactions.to_parquet(_OUT_DIR / "program_interactions.parquet", index=False)
 
+    # ── Demographic breakdowns (only if columns are present) ──────────────────
+    _EDUC_ORDER = [
+        "Less than HS", "HS diploma / GED",
+        "Some college / Associate's", "Bachelor's degree", "Graduate degree",
+    ]
+    _AGE_ORDER = ["16-24", "25-34", "35-44", "45-54", "55-64"]
+
+    demo_outputs: dict[str, pd.DataFrame] = {}
+
+    if "sex_label" in workers.columns:
+        print("02a | Aggregating by sex ...")
+        demo_outputs["by_sex"] = _agg_by_group(
+            workers, net_income_delta, weights.sum(), gross_cost_bn, "sex_label",
+        )
+
+    if "race_ethnicity" in workers.columns:
+        print("02a | Aggregating by race/ethnicity ...")
+        demo_outputs["by_race_ethnicity"] = _agg_by_group(
+            workers, net_income_delta, weights.sum(), gross_cost_bn, "race_ethnicity",
+        )
+
+    if "educ_group" in workers.columns:
+        print("02a | Aggregating by education ...")
+        demo_outputs["by_education"] = _agg_by_group(
+            workers, net_income_delta, weights.sum(), gross_cost_bn, "educ_group",
+            ordered_labels=_EDUC_ORDER,
+        )
+
+    if "age_bin" in workers.columns:
+        print("02a | Aggregating by age bin ...")
+        demo_outputs["by_age_bin"] = _agg_by_group(
+            workers, net_income_delta, weights.sum(), gross_cost_bn, "age_bin",
+            ordered_labels=_AGE_ORDER,
+        )
+
+    for name, df in demo_outputs.items():
+        df.to_parquet(_OUT_DIR / f"{name}.parquet", index=False)
+
     print(f"\n02a | Complete. Output written to: {_OUT_DIR}")
     print(f"  summary.parquet")
     print(f"  by_state.parquet          ({len(by_state)} rows)")
     print(f"  by_wage_bracket.parquet   ({len(by_wage_bracket)} rows)")
     print(f"  by_family_type.parquet    ({len(by_family_type)} rows)")
     print(f"  program_interactions.parquet ({len(program_interactions)} rows)")
+    for name, df in demo_outputs.items():
+        print(f"  {name}.parquet ({len(df)} rows)")
 
 
 if __name__ == "__main__":

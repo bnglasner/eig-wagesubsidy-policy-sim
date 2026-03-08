@@ -285,8 +285,11 @@ After the floor is applied, a worker is eligible if:
 employer_wage < TARGET_WAGE         # floored wage below target (upper bound)
 epi_sample_eligible == True         # age 16+, not self-employed
 hourly_wage_epi_valid == True       # non-missing, positive, finite (pre-floor check)
-age >= 16 and age <= 64             # working-age filter
+age >= 16 and age <= 64             # working-age filter; 65+ excluded as SS proxy
+not (relate == 301 and age < 19)    # tax-dependent exclusion
 ```
+
+The `age <= 64` ceiling serves as a proxy exclusion for Social Security recipients; the CPS ORG does not collect income-by-source, so true SS receipt cannot be identified directly. The dependent exclusion removes workers who are a child of the household head (`relate == 301`) and under 19 years old — the standard qualifying-child dependent definition. Note that qualifying *relative* dependents (any age, income below IRS threshold) cannot be identified from ORG data alone.
 
 Note: the lower bound check (`employer_wage >= BASE_WAGE`) is automatically satisfied
 after flooring — no worker survives to this step with `employer_wage < $7.25`.
@@ -467,10 +470,9 @@ available through 2025, this should be computed dynamically at ingest time.
 **Definition:** Weighted median of `hourly_wage_epi` among paid-hourly
 (non-salaried), EPI-eligible, employed workers in the most recent 12 months of ORG data.
 
-**2025 result (11 months, January–September + November–December):**
+**2025–2026 result (12 pooled year-months):**
 - Weighted median, paid-hourly workers: **$21.00/hr**
-- This exactly validates the current hardcoded config value
-- October 2025 (`month == 10`) is absent from the current IPUMS ORG extract; ingest uses the observed year-month groups (`n_months`) so weighting remains internally consistent.
+- Pooled across 2025 (11 months — October absent from extract) and 2026 (partial year); ingest uses unique `(year, month)` groups for `n_months` so weighting remains internally consistent regardless of missing months.
 
 **Computation in `01a_data_ingest.py`:**
 ```python
@@ -686,7 +688,8 @@ Step 4: Worker Identification (EIG repo, Python)
    WORKSPACE/code/01_data_preparation/01a_data_ingest.py  [REWRITTEN]
    - Read org_workers_{YYYY}.parquet
    - Compute dynamic median wage → TARGET_WAGE
-   - Filter: epi_sample_eligible, valid wage, age 16–64
+   - Filter: epi_sample_eligible, valid wage, age 16–64 (65+ excluded as SS proxy)
+   - Exclude tax dependents: relate == 301 and age < 19
    - Apply federal minimum wage floor: employer_wage = max(hourly_wage_epi, $7.25)
    - Filter: employer_wage < TARGET_WAGE (upper bound eligibility)
    - Map STATEFIP → state abbreviation

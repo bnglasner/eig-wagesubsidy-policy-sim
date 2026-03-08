@@ -54,7 +54,7 @@ FAMILY_KEYS: dict[str, str] = {
     "Married couple, 2 children":  "married_2c",
 }
 
-YEAR_STR = "2025"
+YEAR_STR = "2026"
 
 # ── Income components (display order + chart colors) ─────────────────────────
 

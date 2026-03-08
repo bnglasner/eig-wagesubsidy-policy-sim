@@ -55,6 +55,13 @@ EXPORT_COLS = [
     "hourly_wage_epi_valid",
     "epi_sample_eligible",
     "weekly_earn_epi",
+    # Demographics for breakdown analysis
+    "sex_label",
+    "race_ethnicity",
+    "educ",
+    "age_bin",
+    # Household relationship — used to identify tax dependents
+    "relate",
 ]
 
 

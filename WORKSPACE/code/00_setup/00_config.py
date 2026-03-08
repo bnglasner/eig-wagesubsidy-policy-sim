@@ -54,7 +54,7 @@ cfg = {
     "ws_target_pct":          0.80,   # target wage = 80% of median
     "ws_subsidy_pct":         0.80,   # subsidy covers 80% of gap
     "ws_base_wage":           7.25,   # federal minimum wage — NOT state minimums (base wage floor)
-    "ws_simulation_year":     2025,   # PolicyEngine simulation year
+    "ws_simulation_year":     2026,   # PolicyEngine simulation year
     # Derived (convenience)
     "ws_target_wage":         16.80,  # 0.80 * 21.00
     "ws_max_subsidy":          7.64,  # 0.80 * (16.80 - 7.25)

@@ -88,9 +88,10 @@ Behavior:
 Exported variables include:
 
 - time/sample: `year`, `month`, `mish`
-- weights/demographics: `earnwt`, `age`, `statefip`, `nchild`, `marst`, `wkstat`, `classwkr`
+- weights/demographics: `earnwt`, `age`, `statefip`, `nchild`, `marst`, `wkstat`, `classwkr`, `relate`
 - wage variables: `paid_hourly`, `hours_epi`, `hours_epi_valid`, `hourly_wage_epi`, `hourly_wage_epi_valid`, `weekly_earn_epi`
 - EPI sample flag: `epi_sample_eligible`
+- demographic breakdowns: `sex_label`, `race_ethnicity`, `educ`, `age_bin`
 
 ## 4.2 PolicyEngine schedule step
 
@@ -127,11 +128,12 @@ Operational eligibility in `01a_data_ingest.py` requires:
 
 - `epi_sample_eligible == True`
 - `hourly_wage_epi_valid == True`
-- `16 <= age <= 64`
+- `16 <= age <= 64` — workers 65 and older are excluded as a proxy for Social Security recipient status, since SS income cannot be directly identified in ORG microdata
 - `earnwt > 0`
 - `employer_wage < TARGET_WAGE` after federal floor
+- `NOT (relate == 301 AND age < 19)` — tax dependents are excluded; a worker who is a child of the household head (`relate == 301`) and under age 19 is treated as a qualifying child dependent and therefore ineligible for the wage subsidy
 
-This ensures the subsidy applies to valid wage observations in the intended working-age domain.
+This ensures the subsidy applies to valid wage observations for independent, working-age earners in the intended policy domain.
 
 ---
 
@@ -285,6 +287,10 @@ Files:
 - `by_wage_bracket.parquet`: worker distribution and average subsidy over wage bins
 - `by_family_type.parquet`: four family-type aggregates
 - `program_interactions.parquet`: per-program average and total deltas plus share of gross cost
+- `by_sex.parquet`: worker distribution and average subsidy by sex (Male / Female)
+- `by_race_ethnicity.parquet`: worker distribution by race/ethnicity group (5 categories)
+- `by_education.parquet`: worker distribution by education attainment (5 groups from Less than HS to Graduate degree)
+- `by_age_bin.parquet`: worker distribution by age bin (16-24 through 55-64)
 
 These files are consumed directly by the interactive population tab.
 
@@ -354,7 +360,9 @@ From repository root:
 2. Annual hours are modeled using current-hours plus WKSTAT-based week multipliers, not observed prior-year weeks.
 3. Tax-transfer responses are approximated from stylized schedule interpolation by family-state type, not full household microsimulation per ORG record.
 4. Eligibility floor uses federal `$7.25` by design; state minimum wages are not imposed in the baseline policy implementation.
-5. Estimates should be interpreted as model-based policy simulations with uncertainty bands, not administrative totals.
+5. The Social Security exclusion rule uses age 65+ as a proxy. The CPS ORG does not collect income-by-source, so true SS recipient status (including SSDI recipients under 65) cannot be directly identified.
+6. The tax-dependent exclusion covers qualifying child dependents (child of household head, age < 19) identifiable in ORG via the `relate` variable. Qualifying relative dependents (any age, income < threshold) cannot be identified without tax-return level data.
+7. Estimates should be interpreted as model-based policy simulations with uncertainty bands, not administrative totals.
 
 These limitations are explicit design tradeoffs, not hidden deficiencies.
 

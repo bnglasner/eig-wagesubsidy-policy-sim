@@ -18,9 +18,11 @@ Eligibility (EIG 80-80 Rule)
 -----------------------------
   1. epi_sample_eligible == True  (age ≥16, not self-employed)
   2. hourly_wage_epi_valid == True (non-missing, positive, finite)
-  3. age in [16, 64]
+  3. age in [16, 64]  (65+ excluded as proxy for Social Security recipients)
   4. employer_wage = max(hourly_wage_epi, FEDERAL_MIN_WAGE) < TARGET_WAGE
      where TARGET_WAGE = 80% of weighted median paid-hourly wage (dynamic)
+  5. NOT a tax dependent: exclude relate==301 (child of household head) AND age < 19
+     (qualifying child dependents are not eligible for the wage subsidy)
 
 WKSTAT weeks multiplier (confirmed from IPUMS DDI extract #304)
 ---------------------------------------------------------------
@@ -125,6 +127,22 @@ def _family_key(marst: int, nchild: int) -> str:
     return f"{prefix}_{suffix}"
 
 
+# IPUMS educ codes → grouped education labels
+_EDUC_MAP: dict[int, str] = {
+    1: "Less than HS",  2: "Less than HS",
+   10: "Less than HS", 20: "Less than HS", 30: "Less than HS",
+   40: "Less than HS", 50: "Less than HS", 60: "Less than HS",
+   71: "HS diploma / GED", 73: "HS diploma / GED",
+   81: "Some college / Associate's", 91: "Some college / Associate's",
+   92: "Some college / Associate's",
+  111: "Bachelor's degree",
+  123: "Graduate degree", 124: "Graduate degree", 125: "Graduate degree",
+}
+
+def _educ_group(code: int) -> str:
+    return _EDUC_MAP.get(int(code), "Unknown")
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main() -> None:
@@ -164,14 +182,30 @@ def main() -> None:
     org = org[org["hourly_wage_epi_valid"].astype(bool)].copy()
     org["employer_wage"] = org["hourly_wage_epi"].clip(lower=FEDERAL_MIN_WAGE)
 
+    # Tax dependent exclusion: child of household head (relate==301) under age 19
+    # These workers are qualifying child dependents and not eligible for the subsidy.
+    # relate column may be absent in older ORG exports — default to no exclusion if missing.
+    if "relate" in org.columns:
+        is_dependent = (org["relate"] == 301) & (org["age"] < 19)
+    else:
+        is_dependent = pd.Series(False, index=org.index)
+
     mask = (
         org["epi_sample_eligible"].astype(bool) &
         (org["age"] >= 16) & (org["age"] <= 64) &
         (org["employer_wage"] < TARGET_WAGE) &
-        (org["earnwt"] > 0)
+        (org["earnwt"] > 0) &
+        ~is_dependent
     )
     eligible = org[mask].copy()
-    print(f"  Eligible workers (unweighted rows): {len(eligible):,}")
+    n_dependents = is_dependent[
+        org["epi_sample_eligible"].astype(bool) &
+        (org["age"] >= 16) & (org["age"] <= 64) &
+        (org["employer_wage"] < TARGET_WAGE) &
+        (org["earnwt"] > 0)
+    ].sum()
+    print(f"  Eligible workers (unweighted rows): {len(eligible):,}  "
+          f"(excluded {n_dependents:,} tax dependents)")
 
     if len(eligible) == 0:
         raise RuntimeError(
@@ -232,15 +266,21 @@ def main() -> None:
     eligible["weight"] = eligible["earnwt"] / n_months
     print(f"  Pooled year-months: {n_months}  ->  weight = earnwt / {n_months}")
 
-    # ── 9. Build output DataFrame ─────────────────────────────────────────────
+    # ── 9. Demographics ───────────────────────────────────────────────────────
+    eligible["educ_group"] = eligible["educ"].apply(_educ_group)
+
+    # ── 10. Build output DataFrame ────────────────────────────────────────────
     out_cols = [
         "state_code", "family_type_key",
         "employer_wage", "annual_hours", "baseline_income",
         "subsidy_hr", "subsidy_annual", "weight",
+        "sex_label", "race_ethnicity", "educ_group", "age_bin",
     ]
+    # Only keep demographic cols that were actually exported (older ORG files may lack them)
+    out_cols = [c for c in out_cols if c in eligible.columns]
     df = eligible[out_cols].reset_index(drop=True)
 
-    # ── 10. Save ──────────────────────────────────────────────────────────────
+    # ── 11. Save ──────────────────────────────────────────────────────────────
     out_path = PATH_DATA_PROCESSED / "hourly_workers.parquet"
     df.to_parquet(out_path, index=False)
 

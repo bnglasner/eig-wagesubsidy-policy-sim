@@ -34,6 +34,14 @@ _FILES = {
     "program_interactions": _POP_DIR / "program_interactions.parquet",
 }
 
+# Demographic breakdown files (optional — present only if pipeline ran with demographic columns)
+_DEMO_FILES = {
+    "by_sex":            _POP_DIR / "by_sex.parquet",
+    "by_race_ethnicity": _POP_DIR / "by_race_ethnicity.parquet",
+    "by_education":      _POP_DIR / "by_education.parquet",
+    "by_age_bin":        _POP_DIR / "by_age_bin.parquet",
+}
+
 
 def _all_files_present() -> bool:
     return all(p.exists() for p in _FILES.values())
@@ -145,6 +153,36 @@ def _make_bracket_chart(by_wb: "pd.DataFrame") -> "go.Figure":
         ),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
         margin=dict(t=40, b=40),
+    ))
+    return fig
+
+
+def _make_demo_chart(df: pd.DataFrame, group_col: str, color: str) -> "go.Figure":
+    import plotly.graph_objects as go
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=df["n_workers_k"],
+        y=df[group_col],
+        orientation="h",
+        name="Workers (k)",
+        marker_color=color,
+        yaxis="y",
+        xaxis="x",
+        text=[f"{v:,.0f}k" for v in df["n_workers_k"]],
+        textposition="outside",
+        hovertemplate=(
+            "<b>%{y}</b><br>"
+            "Workers: %{x:,.0f}k (%{customdata:.1f}%)<extra></extra>"
+        ),
+        customdata=df["pct_workers"],
+    ))
+    fig.update_layout(**eig_plotly_layout(
+        height=max(180, len(df) * 36),
+        xaxis=dict(title="Workers (thousands)", tickformat=",.0f", showgrid=True, gridcolor="#D9D9D9"),
+        yaxis=dict(showgrid=False, automargin=True),
+        margin=dict(t=10, b=40, r=100),
+        showlegend=False,
     ))
     return fig
 
@@ -297,9 +335,12 @@ def render() -> None:
     st.caption(
         "**Methodology note:** Eligibility is identified from CPS ORG hourly wages (`hourly_wage_epi`) "
         "with a federal floor of $7.25 and a dynamic target wage (80% of weighted median paid-hourly wage). "
-        "Annual hours are `hours_epi × WKSTAT weeks` (fallback used only when hours are missing). "
+        "Workers age 65 or older are excluded as a proxy for Social Security recipient status (SS income "
+        "is not directly observed in ORG microdata). Tax dependents — defined as children of the household "
+        "head (`relate == 301`) under age 19 — are also excluded. "
+        "Annual hours are `hours_epi x WKSTAT weeks` (fallback used only when hours are missing). "
         "Family type is derived from `MARST` and `NCHILD`, and safety net interactions are interpolated from "
-        "pre-computed PolicyEngine household schedules."
+        "pre-computed PolicyEngine-US 2026 household schedules."
     )
 
 
@@ -390,8 +431,75 @@ def render() -> None:
 
     st.divider()
 
-    # â”€â”€ State detail table (collapsed) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    with st.expander("State-by-state detail table"):
+    # ── Demographic breakdowns ────────────────────────────────────────────────
+    demo_available = all(p.exists() for p in _DEMO_FILES.values())
+    if demo_available:
+        import pandas as pd
+
+        st.subheader(“Eligible Workers by Demographic Group”)
+        st.markdown(
+            “Distribution of eligible workers and average annual subsidy across “
+            “sex, race/ethnicity, education, and age. Worker counts are weighted “
+            “CPS ORG estimates.”
+        )
+
+        by_sex   = pd.read_parquet(_DEMO_FILES[“by_sex”])
+        by_race  = pd.read_parquet(_DEMO_FILES[“by_race_ethnicity”])
+        by_educ  = pd.read_parquet(_DEMO_FILES[“by_education”])
+        by_age   = pd.read_parquet(_DEMO_FILES[“by_age_bin”])
+
+        col_sex, col_race = st.columns(2)
+
+        with col_sex:
+            st.markdown(“**By Sex**”)
+            fig_sex = _make_demo_chart(by_sex, “sex_label”, BRAND_COLORS[“eig_blue_800”])
+            st.plotly_chart(fig_sex, use_container_width=True)
+            st.dataframe(
+                by_sex[[“sex_label”, “pct_workers”, “avg_annual_subsidy”]]
+                .rename(columns={“sex_label”: “Sex”, “pct_workers”: “Share (%)”, “avg_annual_subsidy”: “Avg. subsidy ($)”})
+                .style.format({“Share (%)”: “{:.1f}%”, “Avg. subsidy ($)”: “${:,.0f}”}),
+                use_container_width=True, hide_index=True,
+            )
+
+        with col_race:
+            st.markdown(“**By Race / Ethnicity**”)
+            fig_race = _make_demo_chart(by_race, “race_ethnicity”, BRAND_COLORS[“eig_cyan_700”])
+            st.plotly_chart(fig_race, use_container_width=True)
+            st.dataframe(
+                by_race[[“race_ethnicity”, “pct_workers”, “avg_annual_subsidy”]]
+                .rename(columns={“race_ethnicity”: “Group”, “pct_workers”: “Share (%)”, “avg_annual_subsidy”: “Avg. subsidy ($)”})
+                .style.format({“Share (%)”: “{:.1f}%”, “Avg. subsidy ($)”: “${:,.0f}”}),
+                use_container_width=True, hide_index=True,
+            )
+
+        col_educ, col_age = st.columns(2)
+
+        with col_educ:
+            st.markdown(“**By Education**”)
+            fig_educ = _make_demo_chart(by_educ, “educ_group”, BRAND_COLORS[“eig_gold_600”])
+            st.plotly_chart(fig_educ, use_container_width=True)
+            st.dataframe(
+                by_educ[[“educ_group”, “pct_workers”, “avg_annual_subsidy”]]
+                .rename(columns={“educ_group”: “Education”, “pct_workers”: “Share (%)”, “avg_annual_subsidy”: “Avg. subsidy ($)”})
+                .style.format({“Share (%)”: “{:.1f}%”, “Avg. subsidy ($)”: “${:,.0f}”}),
+                use_container_width=True, hide_index=True,
+            )
+
+        with col_age:
+            st.markdown(“**By Age**”)
+            fig_age = _make_demo_chart(by_age, “age_bin”, BRAND_COLORS[“eig_green_700”])
+            st.plotly_chart(fig_age, use_container_width=True)
+            st.dataframe(
+                by_age[[“age_bin”, “pct_workers”, “avg_annual_subsidy”]]
+                .rename(columns={“age_bin”: “Age group”, “pct_workers”: “Share (%)”, “avg_annual_subsidy”: “Avg. subsidy ($)”})
+                .style.format({“Share (%)”: “{:.1f}%”, “Avg. subsidy ($)”: “${:,.0f}”}),
+                use_container_width=True, hide_index=True,
+            )
+
+        st.divider()
+
+    # ── State detail table (collapsed) ───────────────────────────────────────
+    with st.expander(“State-by-state detail table”):
         st.dataframe(
             by_state.rename(columns={
                 "state_code":        "State",
