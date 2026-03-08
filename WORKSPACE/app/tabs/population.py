@@ -406,8 +406,12 @@ def render() -> None:
         st.subheader("Program Interactions")
         st.markdown(
             "How other programs change for the average eligible worker under the subsidy. "
-            "Negative values (red) indicate reductions in program benefits or increases "
-            "in taxes - these offset the gross subsidy cost to the government."
+            "Values show the change in each program from baseline to subsidized earnings.\n\n"
+            "- **Transfer programs** (SNAP, EITC, Medicaid, etc.): "
+            "green = benefit increases; red = benefit reductions (fiscal savings).\n"
+            "- **Tax rows** (Federal income tax, State income tax, Payroll taxes): "
+            "red = *more* tax revenue collected on the higher earnings - "
+            "a fiscal offset to the government, not a cost."
         )
         _render_program_table(prog)
 
