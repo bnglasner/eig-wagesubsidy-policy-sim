@@ -49,12 +49,18 @@ def _make_budget_figure(df: "pd.DataFrame", scenario: str, active_keys: "set[str
 
     panel = df[df["scenario"] == scenario].sort_values("annual_hours")
 
-    # Compute y-axis bounds using only active components so toggling scenarios doesn't rescale
+    # Compute y-axis bounds using only active components so toggling scenarios doesn't rescale.
+    # Group by (annual_hours, scenario) so the two scenarios don't get summed together.
     pos_cols = [k for k, _, _, is_pos in COMPONENTS if is_pos and k in active_keys]
     neg_cols = [k for k, _, _, is_pos in COMPONENTS if not is_pos and k in active_keys]
 
-    y_max = df.groupby("annual_hours")[pos_cols].sum().max().max() if pos_cols else 0
-    y_min = df.groupby("annual_hours")[neg_cols].sum().min().min() if neg_cols else 0
+    grouped = df.groupby(["annual_hours", "scenario"])
+    y_max_pos = float(grouped[pos_cols].sum().sum(axis=1).max()) if pos_cols else 0.0
+    y_min_neg = float(grouped[neg_cols].sum().sum(axis=1).min()) if neg_cols else 0.0
+    y_max_net = float(grouped["net_income"].sum().max())
+
+    y_max = max(y_max_pos, y_max_net, 0.0)
+    y_min = min(y_min_neg, 0.0)
 
     # Add 5% padding
     y_range_pad = (y_max - y_min) * 0.05
