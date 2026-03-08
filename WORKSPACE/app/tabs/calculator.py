@@ -346,7 +346,7 @@ def render() -> None:
             legend=dict(orientation="h", yanchor="bottom", y=1.02),
             height=380,
         ))
-        st.plotly_chart(fig_sweep, use_container_width=True)
+        st.plotly_chart(fig_sweep, width='stretch')
 
     # â”€â”€ Section 2: Budget Constraint Figure â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     st.divider()
@@ -425,7 +425,7 @@ def render() -> None:
     )
 
     fig_budget = _make_budget_figure(df_sim, scenario, active_keys)
-    st.plotly_chart(fig_budget, use_container_width=True)
+    st.plotly_chart(fig_budget, width='stretch')
 
     # â”€â”€ Difference table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     with st.expander("Difference table: With Subsidy vs. Baseline"):
@@ -455,5 +455,5 @@ def render() -> None:
                        ],
                        axis=0,
                    ),
-            use_container_width=True,
+            width='stretch',
         )

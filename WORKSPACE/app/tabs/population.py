@@ -255,7 +255,7 @@ def _render_program_table(prog: "pd.DataFrame") -> None:
             subset=["Avg. change / worker", "Total change", "% of gross cost"],
             axis=0,
         ),
-        use_container_width=True,
+        width='stretch',
         hide_index=True,
     )
 
@@ -390,12 +390,12 @@ def render() -> None:
             label_visibility="collapsed",
         )
         fig_map = _make_choropleth(by_state, map_metric)
-        st.plotly_chart(fig_map, use_container_width=True)
+        st.plotly_chart(fig_map, width='stretch')
 
     with col_bracket:
         st.subheader("By Wage Bracket")
         fig_bracket = _make_bracket_chart(by_wb)
-        st.plotly_chart(fig_bracket, use_container_width=True)
+        st.plotly_chart(fig_bracket, width='stretch')
 
     st.divider()
 
@@ -414,7 +414,7 @@ def render() -> None:
     with col_ft:
         st.subheader("By Family Type")
         fig_ft = _make_family_chart(by_ft)
-        st.plotly_chart(fig_ft, use_container_width=True)
+        st.plotly_chart(fig_ft, width='stretch')
 
         # Small table with worker shares
         st.dataframe(
@@ -425,7 +425,7 @@ def render() -> None:
                 "n_workers_k": "Workers (k)",
             })
             .style.format({"Share (%)": "{:.1f}%", "Workers (k)": "{:,.0f}"}),
-            use_container_width=True,
+            width='stretch',
             hide_index=True,
         )
 
@@ -453,25 +453,25 @@ def render() -> None:
         with col_sex:
             st.markdown("**By Sex**")
             fig_sex = _make_demo_chart(by_sex, "sex_label", BRAND_COLORS["eig_blue_800"])
-            st.plotly_chart(fig_sex, use_container_width=True)
+            st.plotly_chart(fig_sex, width='stretch')
             st.dataframe(
                 by_sex[["sex_label", "pct_of_recipients", "pct_in_group", "avg_annual_subsidy"]]
                 .rename(columns={"sex_label": "Sex", "pct_of_recipients": "% of recipients",
                                  "pct_in_group": "% of group receiving", "avg_annual_subsidy": "Avg. subsidy ($)"})
                 .style.format({"% of recipients": "{:.1f}%", "% of group receiving": "{:.1f}%", "Avg. subsidy ($)": "${:,.0f}"}),
-                use_container_width=True, hide_index=True,
+                width='stretch', hide_index=True,
             )
 
         with col_race:
             st.markdown("**By Race / Ethnicity**")
             fig_race = _make_demo_chart(by_race, "race_ethnicity", BRAND_COLORS["eig_cyan_700"])
-            st.plotly_chart(fig_race, use_container_width=True)
+            st.plotly_chart(fig_race, width='stretch')
             st.dataframe(
                 by_race[["race_ethnicity", "pct_of_recipients", "pct_in_group", "avg_annual_subsidy"]]
                 .rename(columns={"race_ethnicity": "Group", "pct_of_recipients": "% of recipients",
                                  "pct_in_group": "% of group receiving", "avg_annual_subsidy": "Avg. subsidy ($)"})
                 .style.format({"% of recipients": "{:.1f}%", "% of group receiving": "{:.1f}%", "Avg. subsidy ($)": "${:,.0f}"}),
-                use_container_width=True, hide_index=True,
+                width='stretch', hide_index=True,
             )
 
         col_educ, col_age = st.columns(2)
@@ -479,25 +479,25 @@ def render() -> None:
         with col_educ:
             st.markdown("**By Education**")
             fig_educ = _make_demo_chart(by_educ, "educ_group", BRAND_COLORS["eig_gold_600"])
-            st.plotly_chart(fig_educ, use_container_width=True)
+            st.plotly_chart(fig_educ, width='stretch')
             st.dataframe(
                 by_educ[["educ_group", "pct_of_recipients", "pct_in_group", "avg_annual_subsidy"]]
                 .rename(columns={"educ_group": "Education", "pct_of_recipients": "% of recipients",
                                  "pct_in_group": "% of group receiving", "avg_annual_subsidy": "Avg. subsidy ($)"})
                 .style.format({"% of recipients": "{:.1f}%", "% of group receiving": "{:.1f}%", "Avg. subsidy ($)": "${:,.0f}"}),
-                use_container_width=True, hide_index=True,
+                width='stretch', hide_index=True,
             )
 
         with col_age:
             st.markdown("**By Age**")
             fig_age = _make_demo_chart(by_age, "age_bin", BRAND_COLORS["eig_green_700"])
-            st.plotly_chart(fig_age, use_container_width=True)
+            st.plotly_chart(fig_age, width='stretch')
             st.dataframe(
                 by_age[["age_bin", "pct_of_recipients", "pct_in_group", "avg_annual_subsidy"]]
                 .rename(columns={"age_bin": "Age group", "pct_of_recipients": "% of recipients",
                                  "pct_in_group": "% of group receiving", "avg_annual_subsidy": "Avg. subsidy ($)"})
                 .style.format({"% of recipients": "{:.1f}%", "% of group receiving": "{:.1f}%", "Avg. subsidy ($)": "${:,.0f}"}),
-                use_container_width=True, hide_index=True,
+                width='stretch', hide_index=True,
             )
 
         st.divider()
@@ -517,7 +517,7 @@ def render() -> None:
                 "Net cost ($M)":     "${:,.0f}",
                 "Avg. subsidy ($)":  "${:,.0f}",
             }),
-            use_container_width=True,
+            width='stretch',
             hide_index=True,
         )
 
