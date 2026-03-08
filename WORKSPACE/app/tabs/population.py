@@ -62,7 +62,13 @@ from utils.household_sim import COMPONENTS
 def _make_choropleth(by_state: "pd.DataFrame", metric: str) -> "go.Figure":
     import plotly.graph_objects as go
 
-    if metric == "Workers (thousands)":
+    if metric == "Share receiving subsidy (%)":
+        col, label, fmt = "pct_in_group", "Share receiving subsidy (%)", ".1f"
+        color_scale = [
+            [0.0, "#FEECD6"],  # eig_cream_100
+            [1.0, "#39274F"],  # eig_purple_800
+        ]
+    elif metric == "Workers (thousands)":
         col, label, fmt = "n_workers_k", "Workers (thousands)", ",.0f"
         color_scale = [
             [0.0, "#FEECD6"],  # eig_cream_100
@@ -386,7 +392,7 @@ def render() -> None:
         st.subheader("Geographic Distribution")
         map_metric = st.selectbox(
             "Map color",
-            ["Workers (thousands)", "Gross cost ($M)", "Avg. annual subsidy ($)"],
+            ["Share receiving subsidy (%)", "Workers (thousands)", "Gross cost ($M)", "Avg. annual subsidy ($)"],
             label_visibility="collapsed",
         )
         fig_map = _make_choropleth(by_state, map_metric)

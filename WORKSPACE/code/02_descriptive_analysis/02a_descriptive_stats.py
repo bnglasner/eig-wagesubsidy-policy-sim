@@ -288,14 +288,52 @@ def main() -> None:
 
     # ── By state ──────────────────────────────────────────────────────────────
     print("02a | Aggregating by state …")
+    # Compute state-level base population totals (all EPI-eligible workers, pre-wage-threshold)
+    _state_base_totals: dict[str, float] = {}
+    try:
+        org_candidates = sorted((PATH_DATA / "external").glob("org_workers_*.parquet"))
+        if org_candidates:
+            _org_raw = pd.read_parquet(org_candidates[-1])
+            _base_mask = (
+                _org_raw["epi_sample_eligible"].astype(bool) &
+                _org_raw["hourly_wage_epi_valid"].astype(bool) &
+                (_org_raw["age"] >= 16) & (_org_raw["age"] <= 64) &
+                (_org_raw["earnwt"] > 0)
+            )
+            if "relate" in _org_raw.columns:
+                _base_mask &= ~((_org_raw["relate"] == 301) & (_org_raw["age"] < 19))
+            _org_base = _org_raw[_base_mask].copy()
+            _n_months_base = _org_base.groupby(["year", "month"]).ngroups
+            if "statefip" in _org_base.columns:
+                _FIPS_TO_STATE = {
+                     1: "AL",  2: "AK",  4: "AZ",  5: "AR",  6: "CA",  8: "CO",  9: "CT",
+                    10: "DE", 11: "DC", 12: "FL", 13: "GA", 15: "HI", 16: "ID", 17: "IL",
+                    18: "IN", 19: "IA", 20: "KS", 21: "KY", 22: "LA", 23: "ME", 24: "MD",
+                    25: "MA", 26: "MI", 27: "MN", 28: "MS", 29: "MO", 30: "MT", 31: "NE",
+                    32: "NV", 33: "NH", 34: "NJ", 35: "NM", 36: "NY", 37: "NC", 38: "ND",
+                    39: "OH", 40: "OK", 41: "OR", 42: "PA", 44: "RI", 45: "SC", 46: "SD",
+                    47: "TN", 48: "TX", 49: "UT", 50: "VT", 51: "VA", 53: "WA", 54: "WV",
+                    55: "WI", 56: "WY",
+                }
+                _org_base["_state_code"] = _org_base["statefip"].map(_FIPS_TO_STATE)
+                _state_base_totals = (
+                    _org_base.groupby("_state_code", observed=True)["earnwt"]
+                    .sum().div(_n_months_base).to_dict()
+                )
+    except Exception as _e:
+        print(f"  [warn] State base population load failed ({_e}) — pct_in_group will be None.")
     state_rows = []
     for state_code, grp in workers.groupby("state_code"):
         w  = grp["weight"].values
         gs = grp["subsidy_annual"].values
         nd = net_income_delta[grp.index]
+        eligible_wt = w.sum()
+        base_wt = _state_base_totals.get(state_code, 0)
+        pct_in_group = round(eligible_wt / base_wt * 100, 1) if base_wt > 0 else None
         state_rows.append({
             "state_code":        state_code,
-            "n_workers_k":       round(w.sum() / 1e3, 1),
+            "n_workers_k":       round(eligible_wt / 1e3, 1),
+            "pct_in_group":      pct_in_group,
             "gross_cost_mn":     round((gs * w).sum() / 1e6, 1),
             "net_cost_mn":       round((nd * w).sum() / 1e6, 1),
             "avg_annual_subsidy": round(_weighted_mean(gs, w), 0),
