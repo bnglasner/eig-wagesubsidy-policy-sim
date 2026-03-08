@@ -386,6 +386,16 @@ def run_from_precomputed(
             for col in _SCHEDULE_COLS:
                 row[col] = float(np.interp(total_income, income_axis, schedule[col].values))
 
+            # PolicyEngine's household_net_income excludes in-kind health subsidies
+            # (ACA premium tax credits, Medicaid/CHIP) because they are not cash
+            # income. Add them back so the net_income line equals the sum of all
+            # displayed bars.
+            row["net_income"] = (
+                row["net_income"]
+                + row.get("aca_ptc", 0.0)
+                + row.get("medicaid_chip", 0.0)
+            )
+
             rows.append(row)
 
     return pd.DataFrame(rows)
@@ -422,6 +432,11 @@ def _run_live(
             sim = Simulation(situation=situation)
             components = _extract_components(sim, total_income)
 
+            components["net_income"] = (
+                components["net_income"]
+                + components.get("aca_ptc", 0.0)
+                + components.get("medicaid_chip", 0.0)
+            )
             row = {
                 "annual_hours":   annual_hours,
                 "scenario":       scenario,

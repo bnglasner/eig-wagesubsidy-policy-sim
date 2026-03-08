@@ -165,6 +165,15 @@ def _lookup_deltas(workers: pd.DataFrame) -> pd.DataFrame:
     if n_fallback:
         print(f"  [warn] Used fallback schedule for {n_fallback:,} workers "
               f"(no exact match for their family_type × state).")
+
+    # PolicyEngine's household_net_income excludes in-kind health subsidies
+    # (ACA PTC and Medicaid/CHIP). Add their deltas to net_income so that
+    # avg_net_income_gain and net_cost_bn reflect total compensation changes.
+    if "aca_ptc" in out.columns:
+        out["net_income"] = out["net_income"] + out["aca_ptc"]
+    if "medicaid_chip" in out.columns:
+        out["net_income"] = out["net_income"] + out["medicaid_chip"]
+
     return out
 
 
