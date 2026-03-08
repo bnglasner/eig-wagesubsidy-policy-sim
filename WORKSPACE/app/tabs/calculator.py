@@ -434,7 +434,12 @@ def render() -> None:
             "Positive = gain for worker or increase in program spending. "
             "Negative = reduction. "
             "The **Delta Total transfer spending** row sums all selected government-funded transfers "
-            "(including the wage subsidy itself, less any reductions in existing programs)."
+            "(including the wage subsidy itself, less any reductions in existing programs).\n\n"
+            "- **Transfer programs** (SNAP, EITC, Medicaid, etc.): "
+            "green = benefit increases; red = benefit reductions (fiscal savings).\n"
+            "- **Tax rows** (Federal income tax, State income tax, Payroll taxes): "
+            "red = more tax revenue collected on the higher earnings - "
+            "a fiscal offset to the government, not a cost."
         )
         diff_df = _make_diff_table(df_sim, active_keys)
 
