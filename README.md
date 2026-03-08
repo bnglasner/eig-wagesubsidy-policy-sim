@@ -218,5 +218,3 @@ These are explicit design tradeoffs, documented in the methodology guide.
 Glasner, Benjamin and Adam Ozimek. "The 80-80 Rule: A Wage Subsidy Proposal for American Workers." Economic Innovation Group, 2025.
 
 Interactive simulation: [eig-wage-subsidy.streamlit.app](https://eig-wage-subsidy.streamlit.app/)
-
-Bartik, Timothy J. (2020). "Using Place-Based Jobs Policies to Help Distressed Communities." Upjohn Institute Policy Paper No. 2020-009. [https://research.upjohn.org/up_policypapers/34/](https://research.upjohn.org/up_policypapers/34/)
