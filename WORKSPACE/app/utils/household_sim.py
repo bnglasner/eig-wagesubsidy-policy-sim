@@ -311,7 +311,13 @@ def compute_income_point(
     Run PolicyEngine for one annual income level and return decomposed components.
     Called by 01b_precompute_individual.py for each point in the income grid.
     """
-    from policyengine_us import Simulation
+    try:
+        from policyengine_us import Simulation
+    except ImportError as exc:
+        raise RuntimeError(
+            "policyengine-us is required for pipeline pre-computation. "
+            "Install it with: pip install policyengine-us==1.592.4"
+        ) from exc
 
     situation = _build_situation(annual_income, family_type, state_code)
     sim = Simulation(situation=situation)
@@ -392,7 +398,14 @@ def _run_live(
     subsidy_params: dict,
 ) -> pd.DataFrame:
     """Live PolicyEngine fallback — runs 314 simulations (one per hour bin × scenario)."""
-    from policyengine_us import Simulation
+    try:
+        from policyengine_us import Simulation
+    except ImportError as exc:
+        raise RuntimeError(
+            "PolicyEngine is not installed in this environment. "
+            "Pre-computed schedules should cover all 204 state/family combinations — "
+            "check that the individual_schedules/ parquets are present in the repo."
+        ) from exc
     from utils.subsidy import hourly_subsidy
 
     sub_hr = hourly_subsidy(employer_wage, **subsidy_params)

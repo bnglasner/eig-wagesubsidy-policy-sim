@@ -12,8 +12,8 @@ numpy==2.4.2
 plotly==5.24.1
 pyarrow==23.0.1
 
-# PolicyEngine microsimulation
-# Used at runtime ONLY as a live fallback when pre-computed schedules are missing.
-# All 204 state × family-type schedules are pre-computed and included in the repo,
-# so PolicyEngine is not called in normal production operation.
-policyengine-us==1.592.4
+# PolicyEngine microsimulation — development/pipeline only, not required for production.
+# The app uses 204 pre-computed parquet schedules committed to the repo, so PolicyEngine
+# is never called at runtime. Install separately for local pipeline work:
+#   pip install policyengine-us==1.592.4
+# policyengine-us==1.592.4
