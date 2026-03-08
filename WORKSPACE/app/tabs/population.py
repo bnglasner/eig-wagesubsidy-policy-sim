@@ -152,7 +152,7 @@ def _make_bracket_chart(by_wb: "pd.DataFrame") -> "go.Figure":
             tickformat=",.0f",
         ),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
-        margin=dict(t=40, b=40),
+        margin=dict(t=60, b=40),
     ))
     return fig
 
@@ -178,10 +178,10 @@ def _make_demo_chart(df: pd.DataFrame, group_col: str, color: str) -> "go.Figure
         customdata=df["pct_workers"],
     ))
     fig.update_layout(**eig_plotly_layout(
-        height=max(180, len(df) * 36),
+        height=max(200, len(df) * 40),
         xaxis=dict(title="Workers (thousands)", tickformat=",.0f", showgrid=True, gridcolor="#D9D9D9"),
         yaxis=dict(showgrid=False, automargin=True),
-        margin=dict(t=10, b=40, r=100),
+        margin=dict(t=20, b=40, r=130),
         showlegend=False,
     ))
     return fig
