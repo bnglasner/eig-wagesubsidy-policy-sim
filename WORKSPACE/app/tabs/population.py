@@ -175,7 +175,7 @@ def _make_demo_chart(df: pd.DataFrame, group_col: str, color: str) -> "go.Figure
             "<b>%{y}</b><br>"
             "Workers: %{x:,.0f}k (%{customdata:.1f}%)<extra></extra>"
         ),
-        customdata=df["pct_workers"],
+        customdata=df["pct_of_recipients"],
     ))
     fig.update_layout(**eig_plotly_layout(
         height=max(200, len(df) * 40),
