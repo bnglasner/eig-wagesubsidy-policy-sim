@@ -1,4 +1,4 @@
-"""
+﻿"""
 Tab 2: Population-level impacts.
 
 Loads five pre-computed parquet files produced by the data pipeline and renders:
@@ -17,9 +17,10 @@ from pathlib import Path
 
 import streamlit as st
 
-# ── Paths ──────────────────────────────────────────────────────────────────────
+# â”€â”€ Paths â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 _HERE       = Path(__file__).resolve()
-_PROJECT    = _HERE.parents[4]
+# population.py lives at WORKSPACE/app/tabs/, so repo root is parents[3].
+_PROJECT    = _HERE.parents[3]
 _POP_DIR    = (
     _PROJECT
     / "WORKSPACE" / "output" / "data" / "intermediate_results" / "population"
@@ -38,16 +39,17 @@ def _all_files_present() -> bool:
     return all(p.exists() for p in _FILES.values())
 
 
-# ── EIG style ─────────────────────────────────────────────────────────────────
+# â”€â”€ EIG style â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 import sys
 _APP = _HERE.parents[1]
 if str(_APP) not in sys.path:
     sys.path.insert(0, str(_APP))
 
 from utils.eig_style import eig_plotly_layout, BRAND_COLORS
+from utils.household_sim import COMPONENTS
 
 
-# ── Chart builders ─────────────────────────────────────────────────────────────
+# â”€â”€ Chart builders â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def _make_choropleth(by_state: "pd.DataFrame", metric: str) -> "go.Figure":
     import plotly.graph_objects as go
@@ -189,7 +191,7 @@ def _render_program_table(prog: "pd.DataFrame") -> None:
     if active_keys is not None:
         display = display[display["key"].isin(active_keys)]
         if len(display) < len(prog) - 2:  # -2 for the always-excluded rows
-            st.caption("Showing selected programs only — adjust the selection in the Individual Calculator tab.")
+            st.caption("Showing selected programs only â€” adjust the selection in the Individual Calculator tab.")
 
     # Format columns
     display["Avg. change / worker"] = display["avg_delta_per_worker"].apply(
@@ -220,7 +222,7 @@ def _render_program_table(prog: "pd.DataFrame") -> None:
     )
 
 
-# ── Main render ───────────────────────────────────────────────────────────────
+# â”€â”€ Main render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def render() -> None:
     import plotly.graph_objects as go
@@ -266,7 +268,7 @@ def render() -> None:
     by_ft    = pd.read_parquet(_FILES["by_family_type"])
     prog     = pd.read_parquet(_FILES["program_interactions"])
 
-    # ── Headline metrics ───────────────────────────────────────────────────────
+    # â”€â”€ Headline metrics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     st.subheader("Headline Estimates")
     m1, m2, m3, m4 = st.columns(4)
     m1.metric(
@@ -284,7 +286,7 @@ def render() -> None:
     m3.metric(
         "Eligible workers",
         f"{summary['n_workers_mn']:.1f}M",
-        help="Workers earning $7.25–$16.80/hr who would receive the subsidy.",
+        help="Workers earning $7.25â€“$16.80/hr who would receive the subsidy.",
     )
     m4.metric(
         "Avg. annual subsidy",
@@ -293,14 +295,50 @@ def render() -> None:
     )
 
     st.caption(
-        "**Methodology note:** Hourly wage proxy = annual employment income ÷ annual hours worked "
-        "(2,080 hrs if hours data unavailable). Family type assigned from filing status and dependent count. "
-        "Safety net interactions interpolated from pre-computed PolicyEngine household simulations."
+        "**Methodology note:** Eligibility is identified from CPS ORG hourly wages (`hourly_wage_epi`) "
+        "with a federal floor of $7.25 and a dynamic target wage (80% of weighted median paid-hourly wage). "
+        "Annual hours are `hours_epi × WKSTAT weeks` (fallback used only when hours are missing). "
+        "Family type is derived from `MARST` and `NCHILD`, and safety net interactions are interpolated from "
+        "pre-computed PolicyEngine household schedules."
     )
 
+
+    labels_by_key = {key: label for key, label, _, _ in COMPONENTS}
+    active_keys = st.session_state.get("budget_active_keys")
+    if active_keys is None:
+        selected_program_keys = [
+            k for k in prog["key"].tolist() if k not in {"wage_subsidy", "net_income"}
+        ]
+    else:
+        selected_program_keys = [
+            k for k in active_keys if k not in {"employer_wages", "wage_subsidy", "net_income"}
+        ]
+    selected_program_labels = [labels_by_key[k] for k in selected_program_keys if k in labels_by_key]
+    selected_programs_txt = ", ".join(sorted(selected_program_labels)) if selected_program_labels else "no additional programs selected"
+
+    by_state_ranked = by_state.sort_values("n_workers_k", ascending=False)
+    top3 = by_state_ranked.head(3)
+    top3_states_txt = ", ".join(top3["state_code"].tolist())
+    total_workers_k = by_state["n_workers_k"].sum()
+    top3_share = (top3["n_workers_k"].sum() / total_workers_k) * 100.0 if total_workers_k > 0 else 0.0
+    offset_bn = summary["gross_cost_bn"] - summary["net_cost_bn"]
+
+    st.markdown(
+        f"This population simulation applies the current policy settings to CPS ORG eligible workers and then maps "
+        f"household-level tax and transfer interactions from pre-computed schedules. In this run, about "
+        f"`{summary['n_workers_mn']:.2f} million` workers are eligible, the average annual subsidy is "
+        f"`${summary['avg_annual_subsidy']:,.0f}`, gross program cost is `{summary['gross_cost_bn']:.2f}B`, "
+        f"and net cost is `{summary['net_cost_bn']:.2f}B`."
+    )
+    st.markdown(
+        f"Under the currently selected policy components (`{selected_programs_txt}`), interactions with taxes and "
+        f"means-tested programs offset roughly `${offset_bn:,.2f}B` of gross subsidy spending. Eligibility is "
+        f"geographically concentrated: the top three states by eligible workers are `{top3_states_txt}`, accounting "
+        f"for about `{top3_share:.1f}%` of eligible workers in this run."
+    )
     st.divider()
 
-    # ── Map + Wage bracket side by side ───────────────────────────────────────
+    # â”€â”€ Map + Wage bracket side by side â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     col_map, col_bracket = st.columns([3, 2])
 
     with col_map:
@@ -320,7 +358,7 @@ def render() -> None:
 
     st.divider()
 
-    # ── Program interactions + Family type ────────────────────────────────────
+    # â”€â”€ Program interactions + Family type â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     col_prog, col_ft = st.columns([3, 2])
 
     with col_prog:
@@ -328,7 +366,7 @@ def render() -> None:
         st.markdown(
             "How other programs change for the average eligible worker under the subsidy. "
             "Negative values (red) indicate reductions in program benefits or increases "
-            "in taxes — these offset the gross subsidy cost to the government."
+            "in taxes â€” these offset the gross subsidy cost to the government."
         )
         _render_program_table(prog)
 
@@ -352,7 +390,7 @@ def render() -> None:
 
     st.divider()
 
-    # ── State detail table (collapsed) ────────────────────────────────────────
+    # â”€â”€ State detail table (collapsed) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     with st.expander("State-by-state detail table"):
         st.dataframe(
             by_state.rename(columns={
@@ -370,3 +408,4 @@ def render() -> None:
             use_container_width=True,
             hide_index=True,
         )
+

@@ -1,39 +1,57 @@
 """
-01a_data_ingest.py — Extract eligible hourly workers from PolicyEngine CPS microdata.
+01a_data_ingest.py — Identify eligible hourly workers from CPS ORG microdata.
 
-Uses PolicyEngine-US Microsimulation (CPS) to identify workers whose wages fall
-within the EIG 80-80 Rule eligibility range ($7.25–$16.80/hr), compute gross
-subsidy amounts, and assign family-type keys for pre-computed schedule lookup.
+Replaces the PolicyEngine Microsimulation-based approach. Uses the EPI-constructed
+hourly wage (hourly_wage_epi) from the CPS Outgoing Rotation Group to identify
+eligible workers — eliminating the part-year contamination that plagued the prior
+annual-income / assumed-hours wage proxy.
 
-Assumptions
------------
-- Hourly wage proxy: employment_income / annual_hours_worked.
-  If PE-US cannot provide annual_hours_worked, defaults to 2,080 hrs/yr
-  (40 hrs/wk × 52 wks). This is a full-time equivalent approximation; workers
-  with the same income but different actual hours may be mis-classified at the
-  margins, but aggregate cost estimates are robust to this assumption.
-- Family type: derived from filing_status (married/single) and child count.
-  Workers with 1+ dependents are mapped to the "2 children" schedule as the
-  closest available approximation.
-- State: from the worker's household state_code. Falls back to "TX" with a
-  warning if state_code cannot be resolved at person level.
+Architecture (two-source design)
+---------------------------------
+  CPS ORG (org_workers_{year}.parquet)
+    └─ Who is eligible and at what wage rate
+  PolicyEngine pre-computed schedules (individual_schedules/)
+    └─ How taxes and transfers respond to the subsidy
+  These two sources are NEVER merged at the record level.
 
-Output
-------
+Eligibility (EIG 80-80 Rule)
+-----------------------------
+  1. epi_sample_eligible == True  (age ≥16, not self-employed)
+  2. hourly_wage_epi_valid == True (non-missing, positive, finite)
+  3. age in [16, 64]
+  4. employer_wage = max(hourly_wage_epi, FEDERAL_MIN_WAGE) < TARGET_WAGE
+     where TARGET_WAGE = 80% of weighted median paid-hourly wage (dynamic)
+
+WKSTAT weeks multiplier (confirmed from IPUMS DDI extract #304)
+---------------------------------------------------------------
+  11 → 52  FT hours (35+), usually FT
+  12 → 48  PT non-economic, usually FT (at-work not usual)
+  13 → 52  Not at work, usually FT (on leave; FT worker)
+  14 → 40  FT hours, usually PT for economic reasons (usual status drives)
+  15 → 48  FT hours, usually PT for non-economic reasons
+  21 → 40  PT economic, usually FT
+  22 → 40  PT, usually PT for economic reasons (chronic involuntary PT)
+  41 → 48  PT, usually PT for non-economic reasons (voluntary PT)
+  42 → 48  Not at work, usually PT
+  50/60/99 → filtered out (unemployed / NIU — no valid wage)
+
+Output schema (unchanged — 02a_descriptive_stats.py reads this directly)
+--------------------------------------------------------------------------
 WORKSPACE/data/processed/hourly_workers.parquet
   state_code        str    two-letter state abbreviation
   family_type_key   str    single_0c | single_2c | married_0c | married_2c
-  employer_wage     float  hourly wage proxy
-  annual_hours      float  annual hours (real or assumed 2080)
-  baseline_income   float  annual employment income (employer_wage × annual_hours)
-  subsidy_hr        float  hourly wage subsidy (80-80 rule)
-  subsidy_annual    float  annual subsidy (subsidy_hr × annual_hours)
-  weight            float  CPS person survey weight
+  employer_wage     float  hourly wage after federal minimum floor
+  annual_hours      float  hours_epi × weeks_multiplier(wkstat)
+  baseline_income   float  employer_wage × annual_hours
+  subsidy_hr        float  0.80 × max(0, TARGET_WAGE − employer_wage)
+  subsidy_annual    float  subsidy_hr × annual_hours
+  weight            float  earnwt / n_months  (monthly-average population weight)
 """
 from __future__ import annotations
 
 import importlib.util
 import sys
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -42,13 +60,7 @@ import pandas as pd
 # ── Path setup ────────────────────────────────────────────────────────────────
 _HERE = Path(__file__).resolve()
 _CODE = _HERE.parents[1]          # WORKSPACE/code/
-_APP  = _HERE.parents[2] / "app"  # WORKSPACE/app/
 
-for _p in [str(_CODE / "00_setup"), str(_APP)]:
-    if _p not in sys.path:
-        sys.path.insert(0, _p)
-
-# Load config via file path (directory name has numeric prefix)
 _cfg_spec = importlib.util.spec_from_file_location(
     "eig_config", _CODE / "00_setup" / "00_config.py"
 )
@@ -56,269 +68,203 @@ _cfg_mod = importlib.util.module_from_spec(_cfg_spec)
 _cfg_spec.loader.exec_module(_cfg_mod)
 cfg = _cfg_mod.cfg
 PATH_DATA_PROCESSED = _cfg_mod.PATH_DATA_PROCESSED
+PATH_DATA           = _cfg_mod.PATH_DATA
 
-# ── Subsidy formula (inlined to avoid cross-package import) ───────────────────
-_MEDIAN_WAGE  = cfg["ws_median_hourly_wage"]   # 21.00
-_TARGET_PCT   = cfg["ws_target_pct"]           # 0.80  → target_wage = 16.80
-_SUBSIDY_PCT  = cfg["ws_subsidy_pct"]          # 0.80
-_BASE_WAGE    = cfg["ws_base_wage"]            # 7.25
-_TARGET_WAGE  = cfg["ws_target_wage"]          # 16.80
+# ── Policy parameters ─────────────────────────────────────────────────────────
+FEDERAL_MIN_WAGE = cfg["ws_base_wage"]    # 7.25
+SUBSIDY_PCT      = cfg["ws_subsidy_pct"]  # 0.80
+TARGET_PCT       = cfg["ws_target_pct"]   # 0.80
+
+# ── WKSTAT → annual weeks multiplier ─────────────────────────────────────────
+# Source: IPUMS DDI codebook for extract #304 (confirmed March 2026).
+# See WORKSPACE/docs/org_integration_methodology.md §15.3 for full table.
+WKSTAT_WEEKS: dict[int, int] = {
+    11: 52,   # Full-time hours (35+), usually full-time
+    12: 48,   # Part-time for non-economic reasons, usually full-time
+    13: 52,   # Not at work, usually full-time (on leave; FT worker)
+    14: 40,   # Full-time hours, usually part-time for economic reasons
+    15: 48,   # Full-time hours, usually part-time for non-economic reasons
+    21: 40,   # Part-time for economic reasons, usually full-time
+    22: 40,   # Part-time hours, usually part-time for economic reasons
+    41: 48,   # Part-time hours, usually part-time for non-economic reasons
+    42: 48,   # Not at work, usually part-time
+}
+DEFAULT_WEEKS = 52  # conservative fallback for any unclassified code
+
+# ── FIPS → state abbreviation ─────────────────────────────────────────────────
+FIPS_TO_STATE: dict[int, str] = {
+     1: "AL",  2: "AK",  4: "AZ",  5: "AR",  6: "CA",  8: "CO",  9: "CT",
+    10: "DE", 11: "DC", 12: "FL", 13: "GA", 15: "HI", 16: "ID", 17: "IL",
+    18: "IN", 19: "IA", 20: "KS", 21: "KY", 22: "LA", 23: "ME", 24: "MD",
+    25: "MA", 26: "MI", 27: "MN", 28: "MS", 29: "MO", 30: "MT", 31: "NE",
+    32: "NV", 33: "NH", 34: "NJ", 35: "NM", 36: "NY", 37: "NC", 38: "ND",
+    39: "OH", 40: "OK", 41: "OR", 42: "PA", 44: "RI", 45: "SC", 46: "SD",
+    47: "TN", 48: "TX", 49: "UT", 50: "VT", 51: "VA", 53: "WA", 54: "WV",
+    55: "WI", 56: "WY",
+}
 
 
-def _hourly_subsidy(employer_wage: float | np.ndarray) -> float | np.ndarray:
-    gap = np.maximum(0.0, _TARGET_WAGE - employer_wage)
-    eligible = employer_wage >= _BASE_WAGE
-    return np.where(eligible, _SUBSIDY_PCT * gap, 0.0)
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def _weighted_median(values: np.ndarray, weights: np.ndarray) -> float:
+    """Compute weighted median via sorted cumulative weights."""
+    idx = np.argsort(values)
+    vals_s = values[idx]
+    wts_s  = weights[idx]
+    cumw   = np.cumsum(wts_s)
+    return float(vals_s[np.searchsorted(cumw, cumw[-1] * 0.5)])
 
 
-# ── PolicyEngine helpers ───────────────────────────────────────────────────────
-
-def _safe_calc(sim, var: str, expected_len: int | None = None) -> np.ndarray | None:
-    """
-    Try to get a variable from the Microsimulation; return None on failure.
-    If expected_len is given, returns None when the result length doesn't match
-    (variable is at a different entity level than expected).
-    """
-    try:
-        result = sim.calculate(var)
-        arr = np.asarray(result.values if hasattr(result, "values") else result)
-        if expected_len is not None and len(arr) != expected_len:
-            print(f"  [warn] {var!r} has {len(arr)} records "
-                  f"(expected {expected_len} — likely a different entity level). Skipping.")
-            return None
-        return arr
-    except Exception as exc:
-        print(f"  [warn] Could not calculate {var!r}: {exc}")
-        return None
+def _weeks(wkstat: int) -> int:
+    return WKSTAT_WEEKS.get(int(wkstat), DEFAULT_WEEKS)
 
 
-# ── Main extraction ───────────────────────────────────────────────────────────
+def _family_key(marst: int, nchild: int) -> str:
+    prefix = "married" if marst in {1, 2} else "single"
+    suffix = "2c" if nchild >= 1 else "0c"
+    return f"{prefix}_{suffix}"
+
+
+# ── Main ──────────────────────────────────────────────────────────────────────
 
 def main() -> None:
-    print("01a | Loading PolicyEngine CPS Microsimulation …")
-    from policyengine_us import Microsimulation
+    # ── 1. Locate input file ──────────────────────────────────────────────────
+    ext_dir = PATH_DATA / "external"
+    candidates = sorted(ext_dir.glob("org_workers_*.parquet"))
+    if not candidates:
+        raise FileNotFoundError(
+            f"No org_workers_*.parquet found in {ext_dir}.\n"
+            "Run 00_export_org_data.py first."
+        )
+    org_path = candidates[-1]   # most recent year
+    print(f"01a | Reading ORG workers from: {org_path.name}")
 
-    sim = Microsimulation()
-    print("  Microsimulation loaded.")
+    org = pd.read_parquet(org_path)
+    print(f"  Total rows: {len(org):,}  |  years: {sorted(org['year'].unique())}")
 
-    # ── Person-level variables ────────────────────────────────────────────────
-    employment_income = _safe_calc(sim, "employment_income")
-    if employment_income is None:
-        raise RuntimeError("Could not retrieve employment_income from Microsimulation.")
+    # ── 2. Dynamic median wage and TARGET_WAGE ────────────────────────────────
+    # Weighted median of paid-hourly EPI-eligible workers over all loaded months.
+    ph_mask = (
+        org["hourly_wage_epi_valid"].astype(bool) &
+        org["paid_hourly"].astype(bool) &
+        org["epi_sample_eligible"].astype(bool) &
+        (org["earnwt"] > 0)
+    )
+    ph = org[ph_mask]
+    if len(ph) == 0:
+        raise RuntimeError("No paid-hourly EPI-eligible workers with valid wages found.")
 
-    n_persons = len(employment_income)
-    print(f"  Total CPS persons: {n_persons:,}")
+    median_wage = _weighted_median(ph["hourly_wage_epi"].values, ph["earnwt"].values)
+    TARGET_WAGE = round(median_wage * TARGET_PCT, 2)
+    print(f"  Weighted median wage (paid-hourly): ${median_wage:.2f}/hr")
+    print(f"  TARGET_WAGE (80% of median):        ${TARGET_WAGE:.2f}/hr")
 
-    age             = _safe_calc(sim, "age",             expected_len=n_persons)
-    is_head         = _safe_calc(sim, "is_tax_unit_head", expected_len=n_persons)
-    person_weight   = _safe_calc(sim, "person_weight",   expected_len=n_persons)
-    if person_weight is None:
-        person_weight = _safe_calc(sim, "household_weight", expected_len=n_persons)
-    if person_weight is None:
-        print("  [warn] No weight variable found; using weight=1 for all persons.")
-        person_weight = np.ones(n_persons)
+    # ── 3. Eligibility filter ─────────────────────────────────────────────────
+    # Apply federal minimum wage floor first
+    org = org[org["hourly_wage_epi_valid"].astype(bool)].copy()
+    org["employer_wage"] = org["hourly_wage_epi"].clip(lower=FEDERAL_MIN_WAGE)
 
-    # ── Annual hours ──────────────────────────────────────────────────────────
-    _hours_vars = [
-        "annual_hours_worked", "hours_worked", "employment_hours",
-        "weekly_hours_worked", "usual_weekly_hours",
-    ]
-    annual_hours = None
-    for _hvar in _hours_vars:
-        annual_hours = _safe_calc(sim, _hvar, expected_len=n_persons)
-        if annual_hours is not None:
-            # If clearly weekly (median < 80), scale to annual
-            if np.median(annual_hours[annual_hours > 0]) < 80:
-                annual_hours = annual_hours * 52
-                print(f"  annual_hours derived from weekly {_hvar} × 52.")
-            else:
-                print(f"  annual_hours from {_hvar!r}.")
-            break
-    if annual_hours is None:
-        annual_hours = np.full(n_persons, 2_080.0)
-        print("  [warn] Hours data unavailable — defaulting to 2,080 hrs/yr (40 hrs × 52 wks).")
+    mask = (
+        org["epi_sample_eligible"].astype(bool) &
+        (org["age"] >= 16) & (org["age"] <= 64) &
+        (org["employer_wage"] < TARGET_WAGE) &
+        (org["earnwt"] > 0)
+    )
+    eligible = org[mask].copy()
+    print(f"  Eligible workers (unweighted rows): {len(eligible):,}")
 
-    # Guard against zeros to avoid division errors
-    annual_hours = np.where(annual_hours > 0, annual_hours, 2_080.0)
-
-    # ── Entity-level expansion helper ─────────────────────────────────────────
-    def _expand_to_person(entity_key: str, values: np.ndarray) -> np.ndarray | None:
-        """
-        Expand an entity-level array to person level using nb_persons().
-        Assumes persons are stored in entity order in the PE dataset (standard for CPS).
-        Returns None if the total person count doesn't match n_persons.
-        """
-        try:
-            sizes = np.array(sim.populations[entity_key].nb_persons())
-            if sizes.sum() != n_persons:
-                return None
-            return np.repeat(values, sizes)
-        except Exception as exc:
-            print(f"  [warn] Could not expand {entity_key} → person: {exc}")
-            return None
-
-    # ── State code ────────────────────────────────────────────────────────────
-    # state_code is household-level; expand to person level via household sizes
-    state_arr: np.ndarray | None = None
-
-    # First try: direct person-level variable
-    for _svar in ("state_code", "state"):
-        _raw = _safe_calc(sim, _svar, expected_len=n_persons)
-        if _raw is not None:
-            state_arr = np.array([str(s) for s in _raw])
-            print(f"  state_code from {_svar!r} at person level.")
-            break
-
-    # Second try: expand household-level state_code to persons via group sizes
-    if state_arr is None:
-        _hh_state = _safe_calc(sim, "state_code")  # household level, any length
-        if _hh_state is not None:
-            _expanded = _expand_to_person("household", _hh_state)
-            if _expanded is not None:
-                state_arr = np.array([str(s) for s in _expanded])
-                print("  state_code expanded from household → person via nb_persons().")
-
-    if state_arr is None:
-        print("  [warn] state_code unavailable — defaulting to 'TX'.\n"
-              "         State-level breakdown will not be accurate.")
-        state_arr = np.full(n_persons, "TX")
-
-    # ── Family type indicators ────────────────────────────────────────────────
-    # Married: try person-level first, then expand from tax_unit level
-    is_married_arr: np.ndarray | None = None
-
-    # Person-level attempts
-    for _mvar in ("filing_status", "tax_unit_is_joint", "is_tax_unit_joint", "is_married"):
-        _raw = _safe_calc(sim, _mvar, expected_len=n_persons)
-        if _raw is not None:
-            if _mvar == "filing_status":
-                is_married_arr = np.array([
-                    str(s).upper() in ("JOINT", "MARRIED_FILING_JOINTLY") for s in _raw
-                ])
-            else:
-                is_married_arr = _raw.astype(bool)
-            print(f"  married status from {_mvar!r} at person level.")
-            break
-
-    # Tax-unit-level expansion
-    if is_married_arr is None:
-        for _mvar in ("filing_status", "tax_unit_is_joint"):
-            _raw = _safe_calc(sim, _mvar)  # any length
-            if _raw is not None:
-                _expanded = _expand_to_person("tax_unit", _raw)
-                if _expanded is not None:
-                    if _mvar == "filing_status":
-                        is_married_arr = np.array([
-                            str(s).upper() in ("JOINT", "MARRIED_FILING_JOINTLY")
-                            for s in _expanded
-                        ])
-                    else:
-                        is_married_arr = _expanded.astype(bool)
-                    print(f"  married status expanded from tax_unit via {_mvar!r}.")
-                    break
-
-    if is_married_arr is None:
-        print("  [warn] Marital status unavailable — treating all as single.")
-        is_married_arr = np.zeros(n_persons, dtype=bool)
-
-    # Children: try person-level then expand from tax_unit / household level
-    child_count: np.ndarray | None = None
-
-    for _var in ("count_qualifying_children_for_ctc", "child_count",
-                 "count_dependents", "spm_unit_children", "household_count_children"):
-        _raw = _safe_calc(sim, _var, expected_len=n_persons)
-        if _raw is not None:
-            child_count = _raw
-            print(f"  child count from {_var!r} at person level.")
-            break
-
-    if child_count is None:
-        for _var in ("tax_unit_children", "count_dependents", "child_count"):
-            _raw = _safe_calc(sim, _var)  # any length
-            if _raw is not None:
-                _expanded = _expand_to_person("tax_unit", _raw)
-                if _expanded is not None:
-                    child_count = _expanded
-                    print(f"  child count expanded from tax_unit via {_var!r}.")
-                    break
-
-    if child_count is None:
-        print("  [warn] Child count unavailable — treating all as no children.")
-        child_count = np.zeros(n_persons)
-
-    has_children = child_count >= 1
-
-    # ── Filter to eligible workers ────────────────────────────────────────────
-    # 1. Tax unit head (one record per family)
-    # 2. Working age
-    # 3. Has employment income
-    # 4. Implied hourly wage in [$7.25, $16.80]
-    hourly_wage = employment_income / annual_hours
-
-    mask_head    = (is_head is None) or (is_head.astype(bool))
-    mask_age     = (age is None) or ((age >= 16) & (age <= 64))
-    mask_income  = employment_income > 0
-    mask_wage    = (hourly_wage >= _BASE_WAGE) & (hourly_wage < _TARGET_WAGE)
-
-    if is_head is None:
-        combined_mask = mask_age & mask_income & mask_wage
-    else:
-        combined_mask = mask_head.astype(bool) & mask_age.astype(bool) & mask_income & mask_wage
-
-    n_eligible = combined_mask.sum()
-    print(f"  Eligible workers (pre-weight): {n_eligible:,}")
-    if n_eligible == 0:
+    if len(eligible) == 0:
         raise RuntimeError(
-            "Zero eligible workers found. Check variable names and PE-US version. "
-            "Try running: python -c \"from policyengine_us import Microsimulation; "
-            "sim=Microsimulation(); print(dir(sim))\""
+            "Zero eligible workers found after filtering. "
+            "Check TARGET_WAGE, wage floor, and input data."
         )
 
-    # ── Build output DataFrame ────────────────────────────────────────────────
-    employer_wage_eligible = hourly_wage[combined_mask]
-    annual_hours_eligible  = annual_hours[combined_mask]
-    baseline_income        = employment_income[combined_mask]
-    subsidy_hr             = _hourly_subsidy(employer_wage_eligible)
-    subsidy_annual         = subsidy_hr * annual_hours_eligible
-    weight_eligible        = person_weight[combined_mask]
-    state_eligible         = state_arr[combined_mask]
-    married_eligible       = is_married_arr[combined_mask]
-    children_eligible      = has_children[combined_mask]
+    # ── 4. State code ─────────────────────────────────────────────────────────
+    n_before = len(eligible)
+    eligible["state_code"] = eligible["statefip"].map(FIPS_TO_STATE)
 
-    # Map to family type key
-    def _family_key(married: bool, has_child: bool) -> str:
-        prefix = "married" if married else "single"
-        suffix = "2c" if has_child else "0c"
-        return f"{prefix}_{suffix}"
+    unknown_fips = eligible[eligible["state_code"].isna()]["statefip"].unique()
+    if len(unknown_fips):
+        print(f"  [warn] Dropping {eligible['state_code'].isna().sum():,} rows "
+              f"with unmapped FIPS codes: {sorted(unknown_fips)}")
+    eligible = eligible[eligible["state_code"].notna()].copy()
+    if len(eligible) < n_before:
+        print(f"  After FIPS filter: {len(eligible):,} rows")
 
-    family_type_keys = np.array([
-        _family_key(m, c)
-        for m, c in zip(married_eligible, children_eligible)
-    ])
+    # ── 5. Family type key ────────────────────────────────────────────────────
+    eligible["family_type_key"] = [
+        _family_key(int(m), int(n))
+        for m, n in zip(eligible["marst"], eligible["nchild"])
+    ]
 
-    df = pd.DataFrame({
-        "state_code":       state_eligible,
-        "family_type_key":  family_type_keys,
-        "employer_wage":    employer_wage_eligible,
-        "annual_hours":     annual_hours_eligible,
-        "baseline_income":  baseline_income,
-        "subsidy_hr":       subsidy_hr,
-        "subsidy_annual":   subsidy_annual,
-        "weight":           weight_eligible,
-    })
+    # ── 6. Annual hours via WKSTAT ────────────────────────────────────────────
+    wkstat_vals = eligible["wkstat"].astype(int)
+    fallback_mask = ~wkstat_vals.isin(WKSTAT_WEEKS)
+    if fallback_mask.sum() > 0:
+        unknown_codes = wkstat_vals[fallback_mask].value_counts().to_dict()
+        print(f"  [warn] {fallback_mask.sum():,} rows with unclassified WKSTAT "
+              f"(defaulting to {DEFAULT_WEEKS} weeks): {unknown_codes}")
 
-    # ── Save ─────────────────────────────────────────────────────────────────
+    eligible["weeks_multiplier"] = wkstat_vals.map(WKSTAT_WEEKS).fillna(DEFAULT_WEEKS).astype(int)
+    eligible["annual_hours"]     = eligible["hours_epi"] * eligible["weeks_multiplier"]
+
+    # Guard: if hours_epi is missing, fall back to config default
+    fallback_hours_mask = eligible["annual_hours"].isna() | (eligible["annual_hours"] <= 0)
+    if fallback_hours_mask.sum() > 0:
+        default_annual = cfg.get("ws_hours_per_year", 2000)
+        print(f"  [warn] {fallback_hours_mask.sum():,} rows with missing/zero annual_hours "
+              f"— defaulting to {default_annual} hrs/yr")
+        eligible.loc[fallback_hours_mask, "annual_hours"] = default_annual
+
+    # ── 7. Subsidy calculation ────────────────────────────────────────────────
+    eligible["baseline_income"] = eligible["employer_wage"] * eligible["annual_hours"]
+    eligible["subsidy_hr"]      = (
+        SUBSIDY_PCT * np.maximum(0.0, TARGET_WAGE - eligible["employer_wage"])
+    )
+    eligible["subsidy_annual"]  = eligible["subsidy_hr"] * eligible["annual_hours"]
+
+    # ── 8. Population weight (earnwt / n_months) ──────────────────────────────
+    # Dividing by the number of unique months converts monthly ORG weights to
+    # annual-average weights. DO NOT sum earnwt directly across months.
+    # Count unique year-month combinations, not just unique month numbers.
+    # This correctly handles multi-year pools where months repeat across years.
+    n_months = eligible.groupby(["year", "month"]).ngroups
+    eligible["weight"] = eligible["earnwt"] / n_months
+    print(f"  Pooled year-months: {n_months}  ->  weight = earnwt / {n_months}")
+
+    # ── 9. Build output DataFrame ─────────────────────────────────────────────
+    out_cols = [
+        "state_code", "family_type_key",
+        "employer_wage", "annual_hours", "baseline_income",
+        "subsidy_hr", "subsidy_annual", "weight",
+    ]
+    df = eligible[out_cols].reset_index(drop=True)
+
+    # ── 10. Save ──────────────────────────────────────────────────────────────
     out_path = PATH_DATA_PROCESSED / "hourly_workers.parquet"
     df.to_parquet(out_path, index=False)
 
     total_workers_mn = df["weight"].sum() / 1e6
     gross_cost_bn    = (df["subsidy_annual"] * df["weight"]).sum() / 1e9
     avg_subsidy      = (df["subsidy_annual"] * df["weight"]).sum() / df["weight"].sum()
+    median_subsidy   = np.average(df["subsidy_hr"], weights=df["weight"])
 
-    print(f"  Saved: {out_path}")
-    print(f"  Weighted eligible workers:  {total_workers_mn:.2f}M")
-    print(f"  Gross annual program cost:  ${gross_cost_bn:.2f}B")
+    print(f"\n  Saved: {out_path}")
+    print(f"  Weighted eligible workers:  {total_workers_mn:.2f}M  (target: 25–30M)")
+    print(f"  Gross annual program cost:  ${gross_cost_bn:.2f}B  (target: $40–60B)")
     print(f"  Average annual subsidy:     ${avg_subsidy:,.0f}/worker")
+    print(f"  Weighted mean hourly subsidy: ${median_subsidy:.2f}/hr")
+
+    # State-level sanity check
+    state_counts = (
+        df.groupby("state_code")["weight"].sum()
+        .sort_values(ascending=False)
+        .head(10)
+        / 1e6
+    )
+    print(f"\n  Top 10 states by eligible workers (M):")
+    for st, wt in state_counts.items():
+        print(f"    {st}: {wt:.2f}M")
 
 
 if __name__ == "__main__":

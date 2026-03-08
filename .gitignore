@@ -68,5 +68,12 @@ policyengine_us_cache/
 /WORKSPACE/output/data/**/*.duckdb
 /WORKSPACE/output/data/**/*.log
 
-
-
+# ── App data artifacts: tracked for Streamlit Cloud deployment ───────────────
+# These pre-computed parquet files (~7.5 MB total) are included in the repo so
+# the app works on Streamlit Cloud without a separate data-download step.
+# Negations appear AFTER the catch-all *.parquet rules above to take effect.
+!/WORKSPACE/data/processed/hourly_workers.parquet
+!/WORKSPACE/output/data/intermediate_results/population
+!/WORKSPACE/output/data/intermediate_results/population/*.parquet
+!/WORKSPACE/output/data/intermediate_results/individual_schedules
+!/WORKSPACE/output/data/intermediate_results/individual_schedules/*.parquet

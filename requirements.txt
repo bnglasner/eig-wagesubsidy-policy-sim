@@ -1,13 +1,19 @@
 # eig-wagesubsidy-policy-sim dependencies
-# Requires Python 3.12 (see INFRA/docs/START_HERE.md for setup instructions)
-
-# Core simulation
-policyengine-us>=1.592.0
+# Python 3.12 required (see .python-version)
+# Versions pinned to the validated local environment (2026-03-07).
+# Update with: pip install -r requirements.txt --upgrade, then re-test.
 
 # Interactive app
-streamlit>=1.35.0
+streamlit==1.55.0
 
 # Data and visualization
-pandas>=2.0.0
-numpy>=1.26.0
-plotly>=5.20.0
+pandas==2.3.3
+numpy==2.4.2
+plotly==5.24.1
+pyarrow==23.0.1
+
+# PolicyEngine microsimulation
+# Used at runtime ONLY as a live fallback when pre-computed schedules are missing.
+# All 204 state × family-type schedules are pre-computed and included in the repo,
+# so PolicyEngine is not called in normal production operation.
+policyengine-us==1.592.4

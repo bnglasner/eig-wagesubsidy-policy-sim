@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 # Tabs (imported after page config)
-from tabs import calculator, population  # noqa: E402
+from tabs import calculator, methods, population  # noqa: E402
 
 # ── Header ──────────────────────────────────────────────────────────────────
 st.title("EIG Wage Subsidy Simulator")
@@ -26,10 +26,15 @@ st.markdown(
 )
 
 # ── Tab navigation ───────────────────────────────────────────────────────────
-tab1, tab2 = st.tabs(["📊 Individual Calculator", "🗺️ Population Impacts"])
+tab1, tab2, tab3 = st.tabs(
+    ["📊 Individual Calculator", "🗺️ Population Impacts", "📚 Methods"]
+)
 
 with tab1:
     calculator.render()
 
 with tab2:
     population.render()
+
+with tab3:
+    methods.render()

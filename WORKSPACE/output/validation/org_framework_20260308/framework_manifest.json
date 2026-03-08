@@ -1,0 +1,37 @@
+{
+  "commit": "ab50f120053fbb0f7514406e8bbd202dcd0f9211",
+  "target_wage": 16.8,
+  "inputs": {
+    "org_external": "C:\\Users\\Research\\Documents\\GitHub\\eig-wagesubsidy-policy-sim\\WORKSPACE\\data\\external\\org_workers_2026.parquet",
+    "org_external_sha256": "ad04e569db3771dc36daa2ab414f4435bfb33512eed207d86061dc2c7aefb752",
+    "org_processed": "C:\\Users\\Research\\Documents\\GitHub\\eig-wagesubsidy-policy-sim\\WORKSPACE\\data\\processed\\hourly_workers.parquet",
+    "org_processed_sha256": "024a860b7b4aa7e9f192bf5fffb78fe3b9fe3a3edf23518af79045017edd73de",
+    "asec_h5": "C:\\Users\\Research\\.cache\\huggingface\\hub\\models--policyengine--policyengine-us-data\\snapshots\\fce54d0270dadd6109875d8e08f3f538c3dcb28c\\enhanced_cps_2024.h5",
+    "asec_h5_sha256": "b63a347d47059168685df58bdc8e18efde69f9eacf2408e0ad3bbfa3e8ba963b"
+  },
+  "central": {
+    "eligible_workers_mn": 23.646240889700003,
+    "gross_cost_bn": 100.88881056193668,
+    "net_cost_bn": 66.77728092983875,
+    "weighted_mean_annual_hours": 1611.471370471155,
+    "ca_rank": 3
+  },
+  "calibrated_to_asec_moments": {
+    "asec_proxy_workers_mn": 34.94681781001187,
+    "gross_cost_bn": 148.45126531533563,
+    "net_cost_bn": 95.35414850239795,
+    "fit_before": {
+      "stage": "before_calibration",
+      "total_gap_pct": 32.33649765122357,
+      "state_share_mae_pp": 0.526254792219274,
+      "family_share_mae_pp": 4.942004591082611
+    },
+    "fit_after": {
+      "stage": "after_calibration",
+      "total_gap_pct": 2.131976833321093e-14,
+      "state_share_mae_pp": 0.10054391631088833,
+      "family_share_mae_pp": 1.6046808872766982
+    }
+  },
+  "overall_grade": "Yellow"
+}

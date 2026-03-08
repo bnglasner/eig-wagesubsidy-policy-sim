@@ -1,0 +1,7 @@
+metric,value,status
+calibration_total_gap_pct_after,2.131976833321093e-14,Acceptable
+calibration_state_share_mae_pp_after,0.10054391631088833,Acceptable
+calibration_family_share_mae_pp_after,1.6046808872766982,Caution
+hours_mean_in_expected_band,1611.471370471155,Acceptable
+uncertainty_gross_range_pct,60.5843536562085,Failure
+leave_one_month_out_gross_cv_pct,0.5332403409087374,Acceptable

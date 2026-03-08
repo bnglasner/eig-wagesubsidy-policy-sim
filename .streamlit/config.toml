@@ -1,3 +1,14 @@
+[server]
+# Disable file watcher in production (reduces memory usage on Streamlit Cloud)
+fileWatcherType = "none"
+# Allow embedding in iframes (e.g., for policy briefs or blog posts)
+enableCORS = false
+enableXsrfProtection = true
+
+[browser]
+# Gather usage stats: set false for privacy
+gatherUsageStats = false
+
 [theme]
 # EIG brand colors — keep in sync with INFRA/style/tokens/eig-style-tokens.v1.json
 

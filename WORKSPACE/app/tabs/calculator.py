@@ -1,4 +1,4 @@
-"""
+﻿"""
 Tab 1: Individual wage calculator.
 Section 1: quick subsidy metrics and wage-sweep chart.
 Section 2: budget constraint figure (continuous hours axis) + difference table.
@@ -28,7 +28,7 @@ from utils.household_sim import (
 from utils.eig_style import eig_plotly_layout
 
 
-# ── Cached PolicyEngine wrapper ───────────────────────────────────────────────
+# â”€â”€ Cached PolicyEngine wrapper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 @st.cache_data(show_spinner="Running PolicyEngine simulation (first load only)...")
 def _cached_sim(
@@ -41,7 +41,7 @@ def _cached_sim(
     return run_from_precomputed(employer_wage, family_type, state_code, subsidy_params)
 
 
-# ── Budget constraint figure ──────────────────────────────────────────────────
+# â”€â”€ Budget constraint figure â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def _make_budget_figure(df: "pd.DataFrame", scenario: str, active_keys: "set[str]") -> go.Figure:
     """Single-panel stacked bar chart: annual hours on x-axis, income components on y-axis."""
@@ -110,14 +110,34 @@ def _make_budget_figure(df: "pd.DataFrame", scenario: str, active_keys: "set[str
         legend=dict(orientation="h", yanchor="top", y=-0.25, x=0),
         margin=dict(t=30, b=140),
     ))
+
+    # Reference lines for standard part-time and full-time annual hours.
+    ref_line_color = "#111111"
+    for x_val, label in [(1040, "Part-time (20 hrs/wk)"), (2080, "Full-time (40 hrs/wk)")]:
+        fig.add_vline(
+            x=x_val,
+            line=dict(color=ref_line_color, width=2),
+        )
+        fig.add_annotation(
+            x=x_val,
+            y=y_axis_max,
+            text=label,
+            showarrow=False,
+            xanchor="right",
+            yanchor="bottom",
+            xshift=-6,
+            font=dict(size=11, color=ref_line_color),
+            bgcolor="rgba(255,255,255,0.85)",
+        )
+
     return fig
 
 
-# ── Difference table ──────────────────────────────────────────────────────────
+# â”€â”€ Difference table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def _make_diff_table(df: "pd.DataFrame", active_keys: "set[str]") -> "pd.DataFrame":
     """
-    Difference table: (With Subsidy) − (Baseline) at the 4 reference hour bins.
+    Difference table: (With Subsidy) âˆ’ (Baseline) at the 4 reference hour bins.
     Rows = active income/tax components + net income + total transfer spending change.
     Columns = 0 hrs/wk, 20 hrs/wk, 40 hrs/wk, 60 hrs/wk.
     """
@@ -139,14 +159,30 @@ def _make_diff_table(df: "pd.DataFrame", active_keys: "set[str]") -> "pd.DataFra
 
         # Total transfer spending: sum only active government-funded transfers
         active_transfer_keys = [k for k in TRANSFER_KEYS if k in active_keys]
-        col["Δ Total transfer spending"] = sum(sub[k] - base[k] for k in active_transfer_keys)
+        col["Î” Total transfer spending"] = sum(sub[k] - base[k] for k in active_transfer_keys)
 
         col_data[col_label] = col
 
     return pd.DataFrame(col_data)
 
 
-# ── Main render ───────────────────────────────────────────────────────────────
+def _fmt_dollar(v: float) -> str:
+    return f"${v:,.0f}"
+
+
+def _sign_dollar(v: float) -> str:
+    return f"${v:+,.0f}"
+
+
+def _tax_impact_text(v: float) -> str:
+    if v < 0:
+        return f"`{_fmt_dollar(abs(v))}` loss in income from taxes paid"
+    if v > 0:
+        return f"`{_fmt_dollar(v)}` gain in income from lower taxes"
+    return "`$0` change from taxes"
+
+
+# â”€â”€ Main render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def render() -> None:
     st.header("Individual Wage Calculator")
@@ -228,7 +264,7 @@ def render() -> None:
         )
         state_code = parse_state_code(state_option)
 
-        # ── Program selection ─────────────────────────────────────────────
+        # â”€â”€ Program selection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         # employer_wages and wage_subsidy are always shown; everything else
         # is selectable. Selection is shared with the population tab.
         _ALWAYS_ON = {"employer_wages", "wage_subsidy"}
@@ -283,7 +319,7 @@ def render() -> None:
         m5.metric("Annual subsidy", f"+${ann_sub:,.0f}")
         m6.metric("Annual take-home", f"${ann_total:,.0f}")
 
-        # ── Wage sweep chart ──────────────────────────────────────────────
+        # â”€â”€ Wage sweep chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         wages     = np.arange(base_wage, t_wage + 0.05, 0.25)
         subsidies = [hourly_subsidy(w, **params) for w in wages]
         takehouses = [take_home_wage(w, **params) for w in wages]
@@ -312,14 +348,18 @@ def render() -> None:
         ))
         st.plotly_chart(fig_sweep, use_container_width=True)
 
-    # ── Section 2: Budget Constraint Figure ───────────────────────────────────
+    # â”€â”€ Section 2: Budget Constraint Figure â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     st.divider()
     st.subheader("Budget Constraint: Income by Hours Worked")
-    st.markdown(
-        "Annual income decomposed by source as hours worked increases — "
-        "taxes are shown as negative bars, net income as the dashed line. "
-        "Use the toggle to compare scenarios."
-    )
+
+    if not schedules_available(family_type, state_code):
+        st.info(
+            "Pre-computed schedules not found - running PolicyEngine live. "
+            "First load takes 1-3 minutes; subsequent loads are instant. "
+            "Run `python WORKSPACE/code/01_data_preparation/01b_precompute_individual.py` "
+            "to generate schedules for instant loading.",
+            icon=":hourglass_flowing_sand:",
+        )
 
     scenario = st.radio(
         "Scenario",
@@ -327,35 +367,80 @@ def render() -> None:
         horizontal=True,
     )
 
-    if not schedules_available(family_type, state_code):
-        st.info(
-            "Pre-computed schedules not found — running PolicyEngine live. "
-            "First load takes 1–3 minutes; subsequent loads are instant. "
-            "Run `python WORKSPACE/code/01_data_preparation/01b_precompute_individual.py` "
-            "to generate schedules for instant loading.",
-            icon="⏳",
-        )
-
     subsidy_params_tuple = tuple(sorted(params.items()))
     df_sim = _cached_sim(employer_wage, family_type, state_code, subsidy_params_tuple)
+
+    hours_20 = 20 * 52
+    hours_40 = 40 * 52
+    annual_subsidy_20 = subsidy_hr * hours_20
+    annual_subsidy_40 = subsidy_hr * hours_40
+
+    labels_by_key = {key: label for key, label, _, _ in COMPONENTS}
+    selected_program_labels = [
+        labels_by_key[k]
+        for k in labels_by_key
+        if k in active_keys and k not in {"employer_wages", "wage_subsidy"}
+    ]
+    selected_programs_txt = ", ".join(selected_program_labels) if selected_program_labels else "no additional programs selected"
+
+    def _point_deltas(annual_hours: int) -> dict[str, float]:
+        base = df_sim[(df_sim["annual_hours"] == annual_hours) & (df_sim["scenario"] == "Baseline")].iloc[0]
+        sub = df_sim[(df_sim["annual_hours"] == annual_hours) & (df_sim["scenario"] == "With Subsidy")].iloc[0]
+        tax_change = (
+            (sub["federal_tax"] - base["federal_tax"]) +
+            (sub["state_tax"] - base["state_tax"]) +
+            (sub["payroll_tax"] - base["payroll_tax"])
+        )
+        transfer_keys = [k for k in TRANSFER_KEYS if k in active_keys]
+        transfer_change = sum(sub[k] - base[k] for k in transfer_keys)
+        net_income_change = sub["net_income"] - base["net_income"]
+        return {
+            "tax_change": float(tax_change),
+            "transfer_change": float(transfer_change),
+            "net_income_change": float(net_income_change),
+        }
+
+    p20 = _point_deltas(hours_20)
+    p40 = _point_deltas(hours_40)
+
+    st.markdown(
+        f"The proposed wage subsidy uses a national median hourly wage of `{median_wage:.2f}`. "
+        f"With a target set at `{target_pct * 100:.0f}%`, the target wage is `{t_wage:.2f}`; "
+        f"with a subsidy rate of `{subsidy_pct * 100:.0f}%` and a base wage floor of `{base_wage:.2f}`, "
+        f"a worker paid `{employer_wage:.2f}` by their employer qualifies for an hourly subsidy of "
+        f"`{subsidy_hr:.2f}`. That equals about `{_fmt_dollar(annual_subsidy_20)}` per year at 20 hours per week "
+        f"(52 weeks) and `{_fmt_dollar(annual_subsidy_40)}` per year at 40 hours per week (52 weeks)."
+    )
+    st.markdown(
+        f"Because this subsidy is treated as earnings in the household simulation, it also changes taxes and "
+        f"means-tested supports. For the currently selected programs (`{selected_programs_txt}`), the model estimates "
+        f"at 20 hours per week: {_tax_impact_text(p20['tax_change'])}, net transfer change "
+        f"`{_sign_dollar(p20['transfer_change'])}`, and net income change `{_sign_dollar(p20['net_income_change'])}`. "
+        f"At 40 hours per week: {_tax_impact_text(p40['tax_change'])}, net transfer change "
+        f"`{_sign_dollar(p40['transfer_change'])}`, and net income change `{_sign_dollar(p40['net_income_change'])}`."
+    )
+    st.markdown(
+        "Annual income is decomposed by source as hours worked increase. Taxes are shown as negative bars, "
+        "and net income is the dashed line. Use the scenario toggle to compare baseline and subsidy outcomes."
+    )
 
     fig_budget = _make_budget_figure(df_sim, scenario, active_keys)
     st.plotly_chart(fig_budget, use_container_width=True)
 
-    # ── Difference table ──────────────────────────────────────────────────────
+    # â”€â”€ Difference table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     with st.expander("Difference table: With Subsidy vs. Baseline"):
         st.markdown(
-            "Each cell shows **(With Subsidy) − (Baseline)** at four hours-worked levels. "
+            "Each cell shows **(With Subsidy) âˆ’ (Baseline)** at four hours-worked levels. "
             "Positive = gain for worker or increase in program spending. "
             "Negative = reduction. "
-            "The **Δ Total transfer spending** row sums all selected government-funded transfers "
+            "The **Î” Total transfer spending** row sums all selected government-funded transfers "
             "(including the wage subsidy itself, less any reductions in existing programs)."
         )
         diff_df = _make_diff_table(df_sim, active_keys)
 
         # Separate summary rows from component rows for styling
         component_labels = [label for key, label, _, _ in COMPONENTS if key in active_keys]
-        summary_labels   = ["Net income change", "Δ Total transfer spending"]
+        summary_labels   = ["Net income change", "Î” Total transfer spending"]
 
         st.dataframe(
             diff_df.loc[component_labels + summary_labels]

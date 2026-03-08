@@ -1,7 +1,7 @@
 # ORG Data Integration Methodology
 ## EIG Wage Subsidy Policy Simulation — Worker Identification via CPS Outgoing Rotation Group
 
-**Status:** Draft — pending DDI verification after IPUMS re-extract
+**Status:** Active — DDI codes confirmed March 2026; pipeline running on CPS ORG data
 **Last updated:** 2026-03-07
 **Authors:** EIG Research / Claude Code
 
@@ -470,6 +470,7 @@ available through 2025, this should be computed dynamically at ingest time.
 **2025 result (11 months, January–September + November–December):**
 - Weighted median, paid-hourly workers: **$21.00/hr**
 - This exactly validates the current hardcoded config value
+- October 2025 (`month == 10`) is absent from the current IPUMS ORG extract; ingest uses the observed year-month groups (`n_months`) so weighting remains internally consistent.
 
 **Computation in `01a_data_ingest.py`:**
 ```python
@@ -757,28 +758,54 @@ lowercase column names:
 | `RELATE` | `relate` | Present; integer codes unverified — see §15.3 |
 | `WKSTAT` | `wkstat` | Present; integer codes unverified — see §15.3 |
 
-### 15.3 Pending — require data inspection
+### 15.3 Confirmed — WKSTAT codes from DDI and data inspection
 
-The following items cannot be confirmed from the R source code and require inspection
-of actual values in the org panel parquet once `01b_build_org_panel.R` completes:
+**Source:** Online IPUMS DDI codebook for extract #304 (CPS Basic Monthly, WKSTAT variable,
+start position 145, width 2). Confirmed against `wkstat.value_counts()` on
+`org_panel_2025.parquet` (n=296,369 records).
 
-- [ ] **WKSTAT integer codes:** The `01b` script never references this variable. Inspect
-      `df["wkstat"].value_counts()` on a recent year's org panel parquet to confirm
-      exact codes for full-time, PT economic, PT non-economic, and at-work-not-usual
-      categories. IPUMS harmonizes across CPS history; modern codes are expected to be
-      in the range 10–50 but must be verified from data.
+| Code | DDI Label | 2025 count | Weeks multiplier | Rationale |
+|------|-----------|-----------|-----------------|-----------|
+| 11 | Full-time hours (35+), usually full-time | 102,226 | **52** | Core FT workforce |
+| 12 | Part-time for non-economic reasons, usually full-time | 8,045 | **48** | Usually FT but currently reduced hours voluntarily |
+| 13 | **Not at work**, usually full-time | 3,518 | **52** | On leave/holiday; FT worker, not a PT worker |
+| 14 | Full-time hours, usually part-time for **economic** reasons | 125 | **40** | Usual status is involuntary PT; drives annual weeks |
+| 15 | Full-time hours, usually part-time for **non-economic** reasons | 690 | **48** | Usual status is voluntary PT |
+| 21 | Part-time for economic reasons, usually full-time | 1,327 | **40** | Involuntary PT this week |
+| 22 | Part-time hours, usually part-time for economic reasons | 2,600 | **40** | Chronically involuntary PT |
+| 41 | Part-time hours, usually part-time for non-economic reasons | 20,139 | **48** | Voluntary PT (students, caregivers) |
+| 42 | Not at work, usually part-time | 1,527 | **48** | On leave; PT worker |
+| 50 | Unemployed, seeking full-time work | 4,468 | — | Filtered: no valid wage |
+| 60 | Unemployed, seeking part-time work | 1,103 | — | Filtered: no valid wage |
+| 99 | NIU, blank, or not in labor force | 150,601 | — | Filtered: no valid wage |
 
-- [ ] **RELATE reference-person code:** Confirm the integer code for household reference
-      person (typically 101 in IPUMS harmonized basic monthly CPS, but may differ).
-      Needed only if the optional primary-earner filter is implemented.
+**Implementation in `01a_data_ingest.py`:**
+```python
+WKSTAT_WEEKS = {
+    11: 52,   # FT hours, usually FT → full year
+    12: 48,   # PT non-economic, usually FT → slight discount
+    13: 52,   # Not at work, usually FT → on leave; FT worker
+    14: 40,   # FT this week, usually PT economic → usual status drives
+    15: 48,   # FT this week, usually PT non-economic → usual status drives
+    21: 40,   # PT economic, usually FT → involuntary PT
+    22: 40,   # PT, usually PT for economic reasons → chronic involuntary PT
+    41: 48,   # PT, usually PT for non-economic reasons → voluntary PT
+    42: 48,   # Not at work, usually PT → PT worker on leave
+}
+DEFAULT_WEEKS = 52  # fallback for unclassified codes (conservative)
+```
 
-- [ ] **NCHILD universe in basic monthly CPS:** Confirm `nchild` is non-zero/non-missing
-      for respondents with children in ORG months. If NCHILD is populated only in ASEC
-      records and is systematically zero in basic monthly, an alternative children
-      indicator (family unit structure via FAMUNIT + RELATE) will be needed.
+**Note on codes 10/20/40:** These are aggregate summary codes in the DDI but do not appear
+in the 2025 data (or any post-2000 data). The detailed codes (11–42) are always populated
+for employed respondents. The `DEFAULT_WEEKS = 52` fallback handles any future edge cases.
 
-These will be confirmed once `01b_build_org_panel.R` finishes processing and a sample
-value inspection can be run on the 2024 or 2025 org panel parquet.
+**RELATE reference-person code:** Confirmed as **101** from 2025 data
+(`relate.value_counts()` shows 101 as the dominant code with 125,057 records).
+Needed only for the optional FAMUNIT-based primary-earner sensitivity filter (§11).
+
+**NCHILD in basic monthly CPS:** Confirmed populated. The 2025 org panel shows
+`nchild` ranging from 0–9 with 82,084 workers (28%) reporting at least one child.
+No systematic zero-inflation observed. The variable is valid for family type derivation.
 
 ---
 
