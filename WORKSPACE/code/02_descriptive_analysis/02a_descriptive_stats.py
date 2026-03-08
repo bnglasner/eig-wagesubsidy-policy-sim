@@ -52,6 +52,7 @@ _cfg_spec = importlib.util.spec_from_file_location(
 _cfg_mod = importlib.util.module_from_spec(_cfg_spec)
 _cfg_spec.loader.exec_module(_cfg_mod)
 cfg               = _cfg_mod.cfg
+PATH_DATA                = _cfg_mod.PATH_DATA
 PATH_DATA_PROCESSED      = _cfg_mod.PATH_DATA_PROCESSED
 PATH_OUTPUT_INTERMEDIATE = _cfg_mod.PATH_OUTPUT_INTERMEDIATE
 
@@ -83,6 +84,18 @@ _COMPONENT_LABELS: dict[str, str] = {key: label for key, label, _, _ in COMPONEN
 
 # Tax keys (stored as negative values for worker, positive for government)
 _TAX_KEYS = ["federal_tax", "state_tax", "payroll_tax"]
+
+# Education code -> group label (mirrors 01a_data_ingest.py)
+_EDUC_MAP: dict[int, str] = {
+    1: "Less than HS",  2: "Less than HS",
+   10: "Less than HS", 20: "Less than HS", 30: "Less than HS",
+   40: "Less than HS", 50: "Less than HS", 60: "Less than HS",
+   71: "HS diploma / GED", 73: "HS diploma / GED",
+   81: "Some college / Associate's", 91: "Some college / Associate's",
+   92: "Some college / Associate's",
+  111: "Bachelor's degree",
+  123: "Graduate degree", 124: "Graduate degree", 125: "Graduate degree",
+}
 
 # ── Schedule cache ─────────────────────────────────────────────────────────────
 
@@ -178,8 +191,13 @@ def _agg_by_group(
     gross_cost_bn: float,
     col: str,
     ordered_labels: list[str] | None = None,
+    base_group_totals: dict[str, float] | None = None,
 ) -> pd.DataFrame:
-    """Generic weighted aggregation over a categorical column."""
+    """Generic weighted aggregation over a categorical column.
+
+    base_group_totals: mapping from group label -> total earnwt in the full
+    base population (pre-wage-threshold). Used to compute pct_in_group.
+    """
     if ordered_labels:
         valid_mask = workers[col].isin(ordered_labels)
     else:
@@ -192,13 +210,20 @@ def _agg_by_group(
         w  = grp["weight"].values
         gs = grp["subsidy_annual"].values
         nd = net_income_delta[grp.index]
+        eligible_wt = w.sum()
+        if base_group_totals is not None and label in base_group_totals:
+            base_wt = base_group_totals[label]
+            pct_in_group = round(eligible_wt / base_wt * 100, 1) if base_wt > 0 else None
+        else:
+            pct_in_group = None
         rows.append({
-            col:                  label,
-            "n_workers_k":        round(w.sum() / 1e3, 1),
-            "pct_workers":        round(w.sum() / total_weights * 100, 1),
-            "avg_annual_subsidy": round(_weighted_mean(gs, w), 0),
+            col:                   label,
+            "n_workers_k":         round(eligible_wt / 1e3, 1),
+            "pct_of_recipients":   round(eligible_wt / total_weights * 100, 1),
+            "pct_in_group":        pct_in_group,
+            "avg_annual_subsidy":  round(_weighted_mean(gs, w), 0),
             "avg_net_income_gain": round(_weighted_mean(nd, w), 0),
-            "gross_cost_mn":      round((gs * w).sum() / 1e6, 1),
+            "gross_cost_mn":       round((gs * w).sum() / 1e6, 1),
         })
     df = pd.DataFrame(rows)
     if ordered_labels:
@@ -346,6 +371,47 @@ def main() -> None:
     ], ignore_index=True)
     program_interactions.to_parquet(_OUT_DIR / "program_interactions.parquet", index=False)
 
+    # ── Base population for pct_in_group denominators ────────────────────────
+    # Load the full ORG file and apply the same filter as 01a minus the wage
+    # threshold to get total weighted workers in each demographic group.
+    # earnwt / n_months cancels in the ratio, so raw earnwt is used here.
+    print("02a | Computing base population group totals ...")
+    _base_group_totals: dict[str, dict[str, float]] = {}
+    try:
+        org_candidates = sorted((PATH_DATA / "external").glob("org_workers_*.parquet"))
+        if org_candidates:
+            org_raw = pd.read_parquet(org_candidates[-1])
+            base_mask = (
+                org_raw["epi_sample_eligible"].astype(bool) &
+                org_raw["hourly_wage_epi_valid"].astype(bool) &
+                (org_raw["age"] >= 16) & (org_raw["age"] <= 64) &
+                (org_raw["earnwt"] > 0)
+            )
+            if "relate" in org_raw.columns:
+                base_mask &= ~((org_raw["relate"] == 301) & (org_raw["age"] < 19))
+            org_base = org_raw[base_mask].copy()
+            if "educ" in org_base.columns:
+                org_base["educ_group"] = org_base["educ"].map(
+                    lambda c: _EDUC_MAP.get(int(c), "Unknown")
+                )
+            # Normalize by n_months so the denominator matches the eligible
+            # workers' weight = earnwt / n_months used in _agg_by_group.
+            n_months_base = org_base.groupby(["year", "month"]).ngroups
+            for col in ["sex_label", "race_ethnicity", "educ_group", "age_bin"]:
+                if col in org_base.columns:
+                    _base_group_totals[col] = (
+                        org_base.groupby(col, observed=True)["earnwt"]
+                        .sum()
+                        .div(n_months_base)
+                        .to_dict()
+                    )
+            print(f"  Base population rows: {len(org_base):,}  "
+                  f"(n_months={n_months_base})")
+        else:
+            print("  [warn] No ORG file found — pct_in_group will be omitted.")
+    except Exception as e:
+        print(f"  [warn] Base population load failed ({e}) — pct_in_group will be omitted.")
+
     # ── Demographic breakdowns (only if columns are present) ──────────────────
     _EDUC_ORDER = [
         "Less than HS", "HS diploma / GED",
@@ -359,12 +425,14 @@ def main() -> None:
         print("02a | Aggregating by sex ...")
         demo_outputs["by_sex"] = _agg_by_group(
             workers, net_income_delta, weights.sum(), gross_cost_bn, "sex_label",
+            base_group_totals=_base_group_totals.get("sex_label"),
         )
 
     if "race_ethnicity" in workers.columns:
         print("02a | Aggregating by race/ethnicity ...")
         demo_outputs["by_race_ethnicity"] = _agg_by_group(
             workers, net_income_delta, weights.sum(), gross_cost_bn, "race_ethnicity",
+            base_group_totals=_base_group_totals.get("race_ethnicity"),
         )
 
     if "educ_group" in workers.columns:
@@ -372,6 +440,7 @@ def main() -> None:
         demo_outputs["by_education"] = _agg_by_group(
             workers, net_income_delta, weights.sum(), gross_cost_bn, "educ_group",
             ordered_labels=_EDUC_ORDER,
+            base_group_totals=_base_group_totals.get("educ_group"),
         )
 
     if "age_bin" in workers.columns:
@@ -379,6 +448,7 @@ def main() -> None:
         demo_outputs["by_age_bin"] = _agg_by_group(
             workers, net_income_delta, weights.sum(), gross_cost_bn, "age_bin",
             ordered_labels=_AGE_ORDER,
+            base_group_totals=_base_group_totals.get("age_bin"),
         )
 
     for name, df in demo_outputs.items():

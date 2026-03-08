@@ -455,9 +455,10 @@ def render() -> None:
             fig_sex = _make_demo_chart(by_sex, "sex_label", BRAND_COLORS["eig_blue_800"])
             st.plotly_chart(fig_sex, use_container_width=True)
             st.dataframe(
-                by_sex[["sex_label", "pct_workers", "avg_annual_subsidy"]]
-                .rename(columns={"sex_label": "Sex", "pct_workers": "Share (%)", "avg_annual_subsidy": "Avg. subsidy ($)"})
-                .style.format({"Share (%)": "{:.1f}%", "Avg. subsidy ($)": "${:,.0f}"}),
+                by_sex[["sex_label", "pct_of_recipients", "pct_in_group", "avg_annual_subsidy"]]
+                .rename(columns={"sex_label": "Sex", "pct_of_recipients": "% of recipients",
+                                 "pct_in_group": "% of group receiving", "avg_annual_subsidy": "Avg. subsidy ($)"})
+                .style.format({"% of recipients": "{:.1f}%", "% of group receiving": "{:.1f}%", "Avg. subsidy ($)": "${:,.0f}"}),
                 use_container_width=True, hide_index=True,
             )
 
@@ -466,9 +467,10 @@ def render() -> None:
             fig_race = _make_demo_chart(by_race, "race_ethnicity", BRAND_COLORS["eig_cyan_700"])
             st.plotly_chart(fig_race, use_container_width=True)
             st.dataframe(
-                by_race[["race_ethnicity", "pct_workers", "avg_annual_subsidy"]]
-                .rename(columns={"race_ethnicity": "Group", "pct_workers": "Share (%)", "avg_annual_subsidy": "Avg. subsidy ($)"})
-                .style.format({"Share (%)": "{:.1f}%", "Avg. subsidy ($)": "${:,.0f}"}),
+                by_race[["race_ethnicity", "pct_of_recipients", "pct_in_group", "avg_annual_subsidy"]]
+                .rename(columns={"race_ethnicity": "Group", "pct_of_recipients": "% of recipients",
+                                 "pct_in_group": "% of group receiving", "avg_annual_subsidy": "Avg. subsidy ($)"})
+                .style.format({"% of recipients": "{:.1f}%", "% of group receiving": "{:.1f}%", "Avg. subsidy ($)": "${:,.0f}"}),
                 use_container_width=True, hide_index=True,
             )
 
@@ -479,9 +481,10 @@ def render() -> None:
             fig_educ = _make_demo_chart(by_educ, "educ_group", BRAND_COLORS["eig_gold_600"])
             st.plotly_chart(fig_educ, use_container_width=True)
             st.dataframe(
-                by_educ[["educ_group", "pct_workers", "avg_annual_subsidy"]]
-                .rename(columns={"educ_group": "Education", "pct_workers": "Share (%)", "avg_annual_subsidy": "Avg. subsidy ($)"})
-                .style.format({"Share (%)": "{:.1f}%", "Avg. subsidy ($)": "${:,.0f}"}),
+                by_educ[["educ_group", "pct_of_recipients", "pct_in_group", "avg_annual_subsidy"]]
+                .rename(columns={"educ_group": "Education", "pct_of_recipients": "% of recipients",
+                                 "pct_in_group": "% of group receiving", "avg_annual_subsidy": "Avg. subsidy ($)"})
+                .style.format({"% of recipients": "{:.1f}%", "% of group receiving": "{:.1f}%", "Avg. subsidy ($)": "${:,.0f}"}),
                 use_container_width=True, hide_index=True,
             )
 
@@ -490,9 +493,10 @@ def render() -> None:
             fig_age = _make_demo_chart(by_age, "age_bin", BRAND_COLORS["eig_green_700"])
             st.plotly_chart(fig_age, use_container_width=True)
             st.dataframe(
-                by_age[["age_bin", "pct_workers", "avg_annual_subsidy"]]
-                .rename(columns={"age_bin": "Age group", "pct_workers": "Share (%)", "avg_annual_subsidy": "Avg. subsidy ($)"})
-                .style.format({"Share (%)": "{:.1f}%", "Avg. subsidy ($)": "${:,.0f}"}),
+                by_age[["age_bin", "pct_of_recipients", "pct_in_group", "avg_annual_subsidy"]]
+                .rename(columns={"age_bin": "Age group", "pct_of_recipients": "% of recipients",
+                                 "pct_in_group": "% of group receiving", "avg_annual_subsidy": "Avg. subsidy ($)"})
+                .style.format({"% of recipients": "{:.1f}%", "% of group receiving": "{:.1f}%", "Avg. subsidy ($)": "${:,.0f}"}),
                 use_container_width=True, hide_index=True,
             )
 
