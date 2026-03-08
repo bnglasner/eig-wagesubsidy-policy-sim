@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tab 2: Population-level impacts.
 
 Loads five pre-computed parquet files produced by the data pipeline and renders:
@@ -17,7 +17,7 @@ from pathlib import Path
 
 import streamlit as st
 
-# â”€â”€ Paths â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# â"€â"€ Paths â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 _HERE       = Path(__file__).resolve()
 # population.py lives at WORKSPACE/app/tabs/, so repo root is parents[3].
 _PROJECT    = _HERE.parents[3]
@@ -47,7 +47,7 @@ def _all_files_present() -> bool:
     return all(p.exists() for p in _FILES.values())
 
 
-# â”€â”€ EIG style â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# â"€â"€ EIG style â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 import sys
 _APP = _HERE.parents[1]
 if str(_APP) not in sys.path:
@@ -57,7 +57,7 @@ from utils.eig_style import eig_plotly_layout, BRAND_COLORS
 from utils.household_sim import COMPONENTS
 
 
-# â”€â”€ Chart builders â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# â"€â"€ Chart builders â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 def _make_choropleth(by_state: "pd.DataFrame", metric: str) -> "go.Figure":
     import plotly.graph_objects as go
@@ -229,7 +229,7 @@ def _render_program_table(prog: "pd.DataFrame") -> None:
     if active_keys is not None:
         display = display[display["key"].isin(active_keys)]
         if len(display) < len(prog) - 2:  # -2 for the always-excluded rows
-            st.caption("Showing selected programs only â€” adjust the selection in the Individual Calculator tab.")
+            st.caption("Showing selected programs only - adjust the selection in the Individual Calculator tab.")
 
     # Format columns
     display["Avg. change / worker"] = display["avg_delta_per_worker"].apply(
@@ -260,7 +260,7 @@ def _render_program_table(prog: "pd.DataFrame") -> None:
     )
 
 
-# â”€â”€ Main render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# â"€â"€ Main render â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 def render() -> None:
     import plotly.graph_objects as go
@@ -306,7 +306,7 @@ def render() -> None:
     by_ft    = pd.read_parquet(_FILES["by_family_type"])
     prog     = pd.read_parquet(_FILES["program_interactions"])
 
-    # â”€â”€ Headline metrics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # â"€â"€ Headline metrics â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     st.subheader("Headline Estimates")
     m1, m2, m3, m4 = st.columns(4)
     m1.metric(
@@ -324,7 +324,7 @@ def render() -> None:
     m3.metric(
         "Eligible workers",
         f"{summary['n_workers_mn']:.1f}M",
-        help="Workers earning $7.25â€“$16.80/hr who would receive the subsidy.",
+        help="Workers earning $7.25-$16.80/hr who would receive the subsidy.",
     )
     m4.metric(
         "Avg. annual subsidy",
@@ -379,7 +379,7 @@ def render() -> None:
     )
     st.divider()
 
-    # â”€â”€ Map + Wage bracket side by side â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # â"€â"€ Map + Wage bracket side by side â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     col_map, col_bracket = st.columns([3, 2])
 
     with col_map:
@@ -399,7 +399,7 @@ def render() -> None:
 
     st.divider()
 
-    # â”€â”€ Program interactions + Family type â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # â"€â"€ Program interactions + Family type â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     col_prog, col_ft = st.columns([3, 2])
 
     with col_prog:
@@ -407,7 +407,7 @@ def render() -> None:
         st.markdown(
             "How other programs change for the average eligible worker under the subsidy. "
             "Negative values (red) indicate reductions in program benefits or increases "
-            "in taxes â€” these offset the gross subsidy cost to the government."
+            "in taxes - these offset the gross subsidy cost to the government."
         )
         _render_program_table(prog)
 
@@ -436,70 +436,70 @@ def render() -> None:
     if demo_available:
         import pandas as pd
 
-        st.subheader(“Eligible Workers by Demographic Group”)
+        st.subheader("Eligible Workers by Demographic Group")
         st.markdown(
-            “Distribution of eligible workers and average annual subsidy across “
-            “sex, race/ethnicity, education, and age. Worker counts are weighted “
-            “CPS ORG estimates.”
+            "Distribution of eligible workers and average annual subsidy across "
+            "sex, race/ethnicity, education, and age. Worker counts are weighted "
+            "CPS ORG estimates."
         )
 
-        by_sex   = pd.read_parquet(_DEMO_FILES[“by_sex”])
-        by_race  = pd.read_parquet(_DEMO_FILES[“by_race_ethnicity”])
-        by_educ  = pd.read_parquet(_DEMO_FILES[“by_education”])
-        by_age   = pd.read_parquet(_DEMO_FILES[“by_age_bin”])
+        by_sex   = pd.read_parquet(_DEMO_FILES["by_sex"])
+        by_race  = pd.read_parquet(_DEMO_FILES["by_race_ethnicity"])
+        by_educ  = pd.read_parquet(_DEMO_FILES["by_education"])
+        by_age   = pd.read_parquet(_DEMO_FILES["by_age_bin"])
 
         col_sex, col_race = st.columns(2)
 
         with col_sex:
-            st.markdown(“**By Sex**”)
-            fig_sex = _make_demo_chart(by_sex, “sex_label”, BRAND_COLORS[“eig_blue_800”])
+            st.markdown("**By Sex**")
+            fig_sex = _make_demo_chart(by_sex, "sex_label", BRAND_COLORS["eig_blue_800"])
             st.plotly_chart(fig_sex, use_container_width=True)
             st.dataframe(
-                by_sex[[“sex_label”, “pct_workers”, “avg_annual_subsidy”]]
-                .rename(columns={“sex_label”: “Sex”, “pct_workers”: “Share (%)”, “avg_annual_subsidy”: “Avg. subsidy ($)”})
-                .style.format({“Share (%)”: “{:.1f}%”, “Avg. subsidy ($)”: “${:,.0f}”}),
+                by_sex[["sex_label", "pct_workers", "avg_annual_subsidy"]]
+                .rename(columns={"sex_label": "Sex", "pct_workers": "Share (%)", "avg_annual_subsidy": "Avg. subsidy ($)"})
+                .style.format({"Share (%)": "{:.1f}%", "Avg. subsidy ($)": "${:,.0f}"}),
                 use_container_width=True, hide_index=True,
             )
 
         with col_race:
-            st.markdown(“**By Race / Ethnicity**”)
-            fig_race = _make_demo_chart(by_race, “race_ethnicity”, BRAND_COLORS[“eig_cyan_700”])
+            st.markdown("**By Race / Ethnicity**")
+            fig_race = _make_demo_chart(by_race, "race_ethnicity", BRAND_COLORS["eig_cyan_700"])
             st.plotly_chart(fig_race, use_container_width=True)
             st.dataframe(
-                by_race[[“race_ethnicity”, “pct_workers”, “avg_annual_subsidy”]]
-                .rename(columns={“race_ethnicity”: “Group”, “pct_workers”: “Share (%)”, “avg_annual_subsidy”: “Avg. subsidy ($)”})
-                .style.format({“Share (%)”: “{:.1f}%”, “Avg. subsidy ($)”: “${:,.0f}”}),
+                by_race[["race_ethnicity", "pct_workers", "avg_annual_subsidy"]]
+                .rename(columns={"race_ethnicity": "Group", "pct_workers": "Share (%)", "avg_annual_subsidy": "Avg. subsidy ($)"})
+                .style.format({"Share (%)": "{:.1f}%", "Avg. subsidy ($)": "${:,.0f}"}),
                 use_container_width=True, hide_index=True,
             )
 
         col_educ, col_age = st.columns(2)
 
         with col_educ:
-            st.markdown(“**By Education**”)
-            fig_educ = _make_demo_chart(by_educ, “educ_group”, BRAND_COLORS[“eig_gold_600”])
+            st.markdown("**By Education**")
+            fig_educ = _make_demo_chart(by_educ, "educ_group", BRAND_COLORS["eig_gold_600"])
             st.plotly_chart(fig_educ, use_container_width=True)
             st.dataframe(
-                by_educ[[“educ_group”, “pct_workers”, “avg_annual_subsidy”]]
-                .rename(columns={“educ_group”: “Education”, “pct_workers”: “Share (%)”, “avg_annual_subsidy”: “Avg. subsidy ($)”})
-                .style.format({“Share (%)”: “{:.1f}%”, “Avg. subsidy ($)”: “${:,.0f}”}),
+                by_educ[["educ_group", "pct_workers", "avg_annual_subsidy"]]
+                .rename(columns={"educ_group": "Education", "pct_workers": "Share (%)", "avg_annual_subsidy": "Avg. subsidy ($)"})
+                .style.format({"Share (%)": "{:.1f}%", "Avg. subsidy ($)": "${:,.0f}"}),
                 use_container_width=True, hide_index=True,
             )
 
         with col_age:
-            st.markdown(“**By Age**”)
-            fig_age = _make_demo_chart(by_age, “age_bin”, BRAND_COLORS[“eig_green_700”])
+            st.markdown("**By Age**")
+            fig_age = _make_demo_chart(by_age, "age_bin", BRAND_COLORS["eig_green_700"])
             st.plotly_chart(fig_age, use_container_width=True)
             st.dataframe(
-                by_age[[“age_bin”, “pct_workers”, “avg_annual_subsidy”]]
-                .rename(columns={“age_bin”: “Age group”, “pct_workers”: “Share (%)”, “avg_annual_subsidy”: “Avg. subsidy ($)”})
-                .style.format({“Share (%)”: “{:.1f}%”, “Avg. subsidy ($)”: “${:,.0f}”}),
+                by_age[["age_bin", "pct_workers", "avg_annual_subsidy"]]
+                .rename(columns={"age_bin": "Age group", "pct_workers": "Share (%)", "avg_annual_subsidy": "Avg. subsidy ($)"})
+                .style.format({"Share (%)": "{:.1f}%", "Avg. subsidy ($)": "${:,.0f}"}),
                 use_container_width=True, hide_index=True,
             )
 
         st.divider()
 
     # ── State detail table (collapsed) ───────────────────────────────────────
-    with st.expander(“State-by-state detail table”):
+    with st.expander("State-by-state detail table"):
         st.dataframe(
             by_state.rename(columns={
                 "state_code":        "State",
