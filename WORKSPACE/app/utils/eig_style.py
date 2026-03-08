@@ -105,6 +105,7 @@ def eig_plotly_layout(**overrides) -> dict:
             color=BRAND_COLORS["eig_black"],
         ),
         title=dict(
+            text="",
             font=dict(
                 family=HEADLINE_FONT,
                 size=16,
