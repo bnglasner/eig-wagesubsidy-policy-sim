@@ -88,7 +88,7 @@ def _make_budget_figure(df: "pd.DataFrame", scenario: str, active_keys: "set[str
 
     fig = go.Figure()
 
-    # ── Positive components: cumulative stack upward from 0 ──────────────────
+    # -- Positive components: cumulative stack upward from 0 ------------------
     pos_components = [(k, l, c) for k, l, c, is_pos in COMPONENTS if is_pos and k in active_keys]
     pos_cumulative = np.zeros(len(x))
 
@@ -122,7 +122,7 @@ def _make_budget_figure(df: "pd.DataFrame", scenario: str, active_keys: "set[str
             ),
         ))
 
-    # ── Negative components: cumulative stack downward from 0 ────────────────
+    # -- Negative components: cumulative stack downward from 0 ----------------
     neg_components = [(k, l, c) for k, l, c, is_pos in COMPONENTS if not is_pos and k in active_keys]
     neg_cumulative = np.zeros(len(x))
 
@@ -156,7 +156,7 @@ def _make_budget_figure(df: "pd.DataFrame", scenario: str, active_keys: "set[str
             ),
         ))
 
-    # ── Net income dashed line ────────────────────────────────────────────────
+    # -- Net income dashed line ------------------------------------------------
     fig.add_trace(go.Scatter(
         name="Net income",
         x=x,
@@ -166,11 +166,11 @@ def _make_budget_figure(df: "pd.DataFrame", scenario: str, active_keys: "set[str
         showlegend=True,
     ))
 
-    # ── Bold zero line + "taxes collected" label ──────────────────────────────
+    # -- Bold zero line + "taxes collected" label ------------------------------
     fig.add_hline(
         y=0,
         line=dict(color="#000000", width=3),
-        annotation_text="taxes collected ▼",
+        annotation_text="taxes collected ?",
         annotation_position="bottom left",
         annotation_font=dict(size=10, color="#555555"),
         annotation_bgcolor="rgba(255,255,255,0.8)",
@@ -522,8 +522,7 @@ def render() -> None:
             "Matched pre-computed schedule not found for this household setup - running PolicyEngine live. "
             "First load takes 1-3 minutes; subsequent loads are instant. "
             "Run `python WORKSPACE/code/01_data_preparation/01f_precompute_matched_schedules.py` "
-            "to generate matched schedules for instant loading.",
-            icon=":hourglass_flowing_sand:",
+            "to generate matched schedules for instant loading."
         )
 
     scenario = st.radio(
@@ -650,3 +649,6 @@ def render() -> None:
                    ),
             width='stretch',
         )
+
+
+
