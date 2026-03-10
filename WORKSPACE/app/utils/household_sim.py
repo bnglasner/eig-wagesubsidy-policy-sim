@@ -660,15 +660,34 @@ def run_from_matched_precomputed(
     config_key = _matched_config_key(n_adults, ages_clean, spouse_income_clean)
     schedule = load_matched_schedule(config_key, state_code)
 
+    # Stylized fallback mapping when matched schedule is unavailable and
+    # live PolicyEngine execution cannot run in the deployment environment.
+    n_children = min(len(ages_clean), 3)
+    family_type = (
+        f"Married, {n_children} child" + ("" if n_children == 1 else "ren")
+        if n_adults == 2
+        else f"Single, {n_children} child" + ("" if n_children == 1 else "ren")
+    )
+
     if schedule is None:
-        return _run_live_matched(
-            employer_wage=employer_wage,
-            n_adults=n_adults,
-            children_ages=ages_clean,
-            spouse_annual_income=spouse_income_clean,
-            state_code=state_code,
-            subsidy_params=subsidy_params,
-        )
+        try:
+            return _run_live_matched(
+                employer_wage=employer_wage,
+                n_adults=n_adults,
+                children_ages=ages_clean,
+                spouse_annual_income=spouse_income_clean,
+                state_code=state_code,
+                subsidy_params=subsidy_params,
+            )
+        except RuntimeError as exc:
+            if "PolicyEngine is not installed" in str(exc):
+                return run_from_precomputed(
+                    employer_wage=employer_wage,
+                    family_type=family_type,
+                    state_code=state_code,
+                    subsidy_params=subsidy_params,
+                )
+            raise
 
     from utils.subsidy import hourly_subsidy
 

@@ -521,6 +521,8 @@ def render() -> None:
         st.info(
             "Matched pre-computed schedule not found for this household setup - running PolicyEngine live. "
             "First load takes 1-3 minutes; subsequent loads are instant. "
+            "If live PolicyEngine is unavailable in this environment, the app falls back to the nearest "
+            "stylized household schedule for continuity. "
             "Run `python WORKSPACE/code/01_data_preparation/01f_precompute_matched_schedules.py` "
             "to generate matched schedules for instant loading."
         )
