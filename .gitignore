@@ -1,10 +1,33 @@
 ﻿# ── AI tooling (hidden from public repo) ─────────────────────────────────────
-.claude/
-.codex/
+.claude/*
+.codex/*
 INFRA/.claude/
 INFRA/.codex/
 INFRA/MEMORY.md
 INFRA/style/DATAWRAPPER_PIPELINE_AGENT_HANDOFF.md
+!.claude/agents/
+!.claude/agents/eig-style-guide-agent.md
+!.claude/skills/
+!.claude/skills/eig-project-bootstrap/
+!.claude/skills/eig-project-bootstrap/SKILL.md
+!.claude/skills/eig-style-apply/
+!.claude/skills/eig-style-apply/SKILL.md
+!.claude/skills/eig-style-review/
+!.claude/skills/eig-style-review/SKILL.md
+!.claude/skills/eig-style-datawrapper/
+!.claude/skills/eig-style-datawrapper/SKILL.md
+!.codex/agents/
+!.codex/agents/eig-style-guide-agent.md
+!.codex/playbooks/
+!.codex/playbooks/project-bootstrap.md
+!.codex/skills/
+!.codex/skills/eig-style-apply/
+!.codex/skills/eig-style-apply/SKILL.md
+!.codex/skills/eig-style-review/
+!.codex/skills/eig-style-review/SKILL.md
+!.codex/skills/eig-style-datawrapper/
+!.codex/skills/eig-style-datawrapper/SKILL.md
+.claude/settings.local.json
 
 # OS / editor
 .DS_Store
