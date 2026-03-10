@@ -288,6 +288,7 @@ def render() -> None:
         method_label = st.radio(
             "Household interaction method",
             options=["Matched ASEC households", "Stylized households"],
+            index=0,
             horizontal=True,
             help=(
                 "Matched ASEC households use spouse income and child ages from matched ASEC records; "
