@@ -88,5 +88,7 @@ policyengine_us_cache/
 !/WORKSPACE/data/processed/hourly_workers.parquet
 !/WORKSPACE/output/data/intermediate_results/population
 !/WORKSPACE/output/data/intermediate_results/population/*.parquet
+!/WORKSPACE/output/data/intermediate_results/matched_population
+!/WORKSPACE/output/data/intermediate_results/matched_population/*.parquet
 !/WORKSPACE/output/data/intermediate_results/individual_schedules
 !/WORKSPACE/output/data/intermediate_results/individual_schedules/*.parquet
