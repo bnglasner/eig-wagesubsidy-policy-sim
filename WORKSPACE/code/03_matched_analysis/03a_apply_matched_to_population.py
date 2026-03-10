@@ -163,6 +163,32 @@ def _worker_config_key(row: "pd.Series") -> str:
     return _config_key(n_adults, n_children, ages_repr, spouse_buck)
 
 
+def _matched_family_type_key(row: "pd.Series") -> str:
+    """
+    Derive family-type buckets from matched ASEC household context.
+
+    This is used for matched-population reporting so the Population-Level
+    Impacts tab reflects matched spouse/child context rather than the ORG-side
+    household snapshot.
+    """
+    spouse_income = float(row.get("asec_spouse_income", 0.0) or 0.0)
+    n_adults = 2 if (row.get("marital_binary", 0) == 1 or spouse_income > 0.0) else 1
+
+    ages_raw = row.get("asec_children_ages", "[]")
+    if isinstance(ages_raw, str):
+        try:
+            ages_raw = json.loads(ages_raw)
+        except Exception:
+            ages_raw = []
+    n_children = len([int(a) for a in ages_raw if 0 <= int(a) < 18][:3])
+    if n_children == 0:
+        n_children = int(row.get("asec_n_children", 0) or 0)
+
+    prefix = "married" if n_adults == 2 else "single"
+    suffix = "2c" if n_children >= 1 else "0c"
+    return f"{prefix}_{suffix}"
+
+
 # â”€â”€ Schedule cache â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 _matched_cache:   dict[tuple[str, str], pd.DataFrame | None] = {}
@@ -386,7 +412,7 @@ def main() -> None:
     print("03a | Computing worker economics ...")
     workers = _compute_economics(workers, target_wage)
 
-    # Derive family_type_key for fallback (mirrors 01a_data_ingest.py mapping)
+    # Derive ORG-side family_type_key for stylised fallback schedule lookup.
     def _fkey(row):
         married = row["marst"] in {1, 2}
         has_children = int(row.get("nchild", 0)) >= 1
@@ -394,6 +420,7 @@ def main() -> None:
         suffix = "2c" if has_children else "0c"
         return f"{prefix}_{suffix}"
     workers["family_type_key"] = workers.apply(_fkey, axis=1)
+    workers["matched_family_type_key"] = workers.apply(_matched_family_type_key, axis=1)
 
     weights         = workers["weight"].values
     gross_subsidies = workers["subsidy_annual"].values
@@ -525,7 +552,7 @@ def main() -> None:
         "married_0c": "Married, no children",
         "married_2c": "Married, with children",
     }
-    for fkey, grp in workers.groupby("family_type_key"):
+    for fkey, grp in workers.groupby("matched_family_type_key"):
         w  = grp["weight"].values
         gs = grp["subsidy_annual"].values
         nd = net_income_delta[grp.index]
