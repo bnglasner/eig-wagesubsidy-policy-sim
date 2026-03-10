@@ -1,0 +1,201 @@
+ Codex Agent Handoff: EIG Wage Subsidy — ORG–ASEC Matching Pipeline
+
+  Project overview
+
+  This is a policy simulation app that estimates the fiscal impact of a federal wage subsidy targeting low-wage workers.
+   The repo lives at:
+
+  C:\Users\Research\Documents\GitHub\eig-wagesubsidy-policy-sim\
+
+  The app (WORKSPACE/app/app.py) is a Streamlit dashboard. A Venv is at .venv/Scripts/python.exe (Windows). The working
+  shell is bash (Unix syntax).
+
+  ---
+  Architecture: two-source design
+
+  ┌─────────────────────────────────────┬──────────────────────────────────────────────────────────────────────────┐
+  │               Source                │                                   Role                                   │
+  ├─────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
+  │ CPS ORG (org_workers_2026.parquet)  │ Who is eligible, at what wage, how many hours — primary population       │
+  ├─────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
+  │ PolicyEngine pre-computed schedules │ Safety-net interactions (EITC, SNAP, Medicaid, taxes) per household type │
+  └─────────────────────────────────────┴──────────────────────────────────────────────────────────────────────────┘
+
+  The current app uses stylized households (e.g. "Single, 0 children" with fixed zero spouse income) for the PE
+  schedules. The goal of this pipeline is to replace those with matched real ASEC households so that spouse income and
+  actual child ages flow into PE.
+
+  ---
+  Pipeline: what exists and what each script does
+
+  All scripts are in WORKSPACE/code/01_data_preparation/.
+
+  ┌─────────────────────────────────────┬───────────┬───────────────────────────────────────────────────────────────┐
+  │               Script                │  Status   │                            Purpose                            │
+  ├─────────────────────────────────────┼───────────┼───────────────────────────────────────────────────────────────┤
+  │ 01a_data_ingest.py                  │ Complete  │ Filters ORG parquet to eligible workers; produces             │
+  │                                     │           │ hourly_workers.parquet                                        │
+  ├─────────────────────────────────────┼───────────┼───────────────────────────────────────────────────────────────┤
+  │ 01b_precompute_individual.py        │ Complete  │ Pre-computes PE schedules for all 8 stylized household types  │
+  ├─────────────────────────────────────┼───────────┼───────────────────────────────────────────────────────────────┤
+  │ 01c_asec_pull.R                     │ Complete  │ Pulls CPS ASEC 2025 from IPUMS API →                          │
+  │                                     │           │ asec_persons_2025.parquet (142,125 rows)                      │
+  ├─────────────────────────────────────┼───────────┼───────────────────────────────────────────────────────────────┤
+  │                                     │           │ Identifies primary earner per ASEC household, extracts spouse │
+  │ 01d_asec_preprocess.py              │ Complete  │  income + child ages → asec_earners_2025.parquet (32,287      │
+  │                                     │           │ rows)                                                         │
+  ├─────────────────────────────────────┼───────────┼───────────────────────────────────────────────────────────────┤
+  │ 01e_match_org_to_asec.py            │ Not yet   │ Nearest-neighbor match of ORG workers → ASEC earner           │
+  │                                     │ run       │ households                                                    │
+  ├─────────────────────────────────────┼───────────┼───────────────────────────────────────────────────────────────┤
+  │ 01f_precompute_matched_schedules.py │ Not yet   │ Runs PolicyEngine on unique matched household configs; saves  │
+  │                                     │ run       │ parquets                                                      │
+  └─────────────────────────────────────┴───────────┴───────────────────────────────────────────────────────────────┘
+
+  One downstream analysis script also exists:
+
+  ┌───────────────────────────────────────────────────────────────────────┬────────┬────────────────────────────────┐
+  │                                Script                                 │ Status │            Purpose             │
+  ├───────────────────────────────────────────────────────────────────────┼────────┼────────────────────────────────┤
+  │                                                                       │ Not    │ Re-aggregates population       │
+  │ WORKSPACE/code/03_matched_analysis/03a_apply_matched_to_population.py │ yet    │ statistics using matched PE    │
+  │                                                                       │ run    │ schedules; produces comparison │
+  │                                                                       │        │  output vs. stylized results   │
+  └───────────────────────────────────────────────────────────────────────┴────────┴────────────────────────────────┘
+
+  ---
+  Current pipeline state
+
+  Both completed outputs exist on disk:
+
+  - WORKSPACE/data/external/org_workers_2026.parquet — 318K ORG workers (eligible subset)
+  - WORKSPACE/data/external/asec_earners_2025.parquet — 32,287 primary-earner ASEC households
+
+  Key stats confirmed:
+  - Median ORG wage: $21.00/hr; TARGET_WAGE: $16.80/hr (80th percentile); eligible workers: ~23.65M
+  - ASEC median wage: $32.83/hr; spouse income >0: 46.4%; has children: 43.4%
+
+  Important ASEC coding note: In the 2025 ASEC vintage, IPUMS changed RELATE codes. Spouse is 202 (not 201), and
+  children are 301 only (303 does not appear). This has already been fixed in 01d. Any script that re-references RELATE
+  codes must use 202 for spouses.
+
+  ---
+  Your task: run and validate 01e through 03a
+
+  Step 1 — Run 01e_match_org_to_asec.py
+
+  cd /c/Users/Research/Documents/GitHub/eig-wagesubsidy-policy-sim
+  .venv/Scripts/python.exe WORKSPACE/code/01_data_preparation/01e_match_org_to_asec.py
+
+  This script:
+  - Loads org_workers_2026.parquet (eligible ORG workers) and asec_earners_2025.parquet
+  - Derives matching covariates on both sides: wage_decile, marital_binary, nchild_bin, age_bin, sex_binary, educ_group
+  - Matches each ORG worker to the nearest ASEC earner within the same state (national fallback pool if <30 ASEC records
+   for that state)
+  - Uses sklearn NearestNeighbors(n_neighbors=1, metric="euclidean") with weighted feature scaling
+  - Output: WORKSPACE/data/external/org_asec_matches.parquet
+    - All original ORG columns plus: asec_serial, asec_spouse_income, asec_n_children, asec_children_ages (JSON list),
+  asec_match_distance
+
+  Validate: After running, check that:
+  - Row count matches the eligible ORG worker count (~23.65M weighted, fewer raw rows)
+  - asec_match_distance has a sensible distribution (median < 0.5 on the [0,1]-scaled space)
+  - asec_spouse_income > 0 is around 20–35% (ORG workers skew lower-wage so fewer married)
+  - No state has 100% national-fallback matches (would indicate a FIPS mapping bug)
+
+  Step 2 — Check the compute estimate from 01f
+
+  .venv/Scripts/python.exe WORKSPACE/code/01_data_preparation/01f_precompute_matched_schedules.py --dry-run
+
+  (If --dry-run is not implemented, the script prints a compute estimate and prompts before starting. Read the estimate
+  carefully before proceeding.)
+
+  The script:
+  - Loads org_asec_matches.parquet
+  - Discretizes household configs: spouse income → 10 buckets, child ages → 4 bands (0–2→1, 3–5→4, 6–12→9, 13–17→15)
+  - Config key format: {n_adults}a_{n_children}c_{ages}_s{spouse_k}k_{state}
+  - Caps at MAX_CONFIGS = 5000 via MiniBatchKMeans clustering if unique configs exceed that
+  - Runs 131 income grid points per config via compute_income_point_matched() from household_sim.py
+  - 16 parallel workers (ProcessPoolExecutor)
+  - Output: WORKSPACE/output/data/intermediate_results/matched_schedules/{config_key}_{state}.parquet
+
+  Validate: Confirm projected runtime is acceptable before committing to the full run.
+
+  Step 3 — Run 01f in full
+
+  .venv/Scripts/python.exe WORKSPACE/code/01_data_preparation/01f_precompute_matched_schedules.py
+
+  Watch for:
+  - PolicyEngine import errors (PE must be installed in .venv)
+  - Any config keys that fail — the script should catch per-config exceptions and log them without aborting
+  - Final count of successfully written parquets vs. total unique configs
+
+  Step 4 — Run 03a_apply_matched_to_population.py
+
+  .venv/Scripts/python.exe WORKSPACE/code/03_matched_analysis/03a_apply_matched_to_population.py
+
+  This script:
+  - Loads org_asec_matches.parquet
+  - For each worker, looks up the matched PE schedule from matched_schedules/ using their discretized config key
+  - Falls back to stylized schedule if the matched parquet is missing
+  - Writes outputs to WORKSPACE/output/data/matched_population/ (does NOT overwrite the existing population/ directory)
+  - Produces comparison.parquet and program_comparison.parquet showing stylized vs. matched differences
+
+  Validate: Compare aggregate totals against the stylized run. Gross annual cost should be in the same ballpark (~$100B)
+   but may differ because matched households have real spouse income and child ages. If the matched cost diverges by
+  more than 20%, investigate whether the fallback rate is too high (inspect how many workers used matched vs. stylized
+  schedules).
+
+  ---
+  Key file paths
+
+  WORKSPACE/
+    app/
+      app.py                              # Streamlit entry point
+      utils/household_sim.py              # PE simulation helpers; compute_income_point_matched()
+      tabs/population.py                  # Population tab
+      tabs/calculator.py                  # Budget constraint calculator tab
+    code/
+      01_data_preparation/
+        01a_data_ingest.py
+        01b_precompute_individual.py
+        01c_asec_pull.R
+        01d_asec_preprocess.py
+        01e_match_org_to_asec.py          ← run next
+        01f_precompute_matched_schedules.py
+      03_matched_analysis/
+        03a_apply_matched_to_population.py
+    data/
+      external/
+        org_workers_2026.parquet
+        asec_persons_2025.parquet
+        asec_earners_2025.parquet
+        org_asec_matches.parquet          ← produced by 01e
+    output/data/
+      intermediate_results/
+        matched_schedules/                ← produced by 01f
+      population/                         # existing stylized results — do not overwrite
+      matched_population/                 ← produced by 03a
+    docs/
+      org_integration_methodology.md      # full methodology reference
+
+  ---
+  Known issues to watch for
+
+  1. Python cannot import files starting with digits — 01a_data_ingest.py etc. cannot be imported with from 01a_...
+  import. FIPS mappings and other shared constants must be defined inline in each script.
+  2. Windows path separators — scripts use pathlib.Path throughout; avoid hardcoded backslashes.
+  3. WKSTAT vs WKSWORK2 — ORG uses WKSTAT (CPS month-in-reference-week codes mapped to annual weeks); ASEC uses WKSWORK2
+   (grouped weeks variable, 6 categories). These are not the same variable.
+  4. PE Simulation import — PolicyEngine is the policyengine_us package; the simulation class is from policyengine_us
+  import Simulation.
+  5. Multiprocessing on Windows — ProcessPoolExecutor requires the if __name__ == "__main__": guard, which 01f already
+  has.
+
+  ---
+  Success criteria
+
+  - 01e completes with plausible match distance distribution and no state-level failures
+  - 01f completes with ≥95% of configs successfully written
+  - 03a produces comparison.parquet with matched cost within reasonable range of stylized cost
+  - No existing files in WORKSPACE/output/data/population/ are modified

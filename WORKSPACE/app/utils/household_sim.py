@@ -40,18 +40,26 @@ TABLE_HOURS: dict[int, str] = {
 # ── Family types ──────────────────────────────────────────────────────────────
 
 FAMILY_TYPES: dict[str, dict] = {
-    "Single adult, no children":   {"adults": 1, "children": 0},
-    "Single adult, 2 children":    {"adults": 1, "children": 2},
-    "Married couple, no children": {"adults": 2, "children": 0},
-    "Married couple, 2 children":  {"adults": 2, "children": 2},
+    "Single, 0 children":  {"adults": 1, "children": 0},
+    "Single, 1 child":     {"adults": 1, "children": 1},
+    "Single, 2 children":  {"adults": 1, "children": 2},
+    "Single, 3 children":  {"adults": 1, "children": 3},
+    "Married, 0 children": {"adults": 2, "children": 0},
+    "Married, 1 child":    {"adults": 2, "children": 1},
+    "Married, 2 children": {"adults": 2, "children": 2},
+    "Married, 3 children": {"adults": 2, "children": 3},
 }
 
 # Short keys used in parquet filenames
 FAMILY_KEYS: dict[str, str] = {
-    "Single adult, no children":   "single_0c",
-    "Single adult, 2 children":    "single_2c",
-    "Married couple, no children": "married_0c",
-    "Married couple, 2 children":  "married_2c",
+    "Single, 0 children":  "single_0c",
+    "Single, 1 child":     "single_1c",
+    "Single, 2 children":  "single_2c",
+    "Single, 3 children":  "single_3c",
+    "Married, 0 children": "married_0c",
+    "Married, 1 child":    "married_1c",
+    "Married, 2 children": "married_2c",
+    "Married, 3 children": "married_3c",
 }
 
 YEAR_STR = "2026"
@@ -99,13 +107,24 @@ _SCHEDULE_COLS = [
     "other_benefits", "federal_tax", "state_tax", "payroll_tax", "net_income",
 ]
 
-# Path to pre-computed schedules (relative to this file)
+# Path to pre-computed stylised schedules (built by 01b_precompute_individual.py)
 _SCHEDULES_DIR: Path = (
     Path(__file__).resolve().parent  # utils/
     .parent                          # app/
     .parent                          # WORKSPACE/
     / "output" / "data" / "intermediate_results" / "individual_schedules"
 )
+
+# Path to matched-household schedules (built by 02d_precompute_matched_schedules.py)
+_MATCHED_SCHEDULES_DIR: Path = (
+    Path(__file__).resolve().parent
+    .parent
+    .parent
+    / "output" / "data" / "intermediate_results" / "matched_schedules"
+)
+
+_SPOUSE_BUCKET_BOUNDS = [0, 1, 7_500, 12_500, 17_500, 22_500, 27_500, 37_500, 52_500, 72_500]
+_SPOUSE_BUCKET_REPRS = [0, 5_000, 10_000, 15_000, 20_000, 25_000, 32_500, 45_000, 62_500, 87_500]
 
 
 # ── PolicyEngine helpers ──────────────────────────────────────────────────────
@@ -300,6 +319,114 @@ def _extract_components(sim, annual_income: float) -> dict:
     }
 
 
+# ── Matched-household situation builder ───────────────────────────────────────
+
+def _build_situation_matched(
+    employment_income: float,
+    n_adults: int,
+    n_children: int,
+    children_ages: list[int],
+    spouse_annual_income: float,
+    state_code: str,
+) -> dict:
+    """
+    Build a PolicyEngine situation dict for a matched ASEC household.
+
+    Unlike _build_situation() (which uses four stylised household types with
+    zero spouse income and fixed child ages), this function takes real values
+    drawn from a matched ASEC household:
+      - n_adults              : 1 or 2
+      - n_children            : 0–3 (children > 3 are truncated)
+      - children_ages         : list of actual child ages (from ASEC)
+      - spouse_annual_income  : ASEC-matched spouse's annual wage income ($)
+      - state_code            : two-letter state abbreviation
+
+    The primary earner's income is set to employment_income; the spouse's
+    income is fixed at spouse_annual_income across the entire income grid
+    (it is the matched household context, not a variable).
+    """
+    people: dict       = {}
+    all_members: list  = []
+
+    people["person1"] = {
+        "age":               {YEAR_STR: 35},
+        "employment_income": {YEAR_STR: employment_income},
+    }
+    all_members.append("person1")
+
+    if n_adults == 2:
+        people["person2"] = {
+            "age":               {YEAR_STR: 33},
+            "employment_income": {YEAR_STR: float(spouse_annual_income)},
+        }
+        all_members.append("person2")
+
+    # Use actual child ages from the matched ASEC household (up to 3).
+    # PE cares about age for CTC (<17), CCDF (<13), school meals (5-18), WIC.
+    for i, child_age in enumerate(children_ages[:3]):
+        cid = f"child{i + 1}"
+        people[cid] = {
+            "age":               {YEAR_STR: int(child_age)},
+            "employment_income": {YEAR_STR: 0},
+        }
+        all_members.append(cid)
+
+    adult_members = ["person1"] if n_adults == 1 else ["person1", "person2"]
+
+    return {
+        "people":        people,
+        "families":      {"family1": {"members": all_members}},
+        "marital_units": {"marital_unit1": {"members": adult_members}},
+        "tax_units": {
+            "tax_unit1": {
+                "members":          all_members,
+                "tax_unit_is_joint": {YEAR_STR: n_adults == 2},
+            }
+        },
+        "spm_units":  {"spm_unit1": {"members": all_members}},
+        "households": {
+            "household1": {
+                "members":     all_members,
+                "state_code":  {YEAR_STR: state_code},
+            }
+        },
+    }
+
+
+def compute_income_point_matched(
+    annual_income: float,
+    n_adults: int,
+    n_children: int,
+    children_ages: list[int],
+    spouse_annual_income: float,
+    state_code: str,
+) -> dict:
+    """
+    Run PolicyEngine for one primary-earner income level using real matched
+    household context (actual spouse income and child ages from ASEC).
+
+    Called by 02d_precompute_matched_schedules.py for each income grid point.
+    """
+    try:
+        from policyengine_us import Simulation
+    except ImportError as exc:
+        raise RuntimeError(
+            "policyengine-us is required. "
+            "Install it with: pip install policyengine-us==1.592.4"
+        ) from exc
+
+    situation = _build_situation_matched(
+        employment_income=annual_income,
+        n_adults=n_adults,
+        n_children=n_children,
+        children_ages=children_ages,
+        spouse_annual_income=spouse_annual_income,
+        state_code=state_code,
+    )
+    sim = Simulation(situation=situation)
+    return _extract_components(sim, annual_income)
+
+
 # ── Public: single income point (used by pipeline) ───────────────────────────
 
 def compute_income_point(
@@ -341,6 +468,73 @@ def _load_schedule(family_type: str, state_code: str) -> pd.DataFrame | None:
     if not path.exists():
         return None
     return pd.read_parquet(path)
+
+
+# ── Matched-household schedule helpers ───────────────────────────────────────
+
+def matched_schedule_path(config_key: str, state_code: str) -> "Path":
+    """Return the path for a matched-household pre-computed schedule parquet."""
+    return _MATCHED_SCHEDULES_DIR / f"{config_key}_{state_code}.parquet"
+
+
+def matched_schedule_available(config_key: str, state_code: str) -> bool:
+    """Return True if the matched schedule parquet exists for this config."""
+    return matched_schedule_path(config_key, state_code).exists()
+
+
+def load_matched_schedule(config_key: str, state_code: str) -> "pd.DataFrame | None":
+    """Load a matched-household schedule parquet, or None if not yet computed."""
+    path = matched_schedule_path(config_key, state_code)
+    if not path.exists():
+        return None
+    return pd.read_parquet(path)
+
+
+def _discretise_child_age(age: int) -> int:
+    if age <= 2:
+        return 1
+    if age <= 5:
+        return 4
+    if age <= 12:
+        return 9
+    return 15
+
+
+def _discretise_spouse_income(spouse_income: float) -> float:
+    x = max(0.0, float(spouse_income))
+    for i, lo in enumerate(_SPOUSE_BUCKET_BOUNDS):
+        hi = _SPOUSE_BUCKET_BOUNDS[i + 1] if i + 1 < len(_SPOUSE_BUCKET_BOUNDS) else float("inf")
+        if lo <= x < hi:
+            return float(_SPOUSE_BUCKET_REPRS[i])
+    return float(_SPOUSE_BUCKET_REPRS[-1])
+
+
+def _matched_config_key(
+    n_adults: int,
+    children_ages: list[int],
+    spouse_annual_income: float,
+) -> str:
+    ages = [int(a) for a in children_ages if 0 <= int(a) <= 17][:3]
+    ages_repr = tuple(sorted(_discretise_child_age(a) for a in ages))
+    spouse_bucket = _discretise_spouse_income(spouse_annual_income)
+    spouse_k = int(round(spouse_bucket / 1000.0))
+    ages_str = "_".join(map(str, ages_repr)) if ages_repr else "none"
+    return f"{n_adults}a_{len(ages)}c_{ages_str}_s{spouse_k}k"
+
+
+def matched_schedule_available_for_inputs(
+    marital_status: str,
+    children_ages: list[int],
+    spouse_annual_income: float,
+    state_code: str,
+) -> bool:
+    n_adults = 2 if str(marital_status).lower().startswith("married") else 1
+    config_key = _matched_config_key(
+        n_adults=n_adults,
+        children_ages=children_ages,
+        spouse_annual_income=spouse_annual_income,
+    )
+    return matched_schedule_available(config_key, state_code)
 
 
 # ── Public: build budget constraint DataFrame ─────────────────────────────────
@@ -398,6 +592,110 @@ def run_from_precomputed(
 
             rows.append(row)
 
+    return pd.DataFrame(rows)
+
+
+def _run_live_matched(
+    employer_wage: float,
+    n_adults: int,
+    children_ages: list[int],
+    spouse_annual_income: float,
+    state_code: str,
+    subsidy_params: dict,
+) -> pd.DataFrame:
+    try:
+        from policyengine_us import Simulation
+    except ImportError as exc:
+        raise RuntimeError(
+            "PolicyEngine is not installed in this environment and no matched pre-computed "
+            "schedule was found for this household configuration."
+        ) from exc
+    from utils.subsidy import hourly_subsidy
+
+    sub_hr = hourly_subsidy(employer_wage, **subsidy_params)
+    rows = []
+    for annual_hours in HOURS_CONTINUOUS:
+        for with_subsidy, scenario in [(False, "Baseline"), (True, "With Subsidy")]:
+            sw = sub_hr if with_subsidy else 0.0
+            employer_wages_annual = employer_wage * annual_hours
+            wage_subsidy_annual = sw * annual_hours
+            total_income = employer_wages_annual + wage_subsidy_annual
+
+            situation = _build_situation_matched(
+                employment_income=total_income,
+                n_adults=n_adults,
+                n_children=min(len(children_ages), 3),
+                children_ages=children_ages,
+                spouse_annual_income=spouse_annual_income,
+                state_code=state_code,
+            )
+            sim = Simulation(situation=situation)
+            components = _extract_components(sim, total_income)
+            components["net_income"] = (
+                components["net_income"]
+                + components.get("aca_ptc", 0.0)
+                + components.get("medicaid_chip", 0.0)
+            )
+            rows.append({
+                "annual_hours": annual_hours,
+                "scenario": scenario,
+                "employer_wages": employer_wages_annual,
+                "wage_subsidy": wage_subsidy_annual,
+                **components,
+            })
+    return pd.DataFrame(rows)
+
+
+def run_from_matched_precomputed(
+    employer_wage: float,
+    marital_status: str,
+    children_ages: list[int],
+    spouse_annual_income: float,
+    state_code: str,
+    subsidy_params: dict,
+) -> pd.DataFrame:
+    n_adults = 2 if str(marital_status).lower().startswith("married") else 1
+    ages_clean = [int(a) for a in children_ages if 0 <= int(a) <= 17][:3]
+    spouse_income_clean = max(0.0, float(spouse_annual_income or 0.0))
+    config_key = _matched_config_key(n_adults, ages_clean, spouse_income_clean)
+    schedule = load_matched_schedule(config_key, state_code)
+
+    if schedule is None:
+        return _run_live_matched(
+            employer_wage=employer_wage,
+            n_adults=n_adults,
+            children_ages=ages_clean,
+            spouse_annual_income=spouse_income_clean,
+            state_code=state_code,
+            subsidy_params=subsidy_params,
+        )
+
+    from utils.subsidy import hourly_subsidy
+
+    sub_hr = hourly_subsidy(employer_wage, **subsidy_params)
+    income_axis = schedule.index.values.astype(float)
+    rows = []
+    for annual_hours in HOURS_CONTINUOUS:
+        for with_subsidy, scenario in [(False, "Baseline"), (True, "With Subsidy")]:
+            sw = sub_hr if with_subsidy else 0.0
+            employer_wages_annual = employer_wage * annual_hours
+            wage_subsidy_annual = sw * annual_hours
+            total_income = employer_wages_annual + wage_subsidy_annual
+
+            row = {
+                "annual_hours": annual_hours,
+                "scenario": scenario,
+                "employer_wages": employer_wages_annual,
+                "wage_subsidy": wage_subsidy_annual,
+            }
+            for col in _SCHEDULE_COLS:
+                row[col] = float(np.interp(total_income, income_axis, schedule[col].values))
+            row["net_income"] = (
+                row["net_income"]
+                + row.get("aca_ptc", 0.0)
+                + row.get("medicaid_chip", 0.0)
+            )
+            rows.append(row)
     return pd.DataFrame(rows)
 
 

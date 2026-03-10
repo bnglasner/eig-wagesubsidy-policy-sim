@@ -19,11 +19,10 @@ from utils.subsidy import (
 from utils.states import DEFAULT_STATE_OPTION, STATE_OPTIONS, parse_state_code
 from utils.household_sim import (
     COMPONENTS,
-    FAMILY_TYPES,
     TABLE_HOURS,
     TRANSFER_KEYS,
-    run_from_precomputed,
-    schedules_available,
+    matched_schedule_available_for_inputs,
+    run_from_matched_precomputed,
 )
 from utils.eig_style import eig_plotly_layout
 
@@ -33,35 +32,41 @@ from utils.eig_style import eig_plotly_layout
 @st.cache_data(show_spinner="Running PolicyEngine simulation (first load only)...")
 def _cached_sim(
     employer_wage: float,
-    family_type: str,
+    marital_status: str,
+    children_ages_tuple: tuple[int, ...],
+    spouse_annual_income: float,
     state_code: str,
     subsidy_params_tuple: tuple,
 ) -> "pd.DataFrame":
     subsidy_params = dict(subsidy_params_tuple)
-    return run_from_precomputed(employer_wage, family_type, state_code, subsidy_params)
+    return run_from_matched_precomputed(
+        employer_wage=employer_wage,
+        marital_status=marital_status,
+        children_ages=list(children_ages_tuple),
+        spouse_annual_income=spouse_annual_income,
+        state_code=state_code,
+        subsidy_params=subsidy_params,
+    )
 
 
 # â”€â”€ Budget constraint figure â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def _make_budget_figure(df: "pd.DataFrame", scenario: str, active_keys: "set[str]") -> go.Figure:
-    """Single-panel stacked bar chart: annual hours on x-axis, income components on y-axis."""
+    """Stacked area chart: annual hours on x-axis, income components as cumulative filled lines."""
     import numpy as np
 
-    panel = df[df["scenario"] == scenario].sort_values("annual_hours")
+    panel = df[df["scenario"] == scenario].sort_values("annual_hours").copy()
 
     # Compute y-axis bounds using only active components so toggling scenarios doesn't rescale.
-    # Group by (annual_hours, scenario) so the two scenarios don't get summed together.
     pos_cols = [k for k, _, _, is_pos in COMPONENTS if is_pos and k in active_keys]
     neg_cols = [k for k, _, _, is_pos in COMPONENTS if not is_pos and k in active_keys]
 
-    # Display net income = sum of only the active component columns (so it moves with program toggles)
     all_active_cols = [k for k, _, _, _ in COMPONENTS if k in active_keys]
     panel["display_net_income"] = panel[all_active_cols].sum(axis=1)
 
     grouped = df.groupby(["annual_hours", "scenario"])
     y_max_pos = float(grouped[pos_cols].sum().sum(axis=1).max()) if pos_cols else 0.0
     y_min_neg = float(grouped[neg_cols].sum().sum(axis=1).min()) if neg_cols else 0.0
-    # y_max_net: compute display net income for both scenarios, take the max
     all_active_max = df.copy()
     all_active_max["display_net_income"] = all_active_max[all_active_cols].sum(axis=1)
     y_max_net = float(all_active_max.groupby(["annual_hours", "scenario"])["display_net_income"].sum().max())
@@ -69,41 +74,109 @@ def _make_budget_figure(df: "pd.DataFrame", scenario: str, active_keys: "set[str
     y_max = max(y_max_pos, y_max_net, 0.0)
     y_min = min(y_min_neg, 0.0)
 
-    # Add 5% padding
     y_range_pad = (y_max - y_min) * 0.05
     y_axis_min = y_min - y_range_pad
     y_axis_max = y_max + y_range_pad
 
+    x = panel["annual_hours"].values
+
+    def _hex_rgba(hex_color: str, alpha: float) -> str:
+        r = int(hex_color[1:3], 16)
+        g = int(hex_color[3:5], 16)
+        b = int(hex_color[5:7], 16)
+        return f"rgba({r},{g},{b},{alpha})"
+
     fig = go.Figure()
 
-    for key, label, color, _ in COMPONENTS:
-        if key not in active_keys:
-            continue
-        fig.add_trace(go.Bar(
+    # ── Positive components: cumulative stack upward from 0 ──────────────────
+    pos_components = [(k, l, c) for k, l, c, is_pos in COMPONENTS if is_pos and k in active_keys]
+    pos_cumulative = np.zeros(len(x))
+
+    for key, label, color in pos_components:
+        vals = panel[key].values
+        lower = pos_cumulative.copy()
+        pos_cumulative = pos_cumulative + vals
+        upper = pos_cumulative.copy()
+
+        # Invisible lower boundary — fill="tonexty" fills from this trace up to the next
+        fig.add_trace(go.Scatter(
+            x=x, y=lower,
+            mode="lines",
+            line=dict(width=0, color=color),
+            showlegend=False,
+            hoverinfo="skip",
+        ))
+        # Visible upper boundary line + shaded band
+        fig.add_trace(go.Scatter(
+            x=x, y=upper,
+            mode="lines",
             name=label,
-            x=panel["annual_hours"],
-            y=panel[key],
-            marker_color=color,
-            marker_line_width=0,
+            fill="tonexty",
+            fillcolor=_hex_rgba(color, 0.5),
+            line=dict(color=color, width=2),
+            customdata=np.stack([vals], axis=1),
+            hovertemplate=(
+                f"<b>{label}</b><br>"
+                "Contribution: $%{customdata[0]:,.0f}<br>"
+                "Cumulative: $%{y:,.0f}<extra></extra>"
+            ),
         ))
 
+    # ── Negative components: cumulative stack downward from 0 ────────────────
+    neg_components = [(k, l, c) for k, l, c, is_pos in COMPONENTS if not is_pos and k in active_keys]
+    neg_cumulative = np.zeros(len(x))
+
+    for key, label, color in neg_components:
+        vals = panel[key].values          # already negative in the data
+        upper = neg_cumulative.copy()
+        neg_cumulative = neg_cumulative + vals
+        lower = neg_cumulative.copy()
+
+        # Invisible upper boundary
+        fig.add_trace(go.Scatter(
+            x=x, y=upper,
+            mode="lines",
+            line=dict(width=0, color=color),
+            showlegend=False,
+            hoverinfo="skip",
+        ))
+        # Visible lower boundary line + shaded band
+        fig.add_trace(go.Scatter(
+            x=x, y=lower,
+            mode="lines",
+            name=label,
+            fill="tonexty",
+            fillcolor=_hex_rgba(color, 0.5),
+            line=dict(color=color, width=2),
+            customdata=np.stack([np.abs(vals)], axis=1),
+            hovertemplate=(
+                f"<b>{label}</b><br>"
+                "Amount: $%{customdata[0]:,.0f}<br>"
+                "Cumulative: $%{y:,.0f}<extra></extra>"
+            ),
+        ))
+
+    # ── Net income dashed line ────────────────────────────────────────────────
     fig.add_trace(go.Scatter(
         name="Net income",
-        x=panel["annual_hours"],
+        x=x,
         y=panel["display_net_income"],
         mode="lines",
         line=dict(color="#111111", width=2, dash="dash"),
         showlegend=True,
     ))
 
+    # ── Bold zero line + "taxes collected" label ──────────────────────────────
     fig.add_hline(
         y=0,
-        line=dict(color="#000000", width=1.5),
+        line=dict(color="#000000", width=3),
+        annotation_text="taxes collected ▼",
+        annotation_position="bottom left",
+        annotation_font=dict(size=10, color="#555555"),
+        annotation_bgcolor="rgba(255,255,255,0.8)",
     )
 
     fig.update_layout(**eig_plotly_layout(
-        barmode="relative",
-        bargap=0,
         height=500,
         xaxis=dict(
             title="Annual hours worked",
@@ -265,11 +338,85 @@ def render() -> None:
             )
 
         st.subheader("Budget Constraint Options")
-        family_type = st.selectbox(
-            "Family composition",
-            options=list(FAMILY_TYPES.keys()),
-            index=0,
+        _col_marital, _col_children = st.columns(2)
+        with _col_marital:
+            _marital = st.selectbox("Marital status", ["Single", "Married"])
+        with _col_children:
+            _n_children = st.selectbox("Children", [0, 1, 2, 3])
+        spouse_input_mode = st.radio(
+            "Spouse income input",
+            options=["Spouse salary", "Spouse wage + hours"],
+            horizontal=True,
+            disabled=(_marital != "Married"),
         )
+        if spouse_input_mode == "Spouse salary":
+            spouse_annual_income = st.number_input(
+                "Spouse annual salary ($)",
+                min_value=0.0,
+                max_value=250000.0,
+                value=0.0,
+                step=500.0,
+                disabled=(_marital != "Married"),
+                help="Used in household simulations. Ignored for single filers.",
+            )
+            spouse_wage = None
+            spouse_hours_per_week = None
+            spouse_weeks_per_year = None
+        else:
+            _sw_col1, _sw_col2, _sw_col3 = st.columns(3)
+            with _sw_col1:
+                spouse_wage = st.number_input(
+                    "Spouse wage ($/hr)",
+                    min_value=0.0,
+                    max_value=100.0,
+                    value=20.0,
+                    step=0.25,
+                    disabled=(_marital != "Married"),
+                )
+            with _sw_col2:
+                spouse_hours_per_week = st.number_input(
+                    "Spouse hrs/wk",
+                    min_value=0,
+                    max_value=80,
+                    value=40,
+                    step=1,
+                    disabled=(_marital != "Married"),
+                )
+            with _sw_col3:
+                spouse_weeks_per_year = st.number_input(
+                    "Spouse wks/yr",
+                    min_value=0,
+                    max_value=52,
+                    value=50,
+                    step=1,
+                    disabled=(_marital != "Married"),
+                )
+            spouse_annual_income = float(spouse_wage * spouse_hours_per_week * spouse_weeks_per_year)
+            st.caption(f"Derived spouse annual income: `${spouse_annual_income:,.0f}`")
+
+        if _marital != "Married":
+            spouse_annual_income = 0.0
+        if _n_children > 0:
+            st.caption("Child ages")
+            age_cols = st.columns(_n_children)
+            children_ages: list[int] = []
+            default_ages = [4, 9, 15]
+            for i in range(_n_children):
+                with age_cols[i]:
+                    children_ages.append(
+                        int(
+                            st.number_input(
+                                f"Child {i + 1} age",
+                                min_value=0,
+                                max_value=17,
+                                value=default_ages[i],
+                                step=1,
+                                key=f"child_age_{i + 1}",
+                            )
+                        )
+                    )
+        else:
+            children_ages = []
         state_option = st.selectbox(
             "State",
             options=STATE_OPTIONS,
@@ -365,12 +512,17 @@ def render() -> None:
     st.divider()
     st.subheader("Budget Constraint: Income by Hours Worked")
 
-    if not schedules_available(family_type, state_code):
+    if not matched_schedule_available_for_inputs(
+        marital_status=_marital,
+        children_ages=children_ages,
+        spouse_annual_income=spouse_annual_income,
+        state_code=state_code,
+    ):
         st.info(
-            "Pre-computed schedules not found - running PolicyEngine live. "
+            "Matched pre-computed schedule not found for this household setup - running PolicyEngine live. "
             "First load takes 1-3 minutes; subsequent loads are instant. "
-            "Run `python WORKSPACE/code/01_data_preparation/01b_precompute_individual.py` "
-            "to generate schedules for instant loading.",
+            "Run `python WORKSPACE/code/01_data_preparation/01f_precompute_matched_schedules.py` "
+            "to generate matched schedules for instant loading.",
             icon=":hourglass_flowing_sand:",
         )
 
@@ -381,7 +533,14 @@ def render() -> None:
     )
 
     subsidy_params_tuple = tuple(sorted(params.items()))
-    df_sim = _cached_sim(employer_wage, family_type, state_code, subsidy_params_tuple)
+    df_sim = _cached_sim(
+        employer_wage=employer_wage,
+        marital_status=_marital,
+        children_ages_tuple=tuple(children_ages),
+        spouse_annual_income=spouse_annual_income,
+        state_code=state_code,
+        subsidy_params_tuple=subsidy_params_tuple,
+    )
 
     hours_20 = 20 * 52
     hours_40 = 40 * 52
@@ -424,6 +583,21 @@ def render() -> None:
         f"`{subsidy_hr:.2f}`. That equals about `{_fmt_dollar(annual_subsidy_20)}` per year at 20 hours per week "
         f"(52 weeks) and `{_fmt_dollar(annual_subsidy_40)}` per year at 40 hours per week (52 weeks)."
     )
+    _ages_txt = ", ".join(str(a) for a in children_ages) if children_ages else "none"
+    if _marital == "Married":
+        if spouse_input_mode == "Spouse salary":
+            spouse_ctx = f"spouse salary `${spouse_annual_income:,.0f}`"
+        else:
+            spouse_ctx = (
+                f"spouse wage/hours `{spouse_wage:.2f}` x `{spouse_hours_per_week}` x "
+                f"`{spouse_weeks_per_year}` (annual `${spouse_annual_income:,.0f}`)"
+            )
+    else:
+        spouse_ctx = "no spouse income (single filer)"
+    st.caption(
+        f"Household context for simulation: marital status `{_marital}`, {spouse_ctx}, "
+        f"child ages `{_ages_txt}`, state `{state_code}`."
+    )
     st.markdown(
         f"Because this subsidy is treated as earnings in the household simulation, it also changes taxes and "
         f"means-tested supports. For the currently selected programs (`{selected_programs_txt}`), the model estimates "
@@ -433,8 +607,9 @@ def render() -> None:
         f"`{_sign_dollar(p40['transfer_change'])}`, and net income change `{_sign_dollar(p40['net_income_change'])}`."
     )
     st.markdown(
-        "Annual income is decomposed by source as hours worked increase. Taxes are shown as negative bars, "
-        "and net income is the dashed line. Use the scenario toggle to compare baseline and subsidy outcomes."
+        "Annual income is decomposed by source as hours worked increase. Each band shows the cumulative "
+        "contribution of one component; taxes stack downward below the zero line. Net income is the dashed line. "
+        "Use the scenario toggle to compare baseline and subsidy outcomes."
     )
 
     fig_budget = _make_budget_figure(df_sim, scenario, active_keys)

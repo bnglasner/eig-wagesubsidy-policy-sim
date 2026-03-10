@@ -275,9 +275,9 @@ def render() -> None:
     st.header("Population-Level Impacts")
     st.markdown(
         "Aggregate effects of the EIG 80-80 Rule wage subsidy, estimated using "
-        "[PolicyEngine-US](https://policyengine.org) microdata (Current Population Survey) "
-        "and pre-computed income schedules. Wage subsidy amounts are computed analytically; "
-        "safety net interactions are interpolated from household-level simulations."
+        "CPS Outgoing Rotation Group (ORG) microdata. Wage subsidy amounts are computed analytically "
+        "from ORG hourly wages and annual hours; safety net interactions (EITC, SNAP, Medicaid, etc.) "
+        "are interpolated from pre-computed [PolicyEngine-US](https://policyengine.org) household schedules."
     )
 
     if not _all_files_present():
