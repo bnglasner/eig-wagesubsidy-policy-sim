@@ -115,7 +115,7 @@ _SCHEDULES_DIR: Path = (
     / "output" / "data" / "intermediate_results" / "individual_schedules"
 )
 
-# Path to matched-household schedules (built by 02d_precompute_matched_schedules.py)
+# Path to matched-household schedules (built by 01f_precompute_matched_schedules.py)
 _MATCHED_SCHEDULES_DIR: Path = (
     Path(__file__).resolve().parent
     .parent
@@ -405,7 +405,7 @@ def compute_income_point_matched(
     Run PolicyEngine for one primary-earner income level using real matched
     household context (actual spouse income and child ages from ASEC).
 
-    Called by 02d_precompute_matched_schedules.py for each income grid point.
+    Called by 01f_precompute_matched_schedules.py for each income grid point.
     """
     try:
         from policyengine_us import Simulation

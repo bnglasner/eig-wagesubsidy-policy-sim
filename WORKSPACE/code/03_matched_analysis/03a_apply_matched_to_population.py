@@ -1,4 +1,4 @@
-"""
+﻿"""
 03a_apply_matched_to_population.py
 Re-run the population aggregation using matched ASEC household schedules.
 
@@ -23,7 +23,7 @@ Output
     by_wage_bracket.parquet
     by_family_type.parquet
     program_interactions.parquet
-    comparison.parquet      — side-by-side diff vs. stylised outputs
+    comparison.parquet      â€” side-by-side diff vs. stylised outputs
 
 The matched_population/ outputs do NOT overwrite the existing population/
 outputs, so the two approaches can be compared before deciding to promote
@@ -35,10 +35,10 @@ Usage
 
 Prerequisites
 -------------
-    01c_asec_pull.R              →  asec_persons_{YYYY}.parquet
-    01d_asec_preprocess.py       →  asec_earners_{YYYY}.parquet
-    01e_match_org_to_asec.py     →  org_asec_matches.parquet
-    01f_precompute_matched_schedules.py  →  matched_schedules/{key}_{state}.parquet
+    01c_asec_pull.R              â†’  asec_persons_{YYYY}.parquet
+    01d_asec_preprocess.py       â†’  asec_earners_{YYYY}.parquet
+    01e_match_org_to_asec.py     â†’  org_asec_matches.parquet
+    01f_precompute_matched_schedules.py  â†’  matched_schedules/{key}_{state}.parquet
 """
 from __future__ import annotations
 
@@ -50,7 +50,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-# ── Path setup ────────────────────────────────────────────────────────────────
+# â”€â”€ Path setup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 _HERE = Path(__file__).resolve()
 _CODE = _HERE.parents[1]          # WORKSPACE/code/
@@ -78,7 +78,7 @@ from utils.household_sim import (       # noqa: E402
     matched_schedule_path,
 )
 
-# ── Constants ─────────────────────────────────────────────────────────────────
+# â”€â”€ Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 _EXTERNAL_DIR  = PATH_DATA / "external"
 _MATCHES_PATH  = _EXTERNAL_DIR / "org_asec_matches.parquet"
@@ -95,7 +95,16 @@ _WAGE_BRACKETS = [
     ("$13-$16.80", 13.00, 16.80),
 ]
 
-# WKSTAT → annual weeks (mirrors 01a_data_ingest.py)
+_EDUC_MAP: dict[int, str] = {
+     1: "Less than HS",  2: "Less than HS",
+    10: "Less than HS", 20: "Less than HS", 30: "Less than HS",
+    40: "Less than HS", 50: "Less than HS", 60: "Less than HS",
+    71: "HS diploma / GED", 72: "HS diploma / GED", 73: "HS diploma / GED",
+    81: "Some college / Associate's", 91: "Some college / Associate's", 92: "Some college / Associate's",
+   111: "Bachelor's degree", 121: "Graduate degree", 122: "Graduate degree", 123: "Graduate degree", 124: "Graduate degree", 125: "Graduate degree",
+}
+
+# WKSTAT â†’ annual weeks (mirrors 01a_data_ingest.py)
 _WKSTAT_WEEKS: dict[int, float] = {
     11: 52, 12: 48, 13: 52, 14: 40, 15: 48,
     21: 40, 22: 40, 41: 48, 42: 48,
@@ -108,7 +117,7 @@ _SUBSIDY_PCT   = float(_cfg_mod.cfg.get("ws_subsidy_pct", 0.80))
 _FED_MIN_WAGE  = float(_cfg_mod.cfg.get("ws_base_wage", 7.25))
 _TARGET_WAGE   = float(_cfg_mod.cfg.get("ws_target_wage", 16.80))
 
-# ── Config-key helpers (must match 01f_precompute_matched_schedules.py exactly) ──
+# â”€â”€ Config-key helpers (must match 01f_precompute_matched_schedules.py exactly) â”€â”€
 
 _SPOUSE_BUCKET_BOUNDS = [0, 1, 7_500, 12_500, 17_500, 22_500, 27_500, 37_500, 52_500, 72_500]
 _SPOUSE_BUCKET_REPRS  = [0, 5_000, 10_000, 15_000, 20_000, 25_000, 32_500, 45_000, 62_500, 87_500]
@@ -154,7 +163,7 @@ def _worker_config_key(row: "pd.Series") -> str:
     return _config_key(n_adults, n_children, ages_repr, spouse_buck)
 
 
-# ── Schedule cache ────────────────────────────────────────────────────────────
+# â”€â”€ Schedule cache â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 _matched_cache:   dict[tuple[str, str], pd.DataFrame | None] = {}
 _stylised_cache:  dict[str, pd.DataFrame | None]             = {}
@@ -175,7 +184,7 @@ def _load_stylised(family_type_key: str, state: str) -> pd.DataFrame | None:
     return _stylised_cache[k]
 
 
-# ── Worker economics ──────────────────────────────────────────────────────────
+# â”€â”€ Worker economics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def _compute_economics(workers: pd.DataFrame, target_wage: float) -> pd.DataFrame:
     """
@@ -207,14 +216,14 @@ def _compute_economics(workers: pd.DataFrame, target_wage: float) -> pd.DataFram
     return workers
 
 
-# ── Matched delta lookup ──────────────────────────────────────────────────────
+# â”€â”€ Matched delta lookup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def _lookup_matched_deltas(workers: pd.DataFrame) -> pd.DataFrame:
     """
     For each worker, interpolate component deltas from the matched PE schedule.
 
     Falls back to the stylised (family_type_key, state_code) schedule when:
-      - the matched config schedule doesn't exist (02d not yet run for that config)
+      - the matched config schedule doesn't exist (01f not yet run for that config)
       - the matched schedule file is missing for any other reason
 
     Returns a DataFrame indexed like `workers` with one column per _SCHEDULE_COLS.
@@ -239,7 +248,7 @@ def _lookup_matched_deltas(workers: pd.DataFrame) -> pd.DataFrame:
         schedule   = _load_matched(config_key, state)
 
         if schedule is None:
-            # Fall back to stylised schedule for this family_type × state
+            # Fall back to stylised schedule for this family_type Ã— state
             schedule  = _load_stylised(fkey, state)
             n_fallback += 1
         else:
@@ -263,7 +272,7 @@ def _lookup_matched_deltas(workers: pd.DataFrame) -> pd.DataFrame:
         f"{n_fallback:,} stylised fallback, {n_missing:,} missing (zeroed)"
     )
 
-    # ACA PTC and Medicaid/CHIP are in-kind — add to net_income for consistency
+    # ACA PTC and Medicaid/CHIP are in-kind â€” add to net_income for consistency
     if "aca_ptc" in out.columns:
         out["net_income"] = out["net_income"] + out["aca_ptc"]
     if "medicaid_chip" in out.columns:
@@ -272,7 +281,7 @@ def _lookup_matched_deltas(workers: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-# ── Aggregation helpers (same as 02a) ─────────────────────────────────────────
+# â”€â”€ Aggregation helpers (same as 02a) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def _weighted_median(values: np.ndarray, weights: np.ndarray) -> float:
     values = np.asarray(values, dtype=float)
@@ -308,7 +317,56 @@ def _wage_bracket_label(wage: float) -> str:
     return "$13-$16.80"
 
 
-# ── Main ──────────────────────────────────────────────────────────────────────
+def _agg_by_group(
+    workers: pd.DataFrame,
+    net_income_delta: np.ndarray,
+    total_weights: float,
+    col: str,
+    ordered_labels: list[str] | None = None,
+    base_group_totals: dict[str, float] | None = None,
+) -> pd.DataFrame:
+    if ordered_labels:
+        valid_mask = workers[col].isin(ordered_labels)
+    else:
+        valid_mask = workers[col].notna()
+    workers = workers[valid_mask]
+    net_income_delta = net_income_delta[valid_mask.values]
+
+    rows = []
+    groups = workers.groupby(col, observed=True)
+    for label, grp in groups:
+        w = grp["weight"].values
+        gs = grp["subsidy_annual"].values
+        nd = net_income_delta[grp.index]
+        eligible_wt = w.sum()
+        if base_group_totals is not None and label in base_group_totals:
+            base_wt = base_group_totals[label]
+            pct_in_group = round(eligible_wt / base_wt * 100, 1) if base_wt > 0 else None
+        else:
+            pct_in_group = None
+        rows.append({
+            col: label,
+            "n_workers_k": round(eligible_wt / 1e3, 1),
+            "pct_of_recipients": round(eligible_wt / total_weights * 100, 1),
+            "pct_in_group": pct_in_group,
+            "avg_annual_subsidy": round(_weighted_mean(gs, w), 0),
+            "avg_net_income_gain": round(_weighted_mean(nd, w), 0),
+            "gross_cost_mn": round((gs * w).sum() / 1e6, 1),
+        })
+    df = pd.DataFrame(rows)
+    if df.empty:
+        return pd.DataFrame(columns=[
+            col, "n_workers_k", "pct_of_recipients", "pct_in_group",
+            "avg_annual_subsidy", "avg_net_income_gain", "gross_cost_mn",
+        ])
+    if ordered_labels:
+        df[col] = pd.Categorical(df[col], categories=ordered_labels, ordered=True)
+        df = df.sort_values(col).reset_index(drop=True)
+        df[col] = df[col].astype(str)
+    return df
+
+
+# â”€â”€ Main â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def main() -> None:
     if not _MATCHES_PATH.exists():
@@ -324,7 +382,7 @@ def main() -> None:
     target_wage = _TARGET_WAGE
     print(f"  Target wage: ${target_wage:.2f}/hr  (configured)")
 
-    # ── Derive economics ──────────────────────────────────────────────────────
+    # â”€â”€ Derive economics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     print("03a | Computing worker economics ...")
     workers = _compute_economics(workers, target_wage)
 
@@ -342,14 +400,14 @@ def main() -> None:
     total_workers_mn = weights.sum() / 1e6
     gross_cost_bn    = (gross_subsidies * weights).sum() / 1e9
 
-    # ── Matched delta lookup ──────────────────────────────────────────────────
+    # â”€â”€ Matched delta lookup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     print("03a | Looking up matched fiscal interaction deltas ...")
     deltas           = _lookup_matched_deltas(workers)
     net_income_delta = deltas["net_income"].values
     net_cost_bn      = (net_income_delta * weights).sum() / 1e9
     avg_subsidy      = _weighted_mean(gross_subsidies, weights)
 
-    # ── Summary ───────────────────────────────────────────────────────────────
+    # â”€â”€ Summary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     print("03a | Building summary ...")
     summary = pd.DataFrame([{
         "gross_cost_bn":      round(gross_cost_bn, 2),
@@ -363,16 +421,72 @@ def main() -> None:
     print(f"  Gross cost: ${gross_cost_bn:.2f}B | Net cost: ${net_cost_bn:.2f}B | "
           f"Workers: {total_workers_mn:.2f}M | Avg subsidy: ${avg_subsidy:,.0f}")
 
-    # ── By state ──────────────────────────────────────────────────────────────
+    # â”€â”€ By state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # Base-population denominators for "pct_in_group" rates
+    _state_base_totals: dict[str, float] = {}
+    _base_group_totals: dict[str, dict[str, float]] = {}
+    try:
+        org_candidates = sorted((PATH_DATA / "external").glob("org_workers_*.parquet"))
+        if org_candidates:
+            org_raw = pd.read_parquet(org_candidates[-1])
+            base_mask = (
+                org_raw["epi_sample_eligible"].astype(bool) &
+                org_raw["hourly_wage_epi_valid"].astype(bool) &
+                (org_raw["age"] >= 16) & (org_raw["age"] <= 64) &
+                (org_raw["earnwt"] > 0)
+            )
+            if "relate" in org_raw.columns:
+                base_mask &= ~((org_raw["relate"] == 301) & (org_raw["age"] < 19))
+            org_base = org_raw[base_mask].copy()
+            n_months_base = org_base.groupby(["year", "month"]).ngroups
+
+            fips_to_state = {
+                 1: "AL",  2: "AK",  4: "AZ",  5: "AR",  6: "CA",  8: "CO",  9: "CT",
+                10: "DE", 11: "DC", 12: "FL", 13: "GA", 15: "HI", 16: "ID", 17: "IL",
+                18: "IN", 19: "IA", 20: "KS", 21: "KY", 22: "LA", 23: "ME", 24: "MD",
+                25: "MA", 26: "MI", 27: "MN", 28: "MS", 29: "MO", 30: "MT", 31: "NE",
+                32: "NV", 33: "NH", 34: "NJ", 35: "NM", 36: "NY", 37: "NC", 38: "ND",
+                39: "OH", 40: "OK", 41: "OR", 42: "PA", 44: "RI", 45: "SC", 46: "SD",
+                47: "TN", 48: "TX", 49: "UT", 50: "VT", 51: "VA", 53: "WA", 54: "WV",
+                55: "WI", 56: "WY",
+            }
+            org_base["_state_code"] = org_base["statefip"].map(fips_to_state)
+            _state_base_totals = (
+                org_base.groupby("_state_code", observed=True)["earnwt"]
+                .sum().div(max(n_months_base, 1)).to_dict()
+            )
+
+            if "educ" in org_base.columns:
+                org_base["educ_group"] = pd.cut(
+                    org_base["educ"],
+                    bins=[0, 60, 73, 111, 999],
+                    labels=["lt_hs", "hs", "some_college", "ba_plus"],
+                    right=True,
+                ).astype(str)
+            for col in ["sex_label", "race_ethnicity", "educ_group", "age_bin"]:
+                if col in org_base.columns:
+                    _base_group_totals[col] = (
+                        org_base.groupby(col, observed=True)["earnwt"]
+                        .sum()
+                        .div(max(n_months_base, 1))
+                        .to_dict()
+                    )
+    except Exception as e:
+        print(f"  [warn] Base population denominator load failed ({e})")
+
     print("03a | Aggregating by state ...")
     state_rows = []
     for state_code, grp in workers.groupby("state_code"):
         w  = grp["weight"].values
         gs = grp["subsidy_annual"].values
         nd = net_income_delta[grp.index]
+        eligible_wt = w.sum()
+        base_wt = _state_base_totals.get(state_code, 0)
+        pct_in_group = round(eligible_wt / base_wt * 100, 1) if base_wt > 0 else None
         state_rows.append({
             "state_code":         state_code,
-            "n_workers_k":        round(w.sum() / 1e3, 1),
+            "n_workers_k":        round(eligible_wt / 1e3, 1),
+            "pct_in_group":       pct_in_group,
             "gross_cost_mn":      round((gs * w).sum() / 1e6, 1),
             "net_cost_mn":        round((nd * w).sum() / 1e6, 1),
             "avg_annual_subsidy": round(_weighted_mean(gs, w), 0),
@@ -380,7 +494,7 @@ def main() -> None:
     by_state = pd.DataFrame(state_rows).sort_values("state_code")
     by_state.to_parquet(_OUT_DIR / "by_state.parquet", index=False)
 
-    # ── By wage bracket ───────────────────────────────────────────────────────
+    # â”€â”€ By wage bracket â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     print("03a | Aggregating by wage bracket ...")
     workers["wage_bracket"] = workers["employer_wage"].apply(_wage_bracket_label)
     bracket_rows = []
@@ -402,7 +516,7 @@ def main() -> None:
     by_wage_bracket = pd.DataFrame(bracket_rows)
     by_wage_bracket.to_parquet(_OUT_DIR / "by_wage_bracket.parquet", index=False)
 
-    # ── By family type ────────────────────────────────────────────────────────
+    # â”€â”€ By family type â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     print("03a | Aggregating by family type ...")
     ft_rows = []
     _FT_LABELS = {
@@ -426,7 +540,7 @@ def main() -> None:
     by_family_type = pd.DataFrame(ft_rows)
     by_family_type.to_parquet(_OUT_DIR / "by_family_type.parquet", index=False)
 
-    # ── Program interactions ──────────────────────────────────────────────────
+    # â”€â”€ Program interactions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     print("03a | Computing program interaction table ...")
     prog_rows = []
     for col in _SCHEDULE_COLS:
@@ -453,8 +567,41 @@ def main() -> None:
         pd.DataFrame(prog_rows),
     ], ignore_index=True)
     program_interactions.to_parquet(_OUT_DIR / "program_interactions.parquet", index=False)
+    # Demographic breakdown outputs (mirrors 02a schema)
+    _EDUC_ORDER = ["lt_hs", "hs", "some_college", "ba_plus"]
+    _AGE_ORDER = ["16-24", "25-34", "35-44", "45-54", "55-64"]
 
-    # ── Comparison against stylised estimates ─────────────────────────────────
+    demo_outputs: dict[str, pd.DataFrame] = {}
+    if "sex_label" in workers.columns:
+        print("03a | Aggregating by sex ...")
+        demo_outputs["by_sex"] = _agg_by_group(
+            workers, net_income_delta, weights.sum(), "sex_label",
+            base_group_totals=_base_group_totals.get("sex_label"),
+        )
+    if "race_ethnicity" in workers.columns:
+        print("03a | Aggregating by race/ethnicity ...")
+        demo_outputs["by_race_ethnicity"] = _agg_by_group(
+            workers, net_income_delta, weights.sum(), "race_ethnicity",
+            base_group_totals=_base_group_totals.get("race_ethnicity"),
+        )
+    if "educ_group" in workers.columns:
+        print("03a | Aggregating by education ...")
+        demo_outputs["by_education"] = _agg_by_group(
+            workers, net_income_delta, weights.sum(), "educ_group",
+            ordered_labels=_EDUC_ORDER,
+            base_group_totals=_base_group_totals.get("educ_group"),
+        )
+    if "age_bin" in workers.columns:
+        print("03a | Aggregating by age bin ...")
+        demo_outputs["by_age_bin"] = _agg_by_group(
+            workers, net_income_delta, weights.sum(), "age_bin",
+            ordered_labels=_AGE_ORDER,
+            base_group_totals=_base_group_totals.get("age_bin"),
+        )
+    for name, df in demo_outputs.items():
+        df.to_parquet(_OUT_DIR / f"{name}.parquet", index=False)
+
+    # â”€â”€ Comparison against stylised estimates â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     print("03a | Building comparison vs. stylised estimates ...")
     stylised_summary_path = _STYLISED_DIR / "summary.parquet"
     if stylised_summary_path.exists():
@@ -485,7 +632,7 @@ def main() -> None:
         print("\n  Stylised vs. matched comparison:")
         print(comparison.to_string(index=False))
 
-    # ── Program-level comparison ───────────────────────────────────────────────
+    # â”€â”€ Program-level comparison â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         stylised_prog_path = _STYLISED_DIR / "program_interactions.parquet"
         if stylised_prog_path.exists():
             sp = pd.read_parquet(stylised_prog_path).set_index("key")
@@ -504,7 +651,7 @@ def main() -> None:
             print("\n  Program-level delta comparison (matched - stylised, $M):")
             print(prog_comp.to_string(index=False))
     else:
-        print("  [info] No stylised summary found — skipping comparison.")
+        print("  [info] No stylised summary found â€” skipping comparison.")
 
     print(f"\n03a | Complete. Output written to:\n  {_OUT_DIR}")
 

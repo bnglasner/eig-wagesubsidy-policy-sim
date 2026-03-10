@@ -8,8 +8,9 @@ Loads five pre-computed parquet files produced by the data pipeline and renders:
   - Program interaction table
   - Family type breakdown chart
 
-All data files live in:
-  WORKSPACE/output/data/intermediate_results/population/
+Data files live in:
+  WORKSPACE/output/data/intermediate_results/population/          (stylized)
+  WORKSPACE/output/data/intermediate_results/matched_population/  (matched ASEC)
 """
 from __future__ import annotations
 
@@ -18,33 +19,38 @@ from pathlib import Path
 import streamlit as st
 
 # â"€â"€ Paths â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
-_HERE       = Path(__file__).resolve()
+_HERE = Path(__file__).resolve()
 # population.py lives at WORKSPACE/app/tabs/, so repo root is parents[3].
-_PROJECT    = _HERE.parents[3]
-_POP_DIR    = (
-    _PROJECT
-    / "WORKSPACE" / "output" / "data" / "intermediate_results" / "population"
-)
+_PROJECT = _HERE.parents[3]
+_INTERMEDIATE_DIR = _PROJECT / "WORKSPACE" / "output" / "data" / "intermediate_results"
+_POP_STYLISED_DIR = _INTERMEDIATE_DIR / "population"
+_POP_MATCHED_DIR = _INTERMEDIATE_DIR / "matched_population"
 
-_FILES = {
-    "summary":              _POP_DIR / "summary.parquet",
-    "by_state":             _POP_DIR / "by_state.parquet",
-    "by_wage_bracket":      _POP_DIR / "by_wage_bracket.parquet",
-    "by_family_type":       _POP_DIR / "by_family_type.parquet",
-    "program_interactions": _POP_DIR / "program_interactions.parquet",
-}
-
-# Demographic breakdown files (optional — present only if pipeline ran with demographic columns)
-_DEMO_FILES = {
-    "by_sex":            _POP_DIR / "by_sex.parquet",
-    "by_race_ethnicity": _POP_DIR / "by_race_ethnicity.parquet",
-    "by_education":      _POP_DIR / "by_education.parquet",
-    "by_age_bin":        _POP_DIR / "by_age_bin.parquet",
-}
+_CORE_FILE_NAMES = [
+    "summary",
+    "by_state",
+    "by_wage_bracket",
+    "by_family_type",
+    "program_interactions",
+]
+_DEMO_FILE_NAMES = [
+    "by_sex",
+    "by_race_ethnicity",
+    "by_education",
+    "by_age_bin",
+]
 
 
-def _all_files_present() -> bool:
-    return all(p.exists() for p in _FILES.values())
+def _build_file_map(base_dir: Path) -> dict[str, Path]:
+    out = {name: base_dir / f"{name}.parquet" for name in _CORE_FILE_NAMES}
+    out.update({name: base_dir / f"{name}.parquet" for name in _DEMO_FILE_NAMES})
+    out["comparison"] = base_dir / "comparison.parquet"
+    out["program_comparison"] = base_dir / "program_comparison.parquet"
+    return out
+
+
+def _core_files_present(file_map: dict[str, Path]) -> bool:
+    return all(file_map[name].exists() for name in _CORE_FILE_NAMES)
 
 
 # â"€â"€ EIG style â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
@@ -273,24 +279,43 @@ def render() -> None:
     import pandas as pd
 
     st.header("Population-Level Impacts")
-    st.markdown(
-        "Aggregate effects of the EIG 80-80 Rule wage subsidy, estimated using "
-        "CPS Outgoing Rotation Group (ORG) microdata. Wage subsidy amounts are computed analytically "
-        "from ORG hourly wages and annual hours; safety net interactions (EITC, SNAP, Medicaid, etc.) "
-        "are interpolated from pre-computed [PolicyEngine-US](https://policyengine.org) household schedules."
-    )
+    stylised_files = _build_file_map(_POP_STYLISED_DIR)
+    matched_files = _build_file_map(_POP_MATCHED_DIR)
+    stylised_ready = _core_files_present(stylised_files)
+    matched_ready = _core_files_present(matched_files)
 
-    if not _all_files_present():
-        missing = [name for name, p in _FILES.items() if not p.exists()]
+    if matched_ready and stylised_ready:
+        method_label = st.radio(
+            "Household interaction method",
+            options=["Matched ASEC households", "Stylized households"],
+            horizontal=True,
+            help=(
+                "Matched ASEC households use spouse income and child ages from matched ASEC records; "
+                "stylized households use fixed archetypes."
+            ),
+        )
+    elif matched_ready:
+        method_label = "Matched ASEC households"
+    elif stylised_ready:
+        method_label = "Stylized households"
+    else:
+        method_label = None
+
+    if method_label is None:
+        missing = [name for name in _CORE_FILE_NAMES if not stylised_files[name].exists()]
         st.warning(
             f"Population impact data has not been generated yet "
-            f"(missing: {', '.join(missing)}). "
+            f"(missing stylized core files: {', '.join(missing)}). "
             "Run the data pipeline first:\n\n"
             "```powershell\n"
             "# Activate your virtualenv, then:\n"
             "cd C:\\path\\to\\eig-wagesubsidy-policy-sim\n"
             "python WORKSPACE/code/01_data_preparation/01a_data_ingest.py\n"
             "python WORKSPACE/code/02_descriptive_analysis/02a_descriptive_stats.py\n"
+            "# Optional matched-household pipeline:\n"
+            "python WORKSPACE/code/01_data_preparation/01e_match_org_to_asec.py\n"
+            "python WORKSPACE/code/01_data_preparation/01f_precompute_matched_schedules.py\n"
+            "python WORKSPACE/code/03_matched_analysis/03a_apply_matched_to_population.py\n"
             "```"
         )
         with st.expander("What this tab will show once the pipeline runs"):
@@ -305,12 +330,27 @@ def render() -> None:
             )
         return
 
+    using_matched = method_label == "Matched ASEC households"
+    active_files = matched_files if using_matched else stylised_files
+    source_tag = "matched" if using_matched else "stylized"
+
+    if using_matched:
+        st.markdown(
+            "Aggregate effects using CPS ORG eligibility and **matched ASEC household context** for "
+            "PolicyEngine interactions (spouse income and child ages)."
+        )
+    else:
+        st.markdown(
+            "Aggregate effects using CPS ORG eligibility and **stylized household archetypes** for "
+            "PolicyEngine interactions."
+        )
+
     # Load data
-    summary = pd.read_parquet(_FILES["summary"]).iloc[0]
-    by_state = pd.read_parquet(_FILES["by_state"])
-    by_wb    = pd.read_parquet(_FILES["by_wage_bracket"])
-    by_ft    = pd.read_parquet(_FILES["by_family_type"])
-    prog     = pd.read_parquet(_FILES["program_interactions"])
+    summary = pd.read_parquet(active_files["summary"]).iloc[0]
+    by_state = pd.read_parquet(active_files["by_state"])
+    by_wb = pd.read_parquet(active_files["by_wage_bracket"])
+    by_ft = pd.read_parquet(active_files["by_family_type"])
+    prog = pd.read_parquet(active_files["program_interactions"])
 
     # â"€â"€ Headline metrics â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     st.subheader("Headline Estimates")
@@ -338,16 +378,33 @@ def render() -> None:
         help="Weighted average annual subsidy per eligible worker.",
     )
 
-    st.caption(
-        "**Methodology note:** Eligibility is identified from CPS ORG hourly wages (`hourly_wage_epi`) "
-        "with a federal floor of $7.25 and a dynamic target wage (80% of weighted median paid-hourly wage). "
-        "Workers age 65 or older are excluded as a proxy for Social Security recipient status (SS income "
-        "is not directly observed in ORG microdata). Tax dependents — defined as children of the household "
-        "head (`relate == 301`) under age 19 — are also excluded. "
-        "Annual hours are `hours_epi x WKSTAT weeks` (fallback used only when hours are missing). "
-        "Family type is derived from `MARST` and `NCHILD`, and safety net interactions are interpolated from "
-        "pre-computed PolicyEngine-US 2026 household schedules."
-    )
+    if using_matched:
+        st.caption(
+            "**Methodology note (matched ASEC):** Eligibility and gross subsidy are identified from CPS ORG "
+            "hourly wages and annual hours. Net-cost interactions are drawn from pre-computed PolicyEngine-US "
+            "schedules keyed to matched ASEC household context (state, spouse income bucket, number of adults, "
+            "and child age bands)."
+        )
+    else:
+        st.caption(
+            "**Methodology note (stylized):** Eligibility is identified from CPS ORG hourly wages (`hourly_wage_epi`) "
+            "with a federal floor of $7.25 and a dynamic target wage (80% of weighted median paid-hourly wage). "
+            "Workers age 65 or older are excluded as a proxy for Social Security recipient status (SS income "
+            "is not directly observed in ORG microdata). Tax dependents — defined as children of the household "
+            "head (`relate == 301`) under age 19 — are also excluded. Annual hours are `hours_epi x WKSTAT weeks` "
+            "(fallback used only when hours are missing). Safety-net interactions are interpolated from "
+            "pre-computed stylized PolicyEngine-US schedules."
+        )
+
+    if using_matched and active_files["comparison"].exists():
+        comp = pd.read_parquet(active_files["comparison"])
+        row_net = comp[comp["metric"] == "Net cost ($B)"]
+        if not row_net.empty:
+            delta_pct = float(row_net.iloc[0]["delta_pct"])
+            st.info(
+                f"Matched vs stylized check: net cost is {delta_pct:+.1f}% relative to stylized "
+                f"(comparison source: `matched_population/comparison.parquet`)."
+            )
 
 
     labels_by_key = {key: label for key, label, _, _ in COMPONENTS}
@@ -371,8 +428,8 @@ def render() -> None:
     offset_bn = summary["gross_cost_bn"] - summary["net_cost_bn"]
 
     st.markdown(
-        f"This population simulation applies the current policy settings to CPS ORG eligible workers and then maps "
-        f"household-level tax and transfer interactions from pre-computed schedules. In this run, about "
+        f"This {source_tag} population simulation applies the current policy settings to CPS ORG eligible workers "
+        f"and maps household-level tax and transfer interactions from pre-computed schedules. In this run, about "
         f"`{summary['n_workers_mn']:.2f} million` workers are eligible, the average annual subsidy is "
         f"`${summary['avg_annual_subsidy']:,.0f}`, gross program cost is `{summary['gross_cost_bn']:.2f}B`, "
         f"and net cost is `{summary['net_cost_bn']:.2f}B`."
@@ -461,24 +518,47 @@ def render() -> None:
             hide_index=True,
         )
 
+    if using_matched and active_files["program_comparison"].exists():
+        with st.expander("Matched vs Stylized program deltas"):
+            prog_comp = pd.read_parquet(active_files["program_comparison"])
+            st.dataframe(
+                prog_comp.rename(columns={
+                    "program": "Program",
+                    "stylised_delta_mn": "Stylized delta ($M)",
+                    "matched_delta_mn": "Matched delta ($M)",
+                    "diff_mn": "Difference ($M)",
+                }).style.format({
+                    "Stylized delta ($M)": "${:,.1f}",
+                    "Matched delta ($M)": "${:,.1f}",
+                    "Difference ($M)": "${:,.1f}",
+                }),
+                width='stretch',
+                hide_index=True,
+            )
+
     st.divider()
 
     # ── Demographic breakdowns ────────────────────────────────────────────────
-    demo_available = all(p.exists() for p in _DEMO_FILES.values())
+    demo_available = all(active_files[name].exists() for name in _DEMO_FILE_NAMES)
     if demo_available:
         import pandas as pd
 
         st.subheader("Eligible Workers by Demographic Group")
+        if using_matched:
+            st.caption(
+                "Matched-mode interpretation: worker counts come from ORG eligibility; "
+                "net-income effects include ASEC-matched household context (spouse income and child ages)."
+            )
         st.markdown(
             "Distribution of eligible workers and average annual subsidy across "
             "sex, race/ethnicity, education, and age. Worker counts are weighted "
             "CPS ORG estimates."
         )
 
-        by_sex   = pd.read_parquet(_DEMO_FILES["by_sex"])
-        by_race  = pd.read_parquet(_DEMO_FILES["by_race_ethnicity"])
-        by_educ  = pd.read_parquet(_DEMO_FILES["by_education"])
-        by_age   = pd.read_parquet(_DEMO_FILES["by_age_bin"])
+        by_sex = pd.read_parquet(active_files["by_sex"])
+        by_race = pd.read_parquet(active_files["by_race_ethnicity"])
+        by_educ = pd.read_parquet(active_files["by_education"])
+        by_age = pd.read_parquet(active_files["by_age_bin"])
 
         col_sex, col_race = st.columns(2)
 

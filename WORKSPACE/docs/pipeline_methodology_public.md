@@ -58,16 +58,16 @@ ORG is used to identify the distribution of hourly wages and employment intensit
 
 ### 3.2 Source B: PolicyEngine schedules for fiscal interactions
 
-PolicyEngine schedules encode how household taxes and program entitlements change as annual earnings vary, conditional on stylized family-state profiles.
+PolicyEngine schedules encode how household taxes and program entitlements change as annual earnings vary, conditional on household-state profiles.
 
-### 3.3 Why sources are not linked record-to-record
+### 3.3 How sources are linked in the matched pipeline
 
-ORG and ASEC/PolicyEngine inputs are not a common panel and do not support defensible one-to-one linkage at the individual level in this setup. The pipeline therefore uses:
+ORG and ASEC are not a common panel, so linkage is not a true person-level panel merge. The matched pipeline uses a constrained nearest-neighbor statistical match from ORG workers to ASEC primary earners, then applies PolicyEngine schedules to the matched household context.
 
 - ORG for worker-level eligibility and subsidy amounts
-- PolicyEngine schedule interpolation for conditional fiscal deltas
+- ASEC-matched household context (spouse income, child ages, adults, state) for fiscal deltas
 
-This avoids spurious pseudo-matching while preserving interpretability of each modeling layer.
+This preserves ORG wage-rate identification while adding more realistic household interactions than stylized archetypes.
 
 ---
 
@@ -98,12 +98,17 @@ Exported variables include:
 Script:
 
 - `WORKSPACE/code/01_data_preparation/01b_precompute_individual.py`
+- `WORKSPACE/code/01_data_preparation/01e_match_org_to_asec.py`
+- `WORKSPACE/code/01_data_preparation/01f_precompute_matched_schedules.py`
 
 Behavior:
 
 - Constructs annual-income schedules by `(family_type_key, state_code)`.
 - Stores component values over an income grid in:
   - `WORKSPACE/output/data/intermediate_results/individual_schedules/{family}_{state}.parquet`
+- In matched mode, statistically matches ORG workers to ASEC earners and precomputes schedules by matched config key:
+  - `WORKSPACE/data/external/org_asec_matches.parquet`
+  - `WORKSPACE/output/data/intermediate_results/matched_schedules/{config_key}_{state}.parquet`
 
 These schedules are later interpolated (not re-simulated live) during population aggregation.
 
@@ -218,7 +223,7 @@ Final key in:
 
 - `single_0c`, `single_2c`, `married_0c`, `married_2c`
 
-Note: this is a stylized household typing designed to align with schedule files, not a full household reconstruction.
+Note: this stylized key remains available for baseline/fallback schedules. In matched mode, household context is assigned via nearest-neighbor ORG->ASEC matching and matched config keys.
 
 ---
 
@@ -227,6 +232,7 @@ Note: this is a stylized household typing designed to align with schedule files,
 Script:
 
 - `WORKSPACE/code/02_descriptive_analysis/02a_descriptive_stats.py`
+- `WORKSPACE/code/03_matched_analysis/03a_apply_matched_to_population.py` (matched mode)
 
 For each eligible worker `i`:
 
@@ -234,7 +240,9 @@ For each eligible worker `i`:
    - `Y0_i = employer_wage_i * annual_hours_i`
 2. Subsidized labor income:
    - `Y1_i = Y0_i + subsidy_ann_i`
-3. Load schedule for `(family_type_key_i, state_code_i)`
+3. Load schedule for either:
+   - stylized key `(family_type_key_i, state_code_i)`, or
+   - matched key `(config_key_i, state_code_i)` from ORG->ASEC match
 4. Interpolate each schedule component at `Y0_i` and `Y1_i`
 5. Compute component delta:
    - `Delta c_i = c(Y1_i) - c(Y0_i)`
@@ -338,10 +346,15 @@ From repository root:
 # 3) Build population aggregates with schedule interpolation
 .\.venv\Scripts\python.exe WORKSPACE\code\02_descriptive_analysis\02a_descriptive_stats.py
 
-# 4) Optional: run validation framework
+# 4) Optional matched-household pipeline
+.\.venv\Scripts\python.exe WORKSPACE\code\01_data_preparation\01e_match_org_to_asec.py
+.\.venv\Scripts\python.exe WORKSPACE\code\01_data_preparation\01f_precompute_matched_schedules.py
+.\.venv\Scripts\python.exe WORKSPACE\code\03_matched_analysis\03a_apply_matched_to_population.py
+
+# 5) Optional: run validation framework
 .\.venv\Scripts\python.exe WORKSPACE\code\04_robustness_heterogeneity\04b_org_validation_framework.py
 
-# 5) Launch interactive app
+# 6) Launch interactive app
 .\.venv\Scripts\streamlit.exe run WORKSPACE\app\app.py --server.port 8501
 ```
 
@@ -350,6 +363,7 @@ From repository root:
 - `WORKSPACE/data/external/org_workers_{max_year}.parquet`
 - `WORKSPACE/data/processed/hourly_workers.parquet`
 - population outputs in `WORKSPACE/output/data/intermediate_results/population/`
+- matched outputs in `WORKSPACE/output/data/intermediate_results/matched_population/`
 - validation outputs in `WORKSPACE/output/validation/`
 
 ---
@@ -358,7 +372,7 @@ From repository root:
 
 1. ORG is strong for wage-rate identification but not a complete annual household-resource survey.
 2. Annual hours are modeled using current-hours plus WKSTAT-based week multipliers, not observed prior-year weeks.
-3. Tax-transfer responses are approximated from stylized schedule interpolation by family-state type, not full household microsimulation per ORG record.
+3. Tax-transfer responses use either stylized family-state schedules or matched ASEC-nearest-neighbor household schedules; both are interpolated schedule approximations rather than per-record live microsimulation.
 4. Eligibility floor uses federal `$7.25` by design; state minimum wages are not imposed in the baseline policy implementation.
 5. The Social Security exclusion rule uses age 65+ as a proxy. The CPS ORG does not collect income-by-source, so true SS recipient status (including SSDI recipients under 65) cannot be directly identified.
 6. The tax-dependent exclusion covers qualifying child dependents (child of household head, age < 19) identifiable in ORG via the `relate` variable. Qualifying relative dependents (any age, income < threshold) cannot be identified without tax-return level data.
