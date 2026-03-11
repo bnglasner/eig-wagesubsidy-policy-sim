@@ -57,11 +57,20 @@ def _make_budget_figure(df: "pd.DataFrame", scenario: str, active_keys: "set[str
 
     panel = df[df["scenario"] == scenario].sort_values("annual_hours").copy()
 
-    # Compute y-axis bounds using only active components so toggling scenarios doesn't rescale.
-    pos_cols = [k for k, _, _, is_pos in COMPONENTS if is_pos and k in active_keys]
-    neg_cols = [k for k, _, _, is_pos in COMPONENTS if not is_pos and k in active_keys]
+    def _is_nonzero_series(values: np.ndarray) -> bool:
+        return bool(np.any(~np.isclose(values, 0.0)))
 
-    all_active_cols = [k for k, _, _, _ in COMPONENTS if k in active_keys]
+    visible_component_keys = {
+        key
+        for key, _, _, _ in COMPONENTS
+        if key in active_keys and _is_nonzero_series(panel[key].to_numpy())
+    }
+
+    # Compute y-axis bounds using only active components so toggling scenarios doesn't rescale.
+    pos_cols = [k for k, _, _, is_pos in COMPONENTS if is_pos and k in visible_component_keys]
+    neg_cols = [k for k, _, _, is_pos in COMPONENTS if not is_pos and k in visible_component_keys]
+
+    all_active_cols = [k for k, _, _, _ in COMPONENTS if k in visible_component_keys]
     panel["display_net_income"] = panel[all_active_cols].sum(axis=1)
 
     grouped = df.groupby(["annual_hours", "scenario"])
@@ -89,7 +98,7 @@ def _make_budget_figure(df: "pd.DataFrame", scenario: str, active_keys: "set[str
     fig = go.Figure()
 
     # -- Positive components: cumulative stack upward from 0 ------------------
-    pos_components = [(k, l, c) for k, l, c, is_pos in COMPONENTS if is_pos and k in active_keys]
+    pos_components = [(k, l, c) for k, l, c, is_pos in COMPONENTS if is_pos and k in visible_component_keys]
     pos_cumulative = np.zeros(len(x))
 
     for key, label, color in pos_components:
@@ -112,19 +121,28 @@ def _make_budget_figure(df: "pd.DataFrame", scenario: str, active_keys: "set[str
             mode="lines",
             name=label,
             fill="tonexty",
-            hoveron="points+fills",
+            hoverinfo="skip",
             fillcolor=_hex_rgba(color, 0.5),
             line=dict(color=color, width=2),
-            customdata=np.stack([vals], axis=1),
+        ))
+        hover_mask = ~np.isclose(vals, 0.0)
+        fig.add_trace(go.Scatter(
+            x=x,
+            y=np.where(hover_mask, upper, np.nan),
+            mode="markers",
+            name=label,
+            showlegend=False,
+            marker=dict(size=14, color="rgba(0,0,0,0)"),
+            customdata=np.stack([vals, upper], axis=1),
             hovertemplate=(
                 f"<b>{label}</b><br>"
                 "Contribution: $%{customdata[0]:,.0f}<br>"
-                "Cumulative: $%{y:,.0f}<extra></extra>"
+                "Cumulative: $%{customdata[1]:,.0f}<extra></extra>"
             ),
         ))
 
     # -- Negative components: cumulative stack downward from 0 ----------------
-    neg_components = [(k, l, c) for k, l, c, is_pos in COMPONENTS if not is_pos and k in active_keys]
+    neg_components = [(k, l, c) for k, l, c, is_pos in COMPONENTS if not is_pos and k in visible_component_keys]
     neg_cumulative = np.zeros(len(x))
 
     for key, label, color in neg_components:
@@ -147,14 +165,23 @@ def _make_budget_figure(df: "pd.DataFrame", scenario: str, active_keys: "set[str
             mode="lines",
             name=label,
             fill="tonexty",
-            hoveron="points+fills",
+            hoverinfo="skip",
             fillcolor=_hex_rgba(color, 0.5),
             line=dict(color=color, width=2),
-            customdata=np.stack([np.abs(vals)], axis=1),
+        ))
+        hover_mask = ~np.isclose(vals, 0.0)
+        fig.add_trace(go.Scatter(
+            x=x,
+            y=np.where(hover_mask, lower, np.nan),
+            mode="markers",
+            name=label,
+            showlegend=False,
+            marker=dict(size=14, color="rgba(0,0,0,0)"),
+            customdata=np.stack([np.abs(vals), lower], axis=1),
             hovertemplate=(
                 f"<b>{label}</b><br>"
                 "Amount: $%{customdata[0]:,.0f}<br>"
-                "Cumulative: $%{y:,.0f}<extra></extra>"
+                "Cumulative: $%{customdata[1]:,.0f}<extra></extra>"
             ),
         ))
 
