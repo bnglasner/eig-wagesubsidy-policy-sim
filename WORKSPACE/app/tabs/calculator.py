@@ -179,7 +179,7 @@ def _make_budget_figure(df: "pd.DataFrame", scenario: str, active_keys: "set[str
     )
 
     fig.update_layout(**eig_plotly_layout(
-        height=500,
+        height=680,
         hovermode="x unified",
         xaxis=dict(
             title="Annual hours worked",
@@ -207,7 +207,7 @@ def _make_budget_figure(df: "pd.DataFrame", scenario: str, active_keys: "set[str
             range=[y_axis_min, y_axis_max],
         ),
         legend=dict(orientation="h", yanchor="top", y=-0.25, x=0),
-        margin=dict(t=30, b=140),
+        margin=dict(t=40, b=150),
     ))
 
     # Reference lines for standard part-time and full-time annual hours.
