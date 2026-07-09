@@ -22,6 +22,8 @@
     .risk-label { font-size: 0.9rem; font-weight: 600; color: #475569; }
     .risk-pill { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.3rem 0.9rem; border-radius: 9999px; }
     .risk-high { background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; }
+    .risk-medium { background: #fff7ed; color: #ea580c; border: 1px solid #fdba74; }
+    .risk-low { background: #f0fdf4; color: #16a34a; border: 1px solid #86efac; }
     .design-box { background: #fff; border: 1px solid #e2e8f0; border-left: 4px solid #134e4a; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 2rem; }
     .design-box h3 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #134e4a; margin-bottom: 0.85rem; }
     .design-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem 2rem; font-size: 0.88rem; }
@@ -76,8 +78,8 @@
   <div class="subtitle">Econometric design concerns — err on side of flagging</div>
   <div class="meta">
     <span><strong>Project:</strong> eig-wagesubsidy-policy-sim</span>
-    <span><strong>Reviewed:</strong> 2026-07-08</span>
-    <span><strong>Files:</strong> 7 files across Python</span>
+    <span><strong>Reviewed:</strong> 2026-07-09</span>
+    <span><strong>Files:</strong> 15 files across Python, R</span>
     <span><strong>Reviewer:</strong> AI review agent (methodology-reviewer)</span>
   </div>
 </div>
@@ -92,7 +94,7 @@
   </div>
 
   <div class="summary-box">
-    This is a policy <strong>microsimulation</strong> of the EIG "80-80" wage subsidy, not a causal-inference study, so the DiD / RD / IV / matching checklists do not apply and the report is calibrated accordingly. The static eligibility-and-cost accounting on CPS ORG is sound and correctly survey-weighted (EARNWT for employed earners, WTFINL for the non-employed pool). The methodological risk is concentrated in the <strong>extensive-margin entry model</strong>. Review identified 15 concerns (1 HIGH, 9 MEDIUM, 5 LOW). The one HIGH concern is that the Heckman selection-corrected MPL imputation — which sets each non-employed person's potential wage and therefore who is eligible and inducible — is applied through a <em>conditional Mills</em> prediction whose validity rests on an exclusion restriction the authors themselves disclose does not exist, and that choice moves the pool median wage from roughly $21.5 (unconditional) to $16.3 (conditional), swinging the share below the $16.80 target. The MEDIUM tier centers on the transported-elasticity calibration, the fact that the structural matching model reproduces that calibrated entry count by construction, the definition of the "national median wage," and several survey-data pitfalls (unweighted estimation, topcoding, deflator/vintage consistency). The team's disclosure discipline is unusually strong; most concerns are prompts to confirm deliberate choices and to report the sensitivity band prominently rather than evidence of error.
+    This is a policy <strong>microsimulation</strong>, not a causal-identification study: static accounting on CPS ORG microdata, a reduced-form elasticity transport, a structural search-and-matching model, and a labor-force-entry model calibrated to EITC/CBO and experimental (SSP, Paycheck&nbsp;Plus) elasticities. Accounting outputs (eligibility, cost, distribution) are sound, and the survey-weight usage is <em>correct</em> per the dataset registry — EARNWT for earner wages/eligibility/cost and WTFINL for the non-employed pool, with the Heckman weighted as WTFINL-probit / EARNWT-wage-OLS, exactly the MR-VU2 convention (no MR-VU1/VU2 finding is raised). The two HIGH concerns are both about the <em>behavioral</em> half of the model and are design-inherent and extensively disclosed: (MR-001) the potential-wage imputation for non-workers is a Heckman two-step with no exclusion restriction, and (MR-002) the headline entry count is <em>calibrated</em> to transported elasticities rather than identified from the data — it reproduces the assumed target by construction. Both prior-review HIGH findings still stand. The new paid-hourly eligibility restriction resolves the earlier recipient/target/imputation frame inconsistency and shrinks the selection correction (ρσ ≈ +0.11), but introduces one new medium concern: the selection model is now a binary paid-hourly-vs-non-employed probit that omits salaried employment as a competing sector (MR-003). Remaining MEDIUM/LOW items concern researcher-degrees-of-freedom in the entry re-centering, the absence of any sampling-based uncertainty (only parameter bands are reported), reliance on data provenance rather than code to bound the analysis window, and repeated person-months treated as independent. Overall risk is HIGH because of the two disclosed identification limits on the flagship entry estimate — with the strong caveat that the authors label these as transported/calibrated and publish sensitivity bands rather than a false point estimate.
   </div>
 
   <h2>Research Design Assessment</h2>
@@ -101,173 +103,210 @@
     <div class="design-grid">
       <div class="design-item">
         <span class="design-key">Identification Strategy:</span>
-        <span class="design-val">None (policy microsimulation). Static accounting + structural search-and-matching entry model calibrated to transported labor-supply elasticities.</span>
+        <span class="design-val">Microsimulation (static accounting + transported reduced-form elasticities + structural search-and-matching + calibrated labor-force-entry model). Not DiD/RD/IV.</span>
       </div>
       <div class="design-item">
         <span class="design-key">Treatment Variable:</span>
-        <span class="design-val">Subsidy receipt, applied to all eligible workers; no control group.</span>
+        <span class="design-val">80-80 wage subsidy = 0.80 × max(0, $16.80 − employer wage), paid to age 16–64 paid-hourly workers below the target</span>
       </div>
       <div class="design-item">
         <span class="design-key">Outcome Variable(s):</span>
-        <span class="design-val">Gross/net fiscal cost, eligible-worker counts, induced labor-force entry, net household income.</span>
+        <span class="design-val">Gross/net fiscal cost; induced labor-force entry; incumbent hours; firm capture; safety-net clawback (net gain from work)</span>
       </div>
       <div class="design-item">
         <span class="design-key">Unit of Analysis:</span>
-        <span class="design-val">CPS ORG person (in practice person-month); non-employed person pool.</span>
+        <span class="design-val">CPS ORG person-month (weighted to period-average population); non-employed person for the entry pool</span>
       </div>
       <div class="design-item">
         <span class="design-key">Standard Errors:</span>
-        <span class="design-val">None reported. Point-estimate simulation; Heckman probit/OLS SEs computed but not used downstream.</span>
+        <span class="design-val">None reported. Uncertainty expressed as parameter-sensitivity bands, not sampling variance</span>
       </div>
       <div class="design-item">
         <span class="design-key">Fixed Effects:</span>
-        <span class="design-val">None. Heckman probit/OLS with age, age², 8-bucket education, sex, race/ethnicity, and state dummies.</span>
+        <span class="design-val">N/A (no panel regression); Heckman equations include state dummies + demographics</span>
       </div>
       <div class="design-item">
         <span class="design-key">Sample Period:</span>
-        <span class="design-val">CPS ORG last two annual partitions (2025–2026, *2 era); CPS ASEC 2025; PolicyEngine-US 2026.</span>
+        <span class="design-val">CPS ORG May 2025 – May 2026 (Oct 2025 not fielded); ASEC 2025; PolicyEngine-US 2026 schedules</span>
       </div>
       <div class="design-item">
         <span class="design-key">Key Packages:</span>
-        <span class="design-val">pandas, numpy, statsmodels (Probit/OLS), scipy.stats, PolicyEngine schedules.</span>
+        <span class="design-val">Python (numpy, pandas, statsmodels, scipy); R (ipumsr, ranger, arrow, ggplot2)</span>
       </div>
     </div>
   </div>
 
   <div class="stat-grid">
-    <div class="stat-card sev-high"><div class="count">1</div><div class="label">High</div></div>
-    <div class="stat-card sev-medium"><div class="count">9</div><div class="label">Medium</div></div>
-    <div class="stat-card sev-low"><div class="count">5</div><div class="label">Low</div></div>
+    <div class="stat-card sev-high"><div class="count">2</div><div class="label">High</div></div>
+    <div class="stat-card sev-medium"><div class="count">7</div><div class="label">Medium</div></div>
+    <div class="stat-card sev-low"><div class="count">4</div><div class="label">Low</div></div>
   </div>
 
   <h2>Findings</h2>
 
   <!-- ── HIGH ── -->
-  <div class="category-heading">HIGH — 1 finding(s)</div>
-
+  <div class="category-heading">HIGH — 2 finding(s)</div>
   <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Causal Inference</div>
 
   <div class="finding high">
     <div class="finding-header">
       <div class="finding-id">MR-001</div>
       <div class="finding-title-block">
-        <div class="finding-title">Heckman selection correction lacks a valid exclusion restriction; the used "conditional Mills" MPL drives eligibility and entry</div>
+        <div class="finding-title">Potential-wage imputation for non-workers has no exclusion restriction (Heckman identified off the IMR functional form)</div>
         <div class="finding-meta"><span class="file">code/01_data_preparation/01h_nonemployed_pool.py</span><span> · Causal Inference</span></div>
       </div>
       <span class="severity-badge badge-high">HIGH</span>
     </div>
     <div class="finding-body">
       <div class="finding-section-label">Relevant Code</div>
-      <pre><code>Xsel = _design(est, wage_eq=False)   # selection adds: married, nchild, has_child,
-probit = sm.Probit(D, Xsel.to_numpy()).fit(...)   #   spouse_employed_married, child_under5
-...
-xb_cond = xb + lam_coef * lam0        # E[log w | X, D=0] (ST-7) — the USED imputation
-mpl_cond = np.maximum(FED_MIN, np.exp(xb_cond) * smear)
-# DISCLOSED (methodology doc #3.7): no bulletproof exclusion restriction exists in
-# these data (assortative mating; motherhood penalty; marriage premium).</code></pre>
+      <pre><code>def _design(df, wage_eq):
+    ...
+    if not wage_eq:
+        cols["married"] = df["MARST"].isin([1, 2]) ...
+        cols["nchild"]  = df["NCHILD"] ...
+        cols["has_child"] = (df["NCHILD"] &gt;= 1) ...
+        cols["spouse_employed_married"] = ...
+        cols["child_under5"] = df["own_child_under5"] ...
+# marriage / children / spouse-employed are the ONLY variables that differ
+# between the selection and wage equations.
+xb_cond = xb + lam_coef * lam0   # E[log w | X, D=0]; identified off phi/(1-Phi)</code></pre>
+
       <div class="finding-section-label">Why This Is a Concern</div>
-      <div class="finding-text">
-        The two-step Heckman corrects the wage equation for non-random selection into employment. Identification of the selection correction requires at least one variable that shifts participation but not the offered wage (the exclusion restriction). The instruments here — spouse-employed × married, own-child-under-5, married, nchild — are the conventional Mroz-lineage shifters, and each has a well-documented <em>direct</em> association with wages (assortative mating, the motherhood wage penalty, the marriage premium). The code explicitly discloses this. When the exclusion restriction fails, the selection correction is identified only off the nonlinearity of the inverse Mills ratio, which is fragile and can produce large, poorly-pinned adjustments (Puhani 2000; Heckman 1979). Here the choice is consequential: the diagnostics show the conditional prediction moves the pool median MPL from about $21.5 (Mills=0) and $26.3 (plain OLS) down to $16.3, which in turn sets the weighted share below the $16.80 target at 55.9 percent. Because the imputed MPL determines who is eligible, who is "reachable," and each person's net return to work, essentially every downstream headline (eligible counts, induced entry, cost) inherits this unidentified correction. The team runs a Puhani-style sensitivity (all three imputations printed), which is the right instinct — but only the conditional variant flows to disk and downstream.
-      </div>
+      <div class="finding-text">The counterfactual wage a non-worker would earn is imputed with a two-step Heckman selection correction, but the "instruments" that shift selection (marriage, number of children, child under 5, spouse employment) are conventional Mroz-lineage shifters that plausibly enter the wage equation directly (assortative mating, marriage premium, motherhood penalty). With no valid exclusion restriction, the selection correction is identified only off the non-linearity of the inverse Mills ratio — a well-known fragility (Mroz 1987; Puhani 2000). The imputed potential-wage distribution drives the entire "reachability" of the subsidy (share of the non-employed below the $16.80 target), which then couples mechanically to the headline entry count. The authors disclose this candidly (appendix §4, "no clean instrument"), run three imputation variants (conditional / Mills=0 / plain OLS) plus a non-employment wage-penalty band in <span class="file">02f</span>, and note the correction is small on the paid-hourly frame (ρσ ≈ +0.11). Those bounds are the right response; the finding stands (carried from the prior review) because the identification limit is real and load-bearing for the flagship result.</div>
+
       <div class="finding-section-label">What to Check</div>
       <ul class="check-list">
-        <li>Confirm whether any covariate can be defended as excludable from the wage equation; if not, state plainly that the correction is functional-form-identified.</li>
-        <li>Propagate all three imputations (conditional / Mills=0 / plain OLS) through 02d as a reported band, not just the conditional point, so readers see the full swing in eligible counts and cost.</li>
-        <li>Report the pool MPL distribution and share-below-target under each imputation side by side in the paper (they are already computed in the diagnostics JSON).</li>
-        <li>Consider a bounding exercise (e.g., Lee bounds or a Manski-style range) as a design that does not depend on the exclusion restriction.</li>
-        <li>Sensitivity-test the log-normal smearing factor (currently 1.17) and the FED_MIN floor, which jointly shift the level of every imputed wage.</li>
+        <li>Confirm the imputation-variant band (02f) and the wage-penalty band {0, 10, 20%} are reported alongside the headline entry number in every venue that quotes 1.49M, not only in the appendix.</li>
+        <li>Consider a genuine exclusion restriction if any becomes available (e.g., local labor-demand shifters, non-labor income), and report its selection-equation strength.</li>
+        <li>State explicitly that the potential-wage distribution is an imputation, not an observation, wherever the "47.8% of the pool below target" figure appears.</li>
+        <li>Verify the three imputation variants actually converge on the paid-hourly frame as claimed (the earlier 7× spread was attributed to salaried contamination) and persist the variant spread in the diagnostics JSON.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="finding high">
+    <div class="finding-header">
+      <div class="finding-id">MR-002</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Induced-entry count is calibrated to transported elasticities, not identified; the headline reproduces the assumed target by construction</div>
+        <div class="finding-meta"><span class="file">code/01_data_preparation/01h_nonemployed_pool.py, code/02_descriptive_analysis/02d_matching_simulation.py</span><span> · Causal Inference</span></div>
+      </div>
+      <span class="severity-badge badge-high">HIGH</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code</div>
+      <pre><code># 01h assign_reservation_band: markups m_i ~ Exponential(lambda), lambda bisected
+# so the weighted viable share hits a target derived from transported eps_ext:
+target = min(0.90, np.average(_b.response_multiplier(eps, gr, _SAT_EXT) - 1.0, weights=wr))
+m_edge[e][ridx] = _solve(target)      # solve lambda so realized share == target
+
+# 02d _entrants_from_pool docstring:
+#   "Viability at the MAX package (w = y) reduces to the closed form ... identical
+#    to the calibration condition, so induced entry reproduces the calibrated
+#    target by construction."</code></pre>
+
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">The reservation-wage markups <code>m_i</code> are not estimated — they are drawn from an exponential distribution whose scale is chosen so each demographic cell's viable-entry share equals a target computed from imported participation elasticities (EITC/CBO ranges; SSP and Paycheck Plus anchors) passed through a Michaelis-Menten saturating function with a judgment ceiling (1.5). By the authors' own statement, the entry count then "reproduces the calibrated target by construction." The 1.49M headline is therefore an <em>assumption transported from other policies</em>, not an effect estimated for the 80-80 design — no program with the 80-80's exact geometry (permanent, universal, per-paycheck, no phase-out) has been evaluated, and the extensive-margin elasticity is disputed at its foundation (Kleven 2024 ≈ 0 vs. Chetty 2012 vs. the CTC debate's 0.75). Transporting elasticities estimated on marginal variation to the 80-80's very large proportional gains (g often &gt; 1 near the minimum wage) risks over-extrapolation even with the saturating form. The authors handle this exceptionally well — labeling every parameter as transported, publishing a 27-cell penalty×dispersion×elasticity grid (0.23–3.81M), a reduced-form vs. structural cross-check, an employment-stock base sensitivity, and precedent ladders. The finding stands (carried from the prior review) because the central number is a calibration, and readers must not mistake it for an identified causal quantity.</div>
+
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Ensure the word "calibrated" (not "estimated") governs every presentation of the entry counts, and that the full 0.23–3.81M grid range is shown, not just the 1.49M point.</li>
+        <li>Confirm the saturating-response ceiling (1.5) and the exponential markup form are presented as disclosed judgment with attached sensitivity, since the count scales directly with them.</li>
+        <li>Verify the reduced-form benchmark (0.48M) and structural (1.02–1.49M) entry figures are always paired with the wedge attribution (entry_reconciliation.parquet), so the two are never quoted side-by-side as agreement.</li>
+        <li>Sensitivity-test the linear eps·g margin against the saturating form at the largest g values to quantify the over-extrapolation the config comments warn about.</li>
       </ul>
     </div>
   </div>
 
   <!-- ── MEDIUM ── -->
-  <div class="category-heading">MEDIUM — 9 finding(s)</div>
-
+  <div class="category-heading">MEDIUM — 7 finding(s)</div>
   <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Causal Inference</div>
 
   <div class="finding medium">
     <div class="finding-header">
-      <div class="finding-id">MR-002</div>
+      <div class="finding-id">MR-003</div>
       <div class="finding-title-block">
-        <div class="finding-title">Extensive-margin elasticities are transported from EITC/SSP/Paycheck Plus to a very different budget-set geometry</div>
-        <div class="finding-meta"><span class="file">code/00_setup/00_config.py</span><span> · Causal Inference</span></div>
+        <div class="finding-title">Paid-hourly restriction reduces the selection model to a binary paid-hourly-vs-non-employed probit, omitting salaried employment as a competing sector</div>
+        <div class="finding-meta"><span class="file">code/01_data_preparation/01h_nonemployed_pool.py</span><span> · Causal Inference</span></div>
       </div>
       <span class="severity-badge badge-medium">MEDIUM</span>
     </div>
     <div class="finding-body">
       <div class="finding-section-label">Relevant Code</div>
-      <pre><code>"eps_ext_band": {
-    "lower":   {"single_mothers": 0.25, "other_women": 0.05, "men": 0.00},
-    "central": {"single_mothers": 0.50, "other_women": 0.20, "men": 0.05},
-    "upper":   {"single_mothers": 0.65, "other_women": 0.40, "men": 0.15},
-}
-# IMPORTANT — these are TRANSPORTED, ex-ante assumptions. No elasticity has been
-# estimated for a per-hour wage-FILL design ... g can exceed 1.0 near the minimum wage.</code></pre>
+      <pre><code>org["obs_wage"] = np.where(org["is_paid_hourly_earner"], org["hwage"], np.nan)
+# Estimation sample: non-employed OR paid-hourly earner. Salaried employed DROPPED.
+est = org[org["MISH"].isin(_ORG_MISH) &amp;
+          (~org["is_employed"] | org["is_paid_hourly_earner"])].copy()
+D = est["obs_wage"].notna()   # D=1 paid-hourly; D=0 = non-employed only (salaried removed)</code></pre>
+
       <div class="finding-section-label">Why This Is a Concern</div>
-      <div class="finding-text">
-        The entire induced-entry result rests on participation elasticities estimated for EITC-type in-work credits and demonstrations (SSP, Paycheck Plus) and applied to the 80-80 wage-fill, which delivers proportional gains (g) far larger than the marginal variation those elasticities were estimated on. A constant-elasticity response applied linearly over such large g would over-extrapolate; the code mitigates this with a saturating Michaelis-Menten form and a disclosed band. This is an untestable external-validity assumption that materially affects a headline (induced entry), so it should be surfaced as a primary caveat rather than a footnote. The disclosure in the config and 02b's closing note is exemplary; the flag is to ensure the <em>band</em>, not a central point, is what gets quoted, and that the extensive elasticity for men (near zero in the literature) is not implicitly given more weight than the evidence supports.
-      </div>
+      <div class="finding-text">The new paid-hourly eligibility restriction (PAIDHOUR==2) is now applied consistently to the recipient frame (01a), the take-up denominator (02e), and the wage-imputation frame (01h) — which correctly resolves the earlier recipient/target/imputation-frame inconsistency and is the right frame for a policy that prices the hourly labor market (appendix §4). The side effect is that the Heckman selection equation now models a <em>binary</em> choice — "paid-hourly earner" (D=1) vs. "non-employed" (D=0) — with salaried employment (≈44% of earners) dropped from the sample entirely. Employment is really a multinomial state (non-employed / paid-hourly / salaried), so the selection correction is estimated relative to a truncated universe, and every non-worker is imputed a <em>counterfactual hourly-sector wage</em> judged reachable against the $16.80 hourly target. A non-worker whose best realistic offer is a salaried job above the target is either mislabeled reachable (if their imputed hourly wage falls below target) or has their earning capacity understated. The direction of the resulting bias on reachability, and hence on entry, is not tested. This is the flip side of the frame-consistency improvement and is a genuinely new consequence of the restriction.</div>
+
       <div class="finding-section-label">What to Check</div>
       <ul class="check-list">
-        <li>Ensure every reported entry/cost figure carries the lower–upper band, never a lone central value.</li>
-        <li>State the linear-elasticity-overstates-response caveat prominently, with the ceiling-saturation form as the correction.</li>
-        <li>Confirm the cell weights (~41% men, ~48% other women, ~11% single mothers) and that near-zero male elasticities are not diluted by pooling.</li>
+        <li>Assess how many non-employed entrants would plausibly enter salaried rather than hourly jobs, and whether the hourly-frame imputation over- or under-states their reachability.</li>
+        <li>Consider a sensitivity in which the counterfactual employment sector (hourly vs. salaried) is modeled, or bound entry under a "some entrants take above-target salaried jobs" scenario.</li>
+        <li>Document that the selection probit's D=0 group is non-employed only (salaried excluded), so the estimated ρσ is not comparable to a probit that treats all employment as D=1.</li>
+        <li>Confirm the shrinkage of ρσ from ≈+0.30 to ≈+0.11 is attributable to the frame change and not to the sample truncation itself.</li>
       </ul>
     </div>
   </div>
 
   <div class="finding medium">
     <div class="finding-header">
-      <div class="finding-id">MR-003</div>
+      <div class="finding-id">MR-004</div>
       <div class="finding-title-block">
-        <div class="finding-title">Structural matching model reproduces the calibrated entry count by construction, not as an independent prediction</div>
+        <div class="finding-title">Headline entry depends on disclosed-but-unidentified structural knobs (status-differentiated wage penalty, dispersion λ, markup form, status weights)</div>
+        <div class="finding-meta"><span class="file">code/00_setup/00_config.py, code/02_descriptive_analysis/02g_entry_scenario_grid.py</span><span> · Causal Inference</span></div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code</div>
+      <pre><code>"entry_recenter": {
+    "evidence_central_status_penalty": {"unemployed":0.05,"nilf_other":0.10,
+                                        "disabled":0.15,"retired":0.15},
+    "evidence_central_lambda": 0.75, ...},
+"offer_dispersion": {"lambda_central": 0.75, "band": [0.50, 1.00]},
+"entry_status_weights": {"unemployed":5.0,"nilf_other":1.0,"disabled":0.15,"retired":0.15},</code></pre>
+
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">The headline was deliberately moved from the "conservative floor" (1.02M, zero non-employment wage penalty) to an "evidence-central" (1.49M) by applying a status-differentiated wage penalty averaging ≈10%. The <em>direction</em> is well justified (offer decay ≈0.8%/month is documented — Schmieder, von Wachter &amp; Bender 2016; Krueger &amp; Mueller 2016), but the penalty <em>magnitude</em> (5–15% by status), the dispersion scale (λ = 0.75, chosen to "net out" ≈0.10–0.15 log points of CPS measurement error), the exponential markup functional form, and the status entry-weights (5.0 for the unemployed vs. 0.15 for disabled/retired) are all researcher-selected. Each is defensible, but together they are degrees of freedom that move both the headline count and — for the status weights — the composition of who enters. The measurement-error subtraction that sets λ is itself an unverified assumption. The authors disclose all of these, publish the joint grid, and note the count is insensitive to the status weights while the composition is not. Flagged so the reader treats 1.49M as a chosen central within a wide band, not a data-driven point.</div>
+
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Confirm the floor (1.02M) and the full grid range receive equal prominence with the 1.49M central in the brief, not only in the appendix.</li>
+        <li>Justify the ≈0.10–0.15 log-point CPS measurement-error figure that pins λ = 0.75, or show the headline under λ = 1.00 (no netting).</li>
+        <li>Report the entrant composition (unemployed/NILF/disabled/retired shares) under a uniform lottery as well, since the composition is acknowledged to depend on the disclosed status weights.</li>
+        <li>Verify the "evidence rules out a zero penalty" argument is not stretched to also justify the specific 10% magnitude, which remains judgment.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">MR-005</div>
+      <div class="finding-title-block">
+        <div class="finding-title">No demand side, no displacement, no general-equilibrium wage effects beyond the bargaining split</div>
         <div class="finding-meta"><span class="file">code/02_descriptive_analysis/02d_matching_simulation.py</span><span> · Causal Inference</span></div>
       </div>
       <span class="severity-badge badge-medium">MEDIUM</span>
     </div>
     <div class="finding-body">
       <div class="finding-section-label">Relevant Code</div>
-      <pre><code>viable = req &lt;= gnb * (1.0 + gnet) * (1.0 + 1e-9)   # calibration-identical max-package gate
-# "Viability at the MAX package (w = y) reduces to the closed form ... identical to the
-#  calibration condition, so induced entry reproduces the calibrated target by construction."</code></pre>
+      <pre><code># 02d: every viable match forms (S = y - r &gt;= 0); entrants placed at the bottom
+# of the wage ladder; incidence = bargaining share (1-beta) on NEW matches only
+# when incumbent_wage_rigid=True. No labor-demand constraint, no displacement of
+# incumbents by entrants, no equilibrium employment feedback.</code></pre>
+
       <div class="finding-section-label">Why This Is a Concern</div>
-      <div class="finding-text">
-        The Mortensen-Pissarides / Nash-bargaining machinery in 02d disciplines the <em>wage split and fiscal accounting</em> of entrants, but the <em>number</em> of entrants is set to equal the target share calibrated in 01h from the transported elasticities. The docstring states this explicitly. The risk is presentational: the "structural search-and-matching simulation" framing can read as if the entry count is an independent structural finding, when it is the transported-elasticity assumption re-expressed. The reconciliation note (entry_reconciliation.parquet) is the right guardrail; it should be reflected in the prose so the count is not double-credited as both a calibration input and a model output.
-      </div>
+      <div class="finding-text">The structural model sets employment purely by match viability: every worker-firm pair with non-negative surplus forms a job, with no labor-demand constraint and no possibility that ~1.5M entrants displace existing low-wage incumbents. For a program touching 15.9M incumbents plus ~1.5M entrants, equilibrium wage and employment feedback (beyond the segmented bargaining split) could materially change both cost and net job creation. The authors disclose this in appendix §8 and argue ~1.5M steady-state entrants against 6–7M monthly hires is unlikely to bind, and note it runs opposite to the conservative wage-penalty/dispersion settings (the "genuinely two-sided" framing). Flagged per the err-on-flagging rule: the absence of a demand side is a substantive assumption behind both the cost and entry numbers, not merely a modeling nicety.</div>
+
       <div class="finding-section-label">What to Check</div>
       <ul class="check-list">
-        <li>State in the text that induced entry is calibrated, and that the matching model contributes wage incidence and fiscal split, not the entry count.</li>
-        <li>Keep the 02b-vs-02d wedge attribution attached to any side-by-side entry numbers.</li>
-        <li>Consider a genuinely structural entry margin (surplus threshold with a free reservation distribution) as a contrast to show how much the count is assumption-driven.</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Regression Specification</div>
-
-  <div class="finding medium">
-    <div class="finding-header">
-      <div class="finding-id">MR-004</div>
-      <div class="finding-title-block">
-        <div class="finding-title">Selection indicator conflates non-employment with employed-but-wage-unobserved</div>
-        <div class="finding-meta"><span class="file">code/01_data_preparation/01h_nonemployed_pool.py</span><span> · Regression Specification</span></div>
-      </div>
-      <span class="severity-badge badge-medium">MEDIUM</span>
-    </div>
-    <div class="finding-body">
-      <div class="finding-section-label">Relevant Code</div>
-      <pre><code>org["obs_wage"] = np.where(org["is_employed"] &amp; np.isfinite(org["hwage"]), org["hwage"], np.nan)
-...
-D = est["obs_wage"].notna().to_numpy().astype(int)   # selection = 1 iff a valid wage observed</code></pre>
-      <div class="finding-section-label">Why This Is a Concern</div>
-      <div class="finding-text">
-        The probit models the probability of observing a wage, but D=0 pools two very different groups: the genuinely non-employed and employed persons whose hourly wage is missing or invalid (salaried workers where hours are missing, sentinel-stripped wages, hours &gt; 99 set to NaN). Treating employed-with-unobserved-wage as "non-selected" mislabels a nontrivial share of participants as non-participants, biasing the participation probit and hence the Mills ratio that corrects the wage equation. With the employed-earner share at 0.64, roughly a third of the estimation sample is D=0, and some of that is measurement rather than non-participation. This is a selection-model specification issue (Little &amp; Rubin 2002 on distinguishing missingness mechanisms), separate from the exclusion-restriction concern in MR-001.
-      </div>
-      <div class="finding-section-label">What to Check</div>
-      <ul class="check-list">
-        <li>Quantify how many D=0 records are actually employed (EMPSTAT in {10,12}) but wage-unobserved.</li>
-        <li>Decide whether the selection equation should model employment vs. wage-observation, and align D accordingly.</li>
-        <li>If wage-observation is the intended selection event, ensure the interpretation of the correction reflects that (imputing to non-observers, not to non-workers).</li>
+        <li>Bound the displacement channel: what share of modeled entry could substitute for incumbent hours/jobs at the bottom of the wage ladder?</li>
+        <li>State the no-demand-side assumption wherever cost-per-job comparisons with industrial policy appear, since those alternatives are evaluated in equilibrium.</li>
+        <li>Consider a simple labor-demand-elasticity stress test on aggregate entry, even if only as a disclosed bound.</li>
       </ul>
     </div>
   </div>
@@ -276,55 +315,32 @@ D = est["obs_wage"].notna().to_numpy().astype(int)   # selection = 1 iff a valid
 
   <div class="finding medium">
     <div class="finding-header">
-      <div class="finding-id">MR-005</div>
-      <div class="finding-title-block">
-        <div class="finding-title">"National median wage" benchmark excludes salaried workers, lowering the eligibility threshold</div>
-        <div class="finding-meta"><span class="file">code/00_setup/00_config.py</span><span> · Sample &amp; Data</span></div>
-      </div>
-      <span class="severity-badge badge-medium">MEDIUM</span>
-    </div>
-    <div class="finding-body">
-      <div class="finding-section-label">Relevant Code</div>
-      <pre><code>"ws_median_hourly_wage": 21.00,  # median hourly wage among hourly workers (excludes salaried)
-"ws_target_wage":        16.80,  # 0.80 * 21.00
-# org_target_wage.json: {"median_wage": 21.0, "target_wage": 16.8, "n_source_rows": 64576}</code></pre>
-      <div class="finding-section-label">Why This Is a Concern</div>
-      <div class="finding-text">
-        The policy is described as filling toward 80 percent of the "national median wage," but the median that anchors the target ($21.00 → target $16.80) is computed only over hourly-paid ORG earners, excluding salaried workers who earn more on average. The hourly-worker median is therefore well below a full-workforce median, which lowers the target and narrows (or shifts) who is eligible and how large the per-worker subsidy is. This is a definitional choice that materially affects the headline threshold, so it should be named explicitly and its sensitivity shown. It also interacts with 02e, whose take-up denominator is likewise the hourly, wage-observed, non-self-employed workforce — a defensible but non-obvious universe.
-      </div>
-      <div class="finding-section-label">What to Check</div>
-      <ul class="check-list">
-        <li>State the median's universe (hourly-paid ORG earners) wherever "median wage" appears.</li>
-        <li>Report the target and cost under an all-worker median (including salaried, e.g., from ASEC or the full ORG earnings series) as a sensitivity.</li>
-        <li>Confirm the $16.80 target consumed downstream always comes from org_target_wage.json, not the hard-coded fallback, when the extract changes.</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="finding medium">
-    <div class="finding-header">
       <div class="finding-id">MR-006</div>
       <div class="finding-title-block">
-        <div class="finding-title">Repeated person-months treated as independent; two-year pooling window undocumented</div>
-        <div class="finding-meta"><span class="file">code/01_data_preparation/01h_nonemployed_pool.py</span><span> · Sample &amp; Data</span></div>
+        <div class="finding-title">Analysis window enforced by input-data scope, not by any code date filter; 01a pools all partitions while 01h slices the last two</div>
+        <div class="finding-meta"><span class="file">code/01_data_preparation/01a_data_ingest.py, code/01_data_preparation/01h_nonemployed_pool.py</span><span> · Sample &amp; Data</span></div>
       </div>
       <span class="severity-badge badge-medium">MEDIUM</span>
     </div>
     <div class="finding-body">
       <div class="finding-section-label">Relevant Code</div>
-      <pre><code>parts = sorted(raw_dir.glob("year=*/part-0.parquet"))[-2:]   # last 2 years, no stated rationale
-...
-"weight": (nonemp["WTFINL"] / n_months).to_numpy(),   # person-months averaged to a stock
-# docstring: "one row per non-employed person 16-64" — but no CPSIDP dedup is applied</code></pre>
+      <pre><code># 01a: loads EVERY partition present — no year/month filter at all
+parts = sorted(panel_dir.glob("year=*/part-0.parquet"))
+raw = pd.concat([pd.read_parquet(p) for p in parts], ignore_index=True)
+median_wage = _weighted_median(ph["hourly_wage_epi"].values, ph["earnwt"].values)
+
+# 01h: hard-coded positional slice to the last two year-partitions
+parts = sorted(raw_dir.glob("year=*/part-0.parquet"))[-2:]</code></pre>
+
       <div class="finding-section-label">Why This Is a Concern</div>
-      <div class="finding-text">
-        Two issues compound here. First, the CPS 4-8-4 rotation means the same individual appears in multiple monthly partitions; the WTFINL / n_months divisor correctly rescales the population <em>total</em> to an average monthly stock, but the Heckman probit and OLS treat each person-month as an independent observation, overstating the effective sample and (were SEs used) understating them, and the pool is one row per person-month, not per person as the docstring claims. Second, the <code>[-2:]</code> restriction to the two most recent years carries no comment explaining why two years (the MR-SA1 undocumented-restriction standard). Because no inferential SEs are drawn from the Heckman fit, the independence issue is second-order for point imputation, but the person vs. person-month ambiguity (MR-SA3) can distort cell composition and the calibration weights.
-      </div>
+      <div class="finding-text">The draft states the analysis uses the 12 months May 2025–May 2026 and reports a $21.00 paid-hourly median. But 01a applies <em>no</em> date filter — it pools every partition it finds and computes the dynamic median, eligibility, and all of 02a over whatever window the input contains. The upstream EIG-Wage-Figure ORG panel spans 1982–present; if this repository's <code>cps_org_panel</code> ever contains more than the intended recent window, 01a would silently compute a multi-decade <em>nominal</em> median (mixing 1982 and 2026 dollars) with no error. Meanwhile 01h uses a positional <code>[-2:]</code> slice, so the employed side (01a) and the non-employed side (01h) can silently cover different windows if the partition set changes. The window is thus guaranteed only by data provenance (extract #580), not by the code — a replication and internal-consistency risk, and an undocumented implicit sample restriction (MR-SA1).</div>
+
       <div class="finding-section-label">What to Check</div>
       <ul class="check-list">
-        <li>Add a comment justifying the two-year window (sample size vs. currency trade-off).</li>
-        <li>Decide whether the pool should be deduplicated to one row per CPSIDP, or relabel it as person-months.</li>
-        <li>If any SE or uncertainty is ever reported off these regressions, cluster by CPSIDP.</li>
+        <li>Add an explicit YEAR/MONTH filter (or an assertion on the observed date range) in 01a so the intended window is enforced in code, not assumed from the input.</li>
+        <li>Make 01a and 01h read the same window (a shared config date range) rather than "all partitions" vs. <code>[-2:]</code>.</li>
+        <li>Assert the computed median falls in a plausible nominal band ($20–$22) and fail loudly otherwise.</li>
+        <li>Record the exact months included in a run manifest so replication does not depend on which partitions happen to be on disk.</li>
       </ul>
     </div>
   </div>
@@ -333,217 +349,166 @@ D = est["obs_wage"].notna().to_numpy().astype(int)   # selection = 1 iff a valid
     <div class="finding-header">
       <div class="finding-id">MR-007</div>
       <div class="finding-title-block">
-        <div class="finding-title">Unmapped STATEFIP silently assigned to Texas, contaminating state tax/transfer schedules</div>
+        <div class="finding-title">Repeated person-month observations (CPS 4-8-4 rotation) treated as independent; no person-level clustering in estimation</div>
         <div class="finding-meta"><span class="file">code/01_data_preparation/01h_nonemployed_pool.py</span><span> · Sample &amp; Data</span></div>
       </div>
       <span class="severity-badge badge-medium">MEDIUM</span>
     </div>
     <div class="finding-body">
       <div class="finding-section-label">Relevant Code</div>
-      <pre><code>org["state_code"] = org["STATEFIP"].map(_FIPS).fillna("TX")
-# _FIPS covers 50 states + DC; combined codes 61-90 and 99 (state not identified) -&gt; "TX"</code></pre>
+      <pre><code>est = org[org["MISH"].isin({4,8}) &amp; (...)]     # both ORG rotations pooled
+sm.GLM(D, Xsel, family=Binomial(Probit()), freq_weights=w_sel).fit()  # raw WTFINL
+sm.WLS(y, Xw, weights=w_wage).fit()                                    # raw EARNWT</code></pre>
+
       <div class="finding-section-label">Why This Is a Concern</div>
-      <div class="finding-text">
-        Any STATEFIP value not in the 51-entry map — including IPUMS combined-state codes (61–90) and "state not identified" (99) — is silently coerced to Texas rather than flagged. State drives the PolicyEngine schedule lookup (state income tax, Medicaid/TANF/SNAP parameters), so a misassigned state applies the wrong tax-and-transfer environment to those persons. Texas also has no state income tax, so the fallback is not neutral; it systematically understates state-tax interactions for the affected rows. 02a's schedule fallback ladder likewise ends at TX. If the extract contains only clean 1–56 codes this is harmless, but the silent default should be verified, not assumed.
-      </div>
+      <div class="finding-text">Under the CPS 4-8-4 rotation the same individual is interviewed in month-in-sample 4 and again in month-in-sample 8, so a person can appear twice in the pooled ORG estimation sample. The Heckman probit and wage WLS treat person-months as independent observations and use raw EARNWT/WTFINL as frequency weights (the <code>/n_months</code> normalization that converts to period-average population totals is applied only to the output pool weight, not to the estimation weights). This double-counts recurring persons and understates the effective information in the fit; it also violates the independence assumption behind any coefficient standard error. Because the pipeline reports no standard errors (see MR-008), the immediate consequence is confined to the imputation coefficients and to potential double-counting of the same person in the estimation sample, but it is a genuine unit-of-analysis / serial-correlation issue (MR-SA3).</div>
+
       <div class="finding-section-label">What to Check</div>
       <ul class="check-list">
-        <li>Count rows hit by the <code>.fillna("TX")</code> and 02a's TX schedule fallback; if non-trivial, handle explicitly.</li>
-        <li>Prefer dropping or separately flagging unidentified-state records over a silent TX default.</li>
-        <li>Confirm the ORG extract carries only clean 2-digit FIPS 01–56 for the analysis window.</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Dataset Variable Usage</div>
-
-  <div class="finding medium">
-    <div class="finding-header">
-      <div class="finding-id">MR-008</div>
-      <div class="finding-title-block">
-        <div class="finding-title">Heckman probit and wage OLS are unweighted while the target is a population-representative pool</div>
-        <div class="finding-meta"><span class="file">code/01_data_preparation/01h_nonemployed_pool.py</span><span> · Dataset Variable Usage</span></div>
-      </div>
-      <span class="severity-badge badge-medium">MEDIUM</span>
-    </div>
-    <div class="finding-body">
-      <div class="finding-section-label">Relevant Code</div>
-      <pre><code>probit = sm.Probit(D, Xsel.to_numpy()).fit(disp=0, maxiter=200)   # no weights
-ols    = sm.OLS(y, Xw.to_numpy()).fit()                            # no EARNWT / WTFINL</code></pre>
-      <div class="finding-section-label">Why This Is a Concern</div>
-      <div class="finding-text">
-        Everything downstream is survey-weighted (EARNWT for employed earners, WTFINL for the pool, which the registry confirms are the correct weights), but the estimation that produces the imputed MPL is unweighted. For a conditional-mean predictor of a population quantity, unweighted estimation can be defensible on efficiency grounds when the model is correctly specified (Solon, Haider &amp; Wooldridge 2015) — but that is a judgment that should be stated and tested, not left implicit, especially given the ORG earner design is exactly the case where sampling probabilities differ across the wage distribution the model must span. This is the MR-VU1 pattern (a recognized survey used in a regression without weights); it is graded MEDIUM rather than HIGH because the population aggregates are properly weighted and the regression is a predictor, not an inference target.
-      </div>
-      <div class="finding-section-label">What to Check</div>
-      <ul class="check-list">
-        <li>Re-estimate the probit and wage OLS with EARNWT (wage equation) / WTFINL (selection) and compare the imputed MPL distribution.</li>
-        <li>If unweighted estimation is retained, cite the Solon–Haider–Wooldridge rationale in a comment.</li>
-        <li>Confirm the smearing factor is computed consistently under whichever weighting is chosen.</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="finding medium">
-    <div class="finding-header">
-      <div class="finding-id">MR-009</div>
-      <div class="finding-title-block">
-        <div class="finding-title">Estimation wages strip sentinels but do not apply the topcode correction the main pipeline uses</div>
-        <div class="finding-meta"><span class="file">code/01_data_preparation/01h_nonemployed_pool.py</span><span> · Dataset Variable Usage</span></div>
-      </div>
-      <span class="severity-badge badge-medium">MEDIUM</span>
-    </div>
-    <div class="finding-body">
-      <div class="finding-section-label">Relevant Code</div>
-      <pre><code>hw = np.where(hw >= 999.99, np.nan, hw)
-ew = np.where(ew >= np.where(star2, 999999.99, 9999.99), np.nan, ew)
-# docstring: "replicates the two wage steps 01b would do (sentinel stripping; ...)"
-#  — but NOT the EARNWEEK Pareto topcode imputation the registry documents for 01a/01b.</code></pre>
-      <div class="finding-section-label">Why This Is a Concern</div>
-      <div class="finding-text">
-        The registry records that the main pipeline applies Pareto imputation above the EARNWEEK topcode plus a MISH-8 phase-in harmonization; 01h re-derives employed wages with sentinel stripping only. The employed wages that train the Heckman wage equation are therefore censored differently from the main analysis series, which can bias the upper part of the fitted wage distribution and the smearing factor. Because the subsidy targets low wages, topcoding is less critical for eligibility itself, but the wage-equation slope and the log-normal retransformation are estimated over the full range. Relatedly, CPS/ASEC income variables (INCWAGE, INCTOT) are topcoded per the registry (MEDIUM pitfall) and should be acknowledged wherever income enters. This is a methodology-consistency flag; whether the divergence is a bug belongs in the code report.
-      </div>
-      <div class="finding-section-label">What to Check</div>
-      <ul class="check-list">
-        <li>Decide whether 01h should apply the same topcode treatment as 01a/01b for the estimation sample, and document the choice.</li>
-        <li>Check sensitivity of the IMR coefficient and smearing factor to topcode handling.</li>
-        <li>Acknowledge topcoding wherever ASEC income (INCWAGE/INCTOT) informs the analysis.</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="finding medium">
-    <div class="finding-header">
-      <div class="finding-id">MR-010</div>
-      <div class="finding-title-block">
-        <div class="finding-title">Deflator variant unspecified and nominal vintages mixed across ORG wages, target, and PolicyEngine year</div>
-        <div class="finding-meta"><span class="file">code/00_setup/00_config.py</span><span> · Dataset Variable Usage</span></div>
-      </div>
-      <span class="severity-badge badge-medium">MEDIUM</span>
-    </div>
-    <div class="finding-body">
-      <div class="finding-section-label">Relevant Code</div>
-      <pre><code>"currency_base_year": 2025,
-"ws_simulation_year": 2026,   # PolicyEngine simulation year
-"ws_median_hourly_wage": 21.00, "ws_target_wage": 16.80   # nominal, undated CPI variant</code></pre>
-      <div class="finding-section-label">Why This Is a Concern</div>
-      <div class="finding-text">
-        Three nominal reference points are combined without an explicit deflator: ORG wages from the 2025–2026 partitions, a fixed $16.80 target, and PolicyEngine-US 2026 tax-and-transfer schedules. No CPI series (CPI-U, CPI-U-RS, C-CPI-U, or PCE) is named in these files, and the config declares a 2025 base year while the simulation runs in 2026. If ORG wages are not inflated to the schedule year, the eligibility threshold and per-worker subsidy are evaluated in slightly inconsistent price terms, biasing counts and cost. The registry flags an unspecified deflator variant as a MEDIUM pitfall. This is likely a small effect over a one-year gap, but it should be pinned down.
-      </div>
-      <div class="finding-section-label">What to Check</div>
-      <ul class="check-list">
-        <li>State the price year of the wage data, the target, and the PolicyEngine schedules, and reconcile them.</li>
-        <li>If deflation is applied anywhere upstream (01a/01b), name the CPI variant and base year in a comment.</li>
-        <li>Confirm whether the ~1-year nominal gap is material for the cost estimate; if so, inflate wages to 2026.</li>
-      </ul>
-    </div>
-  </div>
-
-  <!-- ── LOW ── -->
-  <div class="category-heading">LOW — 5 finding(s)</div>
-
-  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Causal Inference</div>
-
-  <div class="finding low">
-    <div class="finding-header">
-      <div class="finding-id">MR-011</div>
-      <div class="finding-title-block">
-        <div class="finding-title">Saturation ceilings (1.50 extensive, 1.40 intensive) are judgment bounds without a stated sensitivity</div>
-        <div class="finding-meta"><span class="file">code/00_setup/00_config.py</span><span> · Causal Inference</span></div>
-      </div>
-      <span class="severity-badge badge-low">LOW</span>
-    </div>
-    <div class="finding-body">
-      <div class="finding-section-label">Relevant Code</div>
-      <pre><code>"saturation": {"ceiling_ext": 1.50, "ceiling_int": 1.40},
-# "Both are disclosed judgment bounds; sensitivity is via these values."</code></pre>
-      <div class="finding-section-label">Why This Is a Concern</div>
-      <div class="finding-text">
-        The Michaelis-Menten ceilings cap how far employment/hours can rise as the wage gain g grows large, and they bind precisely where the 80-80 delivers its largest gains — i.e., for the lowest-wage, highest-response workers. The values are disclosed as judgment calls, which is appropriate, but the results' sensitivity to them is not reported. Since the ceiling governs the top of the induced-entry response, a modest change could move the upper band.
-      </div>
-      <div class="finding-section-label">What to Check</div>
-      <ul class="check-list">
-        <li>Report induced entry and cost under alternative ceilings (e.g., 1.25 and 1.75 extensive).</li>
-        <li>Note what share of entrants are in the saturating (g large) region where the ceiling binds.</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Regression Specification</div>
-
-  <div class="finding low">
-    <div class="finding-header">
-      <div class="finding-id">MR-012</div>
-      <div class="finding-title-block">
-        <div class="finding-title">MPL imputation omits occupation, industry, and hours</div>
-        <div class="finding-meta"><span class="file">code/01_data_preparation/01h_nonemployed_pool.py</span><span> · Regression Specification</span></div>
-      </div>
-      <span class="severity-badge badge-low">LOW</span>
-    </div>
-    <div class="finding-body">
-      <div class="finding-section-label">Relevant Code</div>
-      <pre><code>cols = {"const": ..., "age": age, "age2": ...}   # + fine educ, sex, race/ethnicity, state
-# wage equation has no occupation (OCC2010), industry (IND1990), or hours/part-time controls</code></pre>
-      <div class="finding-section-label">Why This Is a Concern</div>
-      <div class="finding-text">
-        The wage/MPL prediction conditions on demographics, education, and state only. Occupation and industry are strong wage predictors, and their omission can bias the predicted potential wage for cells where composition differs from the employed benchmark. Per the registry, OCC2010/IND1990 are not in the current extract (Tier-3, pending an ORG DDI fetch), so this is a data-availability limitation rather than an oversight, but it caps the imputation's accuracy and should be disclosed.
-      </div>
-      <div class="finding-section-label">What to Check</div>
-      <ul class="check-list">
-        <li>Note the omitted predictors as a limitation on imputed-MPL accuracy.</li>
-        <li>If an ORG extract with OCC2010/IND1990 becomes available, test how the imputation shifts.</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="finding low">
-    <div class="finding-header">
-      <div class="finding-id">MR-013</div>
-      <div class="finding-title-block">
-        <div class="finding-title">Benefit-cliff "pay-up" clearing wage found on a coarse 9-point grid</div>
-        <div class="finding-meta"><span class="file">code/02_descriptive_analysis/02d_matching_simulation.py</span><span> · Regression Specification</span></div>
-      </div>
-      <span class="severity-badge badge-low">LOW</span>
-    </div>
-    <div class="finding-body">
-      <div class="finding-section-label">Relevant Code</div>
-      <pre><code>_PAYUP_GRID_STEPS = 9   # wage grid over [w_e, y] for the net-basis pay-up search (ST-4)
-for t in np.linspace(0.0, 1.0, _PAYUP_GRID_STEPS)[1:]:
-    ...</code></pre>
-      <div class="finding-section-label">Why This Is a Concern</div>
-      <div class="finding-text">
-        Because net income is non-monotone across benefit cliffs, the lowest wage that clears the reservation requirement is found by scanning a 9-point grid between the entrant's Nash wage and their MPL, with unresolved rows defaulting to the full MPL (max package). A coarse grid can overstate the clearing wage (and hence subsidy/fiscal cost) for entrants whose true clearing point falls between grid nodes. The fallback-to-MPL is conservative in one direction. Worth a resolution check.
-      </div>
-      <div class="finding-section-label">What to Check</div>
-      <ul class="check-list">
-        <li>Re-run with a finer grid (e.g., 25–50 steps) and confirm entrant gross/net cost is stable.</li>
-        <li>Report how many entrants fall in the pay-up / fallback branches.</li>
+        <li>De-duplicate or cluster by CPSIDP (person) in the Heckman estimation, or restrict the estimation sample to one rotation per person.</li>
+        <li>If coefficient standard errors are ever reported or used, cluster them at the person (and ideally household) level.</li>
+        <li>Confirm the raw-weight frequency weighting in the probit/WLS does not double-count persons appearing in both MISH 4 and 8 within the window.</li>
       </ul>
     </div>
   </div>
 
   <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Standard Errors</div>
 
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">MR-008</div>
+      <div class="finding-title-block">
+        <div class="finding-title">No sampling-based uncertainty on any point estimate; bands are parameter sensitivity, not sampling variance</div>
+        <div class="finding-meta"><span class="file">code/02_descriptive_analysis/02a_descriptive_stats.py (and 02b/02d/02g)</span><span> · Standard Errors</span></div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code</div>
+      <pre><code>total_workers_mn = weights.sum() / 1e6
+gross_cost_bn    = (gross_subsidies * weights).sum() / 1e9
+# point estimates only; no replicate weights, no bootstrap, no CI anywhere in 02a/02b/02d/02g</code></pre>
+
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">Every number derived from CPS microdata (15.88M eligible, $55.88B gross, state counts, take-up rates, the median wage itself) is a weighted point estimate with no confidence interval. The uncertainty bands the project publishes are <em>parameter</em> bands (elasticity, penalty, dispersion, β) — they do not capture CPS sampling error. CPS ORG provides replicate weights for variance estimation; they are not used, and no design-based bootstrap is performed (MR-VU3 replicate-weights pitfall; Lumley 2010, <em>Complex Surveys</em>). For a 12-month ORG sample, state-level counts (e.g., West Virginia's 105,000 eligible) and small-cell take-up rates carry non-trivial sampling error that is invisible to the reader, and precise figures ("$4,981 in Louisiana", "317,000 eligible") overstate precision.</div>
+
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Attach sampling-error bounds (replicate-weight or design-based bootstrap) to at least the headline eligibility, cost, and median-wage figures.</li>
+        <li>Flag small-cell state and subgroup estimates (e.g., graduate-degree recipients, single-state counts) as imprecise, or suppress cells below a reliability threshold.</li>
+        <li>Distinguish clearly in the text between parameter-uncertainty bands and sampling-uncertainty bands so the $45–48B band is not read as a confidence interval.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Descriptive Analysis</div>
+
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">MR-009</div>
+      <div class="finding-title-block">
+        <div class="finding-title">No summary-statistics / balance table for the Heckman and entry-pool estimation covariates</div>
+        <div class="finding-meta"><span class="file">code/01_data_preparation/01h_nonemployed_pool.py, code/02_descriptive_analysis/02a_descriptive_stats.py</span><span> · Descriptive Analysis</span></div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code</div>
+      <pre><code># 02a emits distributional tables (by_state, by_sex, by_wage_bracket, ...) for
+# RECIPIENTS, but there is no N / mean / SD table for the estimation inputs of
+# the Heckman selection+wage equations or the non-employed pool covariates
+# (age, education distribution, race, state, spouse-employed, child-under-5).</code></pre>
+
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">The project produces rich recipient-distribution tables, but there is no conventional summary-statistics table (N, mean, SD) for the variables entering the selection and wage equations or characterizing the non-employed pool. Because the entry result rests entirely on the imputation, a reader cannot audit whether the D=1 estimation sample and the D=0 pool are comparable on observables, how much missingness there is in the household-link shifters (spouse employment is unlinkable for ~5.1% of the married pool per 01i), or whether any covariate is degenerate within a cell. A summary/balance table comparing the employed paid-hourly estimation sample to the non-employed pool would make visible the selection the model is correcting for (MR-DA1, MR-DA6).</div>
+
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Add a summary-statistics table (weighted N, mean, SD) for all Heckman covariates, separately for the D=1 paid-hourly estimation sample and the D=0 non-employed pool.</li>
+        <li>Report missingness/linkability rates for the household-link shifters (spouse_is_employed, own_child_under5) used in the selection equation.</li>
+        <li>Include a pre-imputation comparison of employed vs. non-employed observables so the direction of selection is visible independent of the model.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── LOW ── -->
+  <div class="category-heading">LOW — 4 finding(s)</div>
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Dataset Variable Usage</div>
+
   <div class="finding low">
     <div class="finding-header">
-      <div class="finding-id">MR-014</div>
+      <div class="finding-id">MR-010</div>
       <div class="finding-title-block">
-        <div class="finding-title">Headline aggregates reported as point estimates with no sampling-uncertainty band</div>
-        <div class="finding-meta"><span class="file">code/02_descriptive_analysis/02a_descriptive_stats.py</span><span> · Standard Errors</span></div>
+        <div class="finding-title">Hourly-wage topcoding in the wage-equation upper tail not explicitly addressed in the imputation frame</div>
+        <div class="finding-meta"><span class="file">code/01_data_preparation/01h_nonemployed_pool.py</span><span> · Dataset Variable Usage</span></div>
       </div>
       <span class="severity-badge badge-low">LOW</span>
     </div>
     <div class="finding-body">
       <div class="finding-section-label">Relevant Code</div>
-      <pre><code>gross_cost_bn = (gross_subsidies * weights).sum() / 1e9
-net_cost_bn   = (net_income_delta * weights).sum() / 1e9   # single point, no CI</code></pre>
+      <pre><code>hw = np.where(hw &gt;= 999.99, np.nan, hw)   # only the NIU sentinel stripped
+# the legitimate HOURWAGE topcode (~$99.99) is retained (not Pareto-adjusted),
+# following EPI; the wage OLS is fit on this topcoded upper tail.</code></pre>
+
       <div class="finding-section-label">Why This Is a Concern</div>
-      <div class="finding-text">
-        Cost and worker-count aggregates are survey-weighted point estimates. CPS provides replicate weights for design-consistent variance estimation, and none are used, so the estimates carry no sampling-error band (Lumley 2010). The behavioral/matching band already conveys <em>parameter</em> uncertainty, but that is distinct from <em>sampling</em> uncertainty in the underlying counts. For a blog/interactive audience a full replicate-weight variance may be overkill, hence LOW, but a rough CI on the headline eligible-worker count would strengthen the numbers.
-      </div>
+      <div class="finding-text">CPS hourly wages are topcoded (the legitimate HOURWAGE topcode ≈ $99.99 for the relevant era), and the 01b weekly-wage Pareto adjustment applies to salaried EARNWEEK, not to hourly HOURWAGE. The log-wage OLS in the Heckman is therefore fit on a topcoded upper tail, which can flatten the estimated returns to age/education and slightly bias the conditional-mean imputation. Impact is limited here because eligibility and the median ($21) sit well below the topcode and the decision-relevant imputation region is <em>below</em> the $16.80 target, but the topcoding is a registry-flagged CPS pitfall (cps-topcoded-income) that is not acknowledged for the hourly frame.</div>
+
       <div class="finding-section-label">What to Check</div>
       <ul class="check-list">
-        <li>Consider reporting a sampling-error band on eligible counts and gross cost (replicate weights or a design effect).</li>
-        <li>Distinguish sampling uncertainty from the behavioral parameter band in the write-up.</li>
+        <li>Confirm the share of paid-hourly earners at/above the hourly topcode is negligible in this window; if not, consider a tail adjustment or acknowledge the flattening.</li>
+        <li>Note in the appendix that hourly topcoding is retained (per EPI) and argue why it does not affect below-target imputation.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">MR-011</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Nominal-only analysis; deflator variant unspecified and config base year unused</div>
+        <div class="finding-meta"><span class="file">code/00_setup/00_config.py, code/01_data_preparation/01a_data_ingest.py</span><span> · Dataset Variable Usage</span></div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code</div>
+      <pre><code>"currency_base_year": 2025,   # declared but no deflation performed
+# 01a: "Deflation is out of scope." Wages, target, subsidy all in nominal dollars.</code></pre>
+
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">All monetary values are nominal, defensible for a single 12-month window, but the config declares a <code>currency_base_year</code> of 2025 that is never applied, and no deflator variant is named (CPI-U vs. CPI-U-RS vs. PCE — registry pitfall cpi-variant-unspecified). Impact is minimal within a 12-month window, but any comparison to the prior posts' 2024-vintage figures ($20 median / $16 target vs. $21.00 / $16.80) mixes nominal vintages; the draft discloses the vintage difference in prose but no deflator is stated. Wherever a real comparison is implied, the deflator should be named.</div>
+
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Label all dollar figures explicitly as nominal 2025–2026, and remove or use the unused <code>currency_base_year</code>.</li>
+        <li>If any cross-vintage comparison to the 2024 posts is made, state the deflator (or that the comparison is nominal).</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Sample &amp; Data</div>
+
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">MR-012</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Tax/transfer schedule grid extrapolation for high-income households (np.interp clamps at the $65k cap)</div>
+        <div class="finding-meta"><span class="file">code/02_descriptive_analysis/02b_behavioral_scenarios.py, code/02_descriptive_analysis/02a_descriptive_stats.py</span><span> · Sample &amp; Data</span></div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code</div>
+      <pre><code>ni = np.interp(income, axis, schedule["net_income"].values)  # clamps outside grid
+n_above_grid += int(np.sum(ip &gt; income_max))   # counted &amp; warned (income_max=65000)</code></pre>
+
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">Net-income schedules are pre-computed on an income grid capped at $65,000; <code>np.interp</code> flat-clamps values above the top knot, so taxes/transfers for any household whose policy income exceeds the grid are frozen at the top value. The code counts and warns about the share above the grid — good practice — but for two-earner households or hours-response scenarios that push income past the cap, the net-cost delta is approximate. Impact is small for a low-wage-targeted program but should be bounded rather than only warned.</div>
+
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Report the weighted share of households whose policy income exceeds the $65k grid and the sensitivity of net cost to extending the grid.</li>
+        <li>Extend the schedule grid (as the code comment suggests) if the above-grid share is material in any scenario.</li>
       </ul>
     </div>
   </div>
@@ -552,26 +517,27 @@ net_cost_bn   = (net_income_delta * weights).sum() / 1e9   # single point, no CI
 
   <div class="finding low">
     <div class="finding-header">
-      <div class="finding-id">MR-015</div>
+      <div class="finding-id">MR-013</div>
       <div class="finding-title-block">
-        <div class="finding-title">Person-level reservation markups are a calibration device, not behavioral estimates</div>
-        <div class="finding-meta"><span class="file">code/01_data_preparation/01h_nonemployed_pool.py</span><span> · Descriptive Analysis</span></div>
+        <div class="finding-title">02a silently emits null pct_in_group when its base-population file is absent; take-up denominators reconstructed in a separate stage</div>
+        <div class="finding-meta"><span class="file">code/02_descriptive_analysis/02a_descriptive_stats.py, code/02_descriptive_analysis/02e_take_up_by_group.py</span><span> · Descriptive Analysis</span></div>
       </div>
       <span class="severity-badge badge-low">LOW</span>
     </div>
     <div class="finding-body">
       <div class="finding-section-label">Relevant Code</div>
-      <pre><code>u = (pd.Series(hsh[ridx]).rank(method="first").to_numpy() - 0.5) / len(ridx)
-m_edge[e][ridx] = -np.log(1.0 - u) / lam   # Exponential markup from a hash-ranked uniform
-target = min(0.90, float(np.average(_b.response_multiplier(eps, gr, _SAT_EXT) - 1.0, weights=wr)))</code></pre>
+      <pre><code>org_candidates = sorted((PATH_DATA / "external").glob("org_workers_*.parquet"))
+# if absent: pct_in_group is None for every demographic row (only a [warn] printed)
+# 02e reconstructs the denominator from the in-repo ORG panel instead.</code></pre>
+
       <div class="finding-section-label">Why This Is a Concern</div>
-      <div class="finding-text">
-        Individual reservation markups are drawn from a hash-ranked uniform and calibrated so the aggregate viable share matches the transported-elasticity target; the hash gives reproducibility and common random numbers across edges (nicely done, and the corr(markup, survey month) ≈ 0.008 check confirms no timing artifact). The caution is interpretive: a specific person's reservation_wage carries no behavioral meaning — only the calibrated cell share does — and the target is hard-capped at 0.90. Downstream narrative should not read individual entrants as identified, and the 0.90 cap should be noted where it could bind (it does not appear to bind in the current diagnostics).
-      </div>
+      <div class="finding-text">02a's "share of the group's workers" (pct_in_group) depends on an external base-population file (<code>org_workers_*.parquet</code>) absent from this checkout, so 02a emits null for those columns with only a warning, and the take-up denominators are reconstructed separately in 02e. This is disclosed in the draft's assumptions, but it is a reproducibility and missing-data-documentation gap (MR-DA2): a reader running 02a alone gets incomplete output, and the published Table 2 take-up column comes from 02e rather than the stage that nominally produces it. The two paths should be reconciled so the denominator is computed once from a single, present source.</div>
+
       <div class="finding-section-label">What to Check</div>
       <ul class="check-list">
-        <li>Frame reservation wages as a calibration device delivering an aggregate share, not person-level predictions.</li>
-        <li>Confirm the 0.90 target cap is non-binding for all cells/edges in the reported run.</li>
+        <li>Have 02a compute pct_in_group from the same in-repo panel adapter 02e uses, so it does not depend on an absent external file.</li>
+        <li>Fail loudly (not silently null) if the intended base population cannot be constructed, or document the fallback path in the run log.</li>
+        <li>Confirm the published Table 2 take-up column matches a single reproducible source.</li>
       </ul>
     </div>
   </div>
@@ -588,62 +554,28 @@ target = min(0.90, float(np.average(_b.response_multiplier(eps, gr, _SAT_EXT) - 
       </tr>
     </thead>
     <tbody>
-      <tr>
-        <td>code/00_setup/00_config.py</td>
-        <td>Python</td>
-        <td class="count-cell">236</td>
-        <td class="count-cell has-issues">4</td>
-        <td class="count-cell">MEDIUM</td>
-      </tr>
-      <tr>
-        <td>code/01_data_preparation/01h_nonemployed_pool.py</td>
-        <td>Python</td>
-        <td class="count-cell">558</td>
-        <td class="count-cell has-issues">8</td>
-        <td class="count-cell">HIGH</td>
-      </tr>
-      <tr>
-        <td>code/01_data_preparation/01i_household_links.py</td>
-        <td>Python</td>
-        <td class="count-cell">170</td>
-        <td class="count-cell ok">0</td>
-        <td class="count-cell">— (feeds MR-001)</td>
-      </tr>
-      <tr>
-        <td>code/02_descriptive_analysis/02a_descriptive_stats.py</td>
-        <td>Python</td>
-        <td class="count-cell">515</td>
-        <td class="count-cell has-issues">1</td>
-        <td class="count-cell">LOW</td>
-      </tr>
-      <tr>
-        <td>code/02_descriptive_analysis/02b_behavioral_scenarios.py</td>
-        <td>Python</td>
-        <td class="count-cell">340</td>
-        <td class="count-cell ok">0</td>
-        <td class="count-cell">— (feeds MR-002)</td>
-      </tr>
-      <tr>
-        <td>code/02_descriptive_analysis/02d_matching_simulation.py</td>
-        <td>Python</td>
-        <td class="count-cell">379</td>
-        <td class="count-cell has-issues">2</td>
-        <td class="count-cell">MEDIUM</td>
-      </tr>
-      <tr>
-        <td>code/02_descriptive_analysis/02e_take_up_by_group.py</td>
-        <td>Python</td>
-        <td class="count-cell">101</td>
-        <td class="count-cell ok">0</td>
-        <td class="count-cell">— (feeds MR-005)</td>
-      </tr>
+      <tr><td>code/00_setup/00_config.py</td><td>Python</td><td class="count-cell">303</td><td class="count-cell has-issues">2</td><td class="count-cell">MEDIUM</td></tr>
+      <tr><td>code/00_ingest/00a_download-ipums-cps.R</td><td>R</td><td class="count-cell">417</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/00_ingest/01a_load-ipums-cps.R</td><td>R</td><td class="count-cell">476</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/00_ingest/01b_build-org-panel.R</td><td>R</td><td class="count-cell">1375</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/01_data_preparation/01a_data_ingest.py</td><td>Python</td><td class="count-cell">450</td><td class="count-cell has-issues">3</td><td class="count-cell">MEDIUM</td></tr>
+      <tr><td>code/01_data_preparation/01h_nonemployed_pool.py</td><td>Python</td><td class="count-cell">788</td><td class="count-cell has-issues">6</td><td class="count-cell">HIGH</td></tr>
+      <tr><td>code/01_data_preparation/01i_household_links.py</td><td>Python</td><td class="count-cell">170</td><td class="count-cell has-issues">1</td><td class="count-cell">MEDIUM</td></tr>
+      <tr><td>code/02_descriptive_analysis/02a_descriptive_stats.py</td><td>Python</td><td class="count-cell">515</td><td class="count-cell has-issues">4</td><td class="count-cell">MEDIUM</td></tr>
+      <tr><td>code/02_descriptive_analysis/02b_behavioral_scenarios.py</td><td>Python</td><td class="count-cell">340</td><td class="count-cell has-issues">3</td><td class="count-cell">HIGH</td></tr>
+      <tr><td>code/02_descriptive_analysis/02d_matching_simulation.py</td><td>Python</td><td class="count-cell">543</td><td class="count-cell has-issues">3</td><td class="count-cell">HIGH</td></tr>
+      <tr><td>code/02_descriptive_analysis/02e_take_up_by_group.py</td><td>Python</td><td class="count-cell">106</td><td class="count-cell has-issues">1</td><td class="count-cell">LOW</td></tr>
+      <tr><td>code/02_descriptive_analysis/02f_mpl_imputation_band.py</td><td>Python</td><td class="count-cell">134</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/02_descriptive_analysis/02g_entry_scenario_grid.py</td><td>Python</td><td class="count-cell">210</td><td class="count-cell has-issues">1</td><td class="count-cell">MEDIUM</td></tr>
+      <tr><td>code/05_figures_tables/05c_core_figures.R</td><td>R</td><td class="count-cell">535</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/05_figures_tables/05d_supporting_figures.R</td><td>R</td><td class="count-cell">700</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
     </tbody>
   </table>
 
 </div>
 
 <div class="report-footer">
-  Generated by AI review agent · methodology-reviewer · 2026-07-08<br>
+  Generated by AI review agent · methodology-reviewer · 2026-07-09<br>
   Scope: methodology &amp; design concerns — see code-error-report.html for definitive code bugs
 </div>
 

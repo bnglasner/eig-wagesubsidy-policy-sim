@@ -76,8 +76,8 @@
   <div class="subtitle">Definitive code bugs and efficiency/readability suggestions</div>
   <div class="meta">
     <span><strong>Project:</strong> eig-wagesubsidy-policy-sim</span>
-    <span><strong>Reviewed:</strong> 2026-07-08</span>
-    <span><strong>Files:</strong> 11 files across Python, R</span>
+    <span><strong>Reviewed:</strong> 2026-07-09</span>
+    <span><strong>Files:</strong> 47 files across Python, R, Stata</span>
     <span><strong>Reviewer:</strong> AI review agent (code-reviewer)</span>
   </div>
 </div>
@@ -86,243 +86,233 @@
 
   <h2>Executive Summary</h2>
   <div class="summary-box">
-    Review of 11 files (8 Python, 3 R) covering the wage-subsidy analysis pipeline that produces the draft's numbers found <strong>no CRITICAL or HIGH definitive bugs</strong>. The code is careful and internally consistent: positional/label alignment is handled correctly with <code>get_indexer</code> in the newly remodeled 02b/02d/01h paths, merge keys are dtype-coerced before joining, monotonicity is asserted where relied upon, and no unseeded randomness or removed pandas APIs appear. Two <strong>LOW</strong> latent bugs were found (a fragile array-index-by-pandas-label pattern in 02a that is correct only while every group value stays inside its ordered label set, and a double-increment of a fallback diagnostic counter). Four <strong>SUGGESTIONS</strong> address a repeated Parquet read inside the six-iteration 02d simulation loop, a duplicated external-file read in 02a, hard-coded figure constants that can drift from the data, and dense one-line helper functions in 01h. No changes are required before the draft ships; the LOW items are worth hardening for reuse.
+    Review of 47 files (25 Python, 15 R, 7 Stata), concentrated on the active analysis pipeline
+    (Python config/orchestrator, stages 01a/01i/01h and 02a&ndash;02g, verification stage 05a, the
+    R figure suite 05c/05d, the manifest builder 05z, and the vendored R ORG ingest in
+    <code>code/00_ingest/</code>). Three of the four issues flagged in the prior cycle are confirmed
+    <strong>resolved</strong>: the orchestrator now invokes each stage's <code>main()</code> after import
+    (prior CE-001), <code>05a_main_outputs.py</code> reads the correct <code>pct_of_recipients</code> column
+    (prior CE-004), and the Figure&nbsp;14 subtitle reads 1.49M/1.02M/3.81M (prior CE-003). One prior
+    finding <strong>still stands</strong>: <code>02a_descriptive_stats.py::_agg_by_group</code>
+    positionally filters <code>net_income_delta</code> but then indexes it with original DataFrame labels
+    (prior CE-002), reported here as CE-001 (HIGH). The bug is currently masked because every demographic
+    filter happens to drop zero rows in the present data, but it will crash or silently mis-map the moment
+    any group value is dropped. No CRITICAL errors were found. Three efficiency/readability SUGGESTIONS are
+    included. The vendored R ingest scripts set a deterministic seed and use <code>as.numeric()</code> on
+    labelled IPUMS columns correctly (not the factor-code trap). The <code>.do</code> files and the
+    <code>03_*</code>/<code>04_*</code> scripts are intentional placeholder stubs.
   </div>
 
   <div class="stat-grid">
     <div class="stat-card sev-critical"><div class="count">0</div><div class="label">Critical</div></div>
-    <div class="stat-card sev-high"><div class="count">0</div><div class="label">High</div></div>
+    <div class="stat-card sev-high"><div class="count">1</div><div class="label">High</div></div>
     <div class="stat-card sev-medium"><div class="count">0</div><div class="label">Medium</div></div>
-    <div class="stat-card sev-low"><div class="count">2</div><div class="label">Low</div></div>
+    <div class="stat-card sev-low"><div class="count">0</div><div class="label">Low</div></div>
     <div class="stat-card sev-info"><div class="count">0</div><div class="label">Info</div></div>
-    <div class="stat-card sev-suggestion"><div class="count">4</div><div class="label">Suggestions</div></div>
+    <div class="stat-card sev-suggestion"><div class="count">3</div><div class="label">Suggestions</div></div>
   </div>
 
   <h2>Findings</h2>
 
-  <!-- CE-001 LOW -->
-  <div class="finding low">
+  <!-- ── CE-001 HIGH ── -->
+  <div class="finding high">
     <div class="finding-header">
       <div class="finding-id">CE-001</div>
       <div class="finding-title-block">
-        <div class="finding-title">NumPy array indexed by pandas index labels in <code>_agg_by_group</code></div>
+        <div class="finding-title">Demographic aggregation indexes a positionally-filtered array with original DataFrame labels</div>
         <div class="finding-meta">
           <span class="file">code/02_descriptive_analysis/02a_descriptive_stats.py</span>
-          <span> · Line 214–221 · Python</span>
+          <span> · Lines 214&ndash;222 (function <code>_agg_by_group</code>) · Python</span>
         </div>
       </div>
-      <span class="severity-badge badge-low">LOW</span>
+      <span class="severity-badge badge-high">HIGH</span>
     </div>
     <div class="finding-body">
       <div class="finding-section-label">Problematic Code</div>
-      <div class="code-label">02a_descriptive_stats.py:214</div>
+      <div class="code-label">code/02_descriptive_analysis/02a_descriptive_stats.py:214</div>
       <pre><code>workers = workers[valid_mask]
-net_income_delta = net_income_delta[valid_mask.values]   # positionally compacted
+net_income_delta = net_income_delta[valid_mask.values]   # positional filter -&gt; length m
 rows = []
 groups = workers.groupby(col, observed=True)
 for label, grp in groups:
-    ...
-    nd = net_income_delta[grp.index]   # grp.index are ORIGINAL labels, not positions</code></pre>
+    w  = grp[&quot;weight&quot;].values
+    gs = grp[&quot;subsidy_annual&quot;].values
+    nd = net_income_delta[grp.index]     # grp.index = ORIGINAL row labels, NOT 0..m-1</code></pre>
 
       <div class="finding-section-label">Why This Is Wrong</div>
       <div class="finding-text">
-        After <code>net_income_delta = net_income_delta[valid_mask.values]</code>, the array is compacted to only the surviving rows (length = number of rows passing the mask), indexed 0..M-1 positionally. But <code>grp.index</code> holds the <em>original</em> DataFrame labels of <code>workers</code> (a subset of the 0..N-1 RangeIndex). <code>net_income_delta[grp.index]</code> then indexes the compacted array with the original labels. This is only correct when <code>valid_mask</code> drops no rows (so labels still equal positions). It works today because every <code>educ_group</code>/<code>age_bin</code> value falls inside <code>_EDUC_ORDER</code>/<code>_AGE_ORDER</code> and <code>sex_label</code>/<code>race_ethnicity</code> have no NaN (verified against hourly_workers.parquet, N=15,596). If a future extract introduces an out-of-list category (e.g. an "Unknown" education group) or an NaN, rows are dropped and the mismatch either raises <code>IndexError</code> or silently pulls the wrong worker's net-income delta into <code>avg_net_income_gain</code>.
+        <code>net_income_delta</code> is a NumPy array. The line
+        <code>net_income_delta = net_income_delta[valid_mask.values]</code> filters it
+        <em>positionally</em>, producing a length-<code>m</code> array indexed 0..m&minus;1.
+        However, <code>workers = workers[valid_mask]</code> keeps the <em>original</em> index labels (with gaps),
+        so inside the group loop <code>grp.index</code> contains original labels that can range up to
+        <code>N&minus;1</code> (the pre-filter row count). <code>net_income_delta[grp.index]</code> then performs
+        NumPy fancy indexing that treats those labels as positions into the length-<code>m</code> array.
+        Whenever <code>valid_mask</code> drops at least one row (<code>m &lt; N</code>): if any surviving label is
+        &ge; <code>m</code> it raises <code>IndexError</code> and halts the stage; if by chance all surviving
+        labels are &lt; <code>m</code> it silently returns the wrong worker's net-income delta, corrupting
+        <code>avg_net_income_gain</code>. It is currently masked only because, in the present data, all four
+        demographic filters (<code>by_sex</code>, <code>by_race_ethnicity</code>, <code>by_education</code>,
+        <code>by_age_bin</code>) happen to drop zero rows &mdash; but <code>_educ_group()</code> can emit
+        <code>&quot;Unknown&quot;</code> and <code>sex_label</code>/<code>race_ethnicity</code> can be missing, either of
+        which triggers the bug. The sibling stages 02b (<code>_scenario_costs</code>) and 02d
+        (<code>_ni_cost</code>, <code>_entrant_fiscal</code>, <code>_NetIncome</code>) all use the correct
+        <code>b.index.get_indexer(idx)</code> pattern, confirming this line is the anomaly.
       </div>
 
       <div class="finding-section-label">Recommended Fix</div>
       <pre><code>workers = workers[valid_mask].reset_index(drop=True)
 net_income_delta = net_income_delta[valid_mask.values]
-...
-for label, grp in workers.groupby(col, observed=True):
-    nd = net_income_delta[grp.index.to_numpy()]   # index now aligns with the compacted array</code></pre>
-      <div class="finding-text">Resetting the index after filtering (or using <code>net_income_delta[workers.index.get_indexer(grp.index)]</code>) keeps the array and the group labels aligned regardless of how many rows the mask drops.</div>
+rows = []
+groups = workers.groupby(col, observed=True)
+for label, grp in groups:
+    w  = grp[&quot;weight&quot;].values
+    gs = grp[&quot;subsidy_annual&quot;].values
+    nd = net_income_delta[grp.index]     # now grp.index is 0..m-1, aligned with the array</code></pre>
+      <div class="finding-text">
+        Adding <code>.reset_index(drop=True)</code> re-bases the DataFrame index to 0..m&minus;1 so it aligns
+        positionally with the filtered array (matching the intent). Equivalently, replace the indexing line
+        with <code>nd = net_income_delta[workers.index.get_indexer(grp.index)]</code> to adopt the same
+        positional-lookup idiom the 02b/02d siblings use.
+      </div>
     </div>
   </div>
 
-  <!-- CE-002 LOW -->
-  <div class="finding low">
+  <!-- ── CE-002 SUGGESTION ── -->
+  <div class="finding suggestion">
     <div class="finding-header">
       <div class="finding-id">CE-002</div>
       <div class="finding-title-block">
-        <div class="finding-title">Fallback counter <code>n_fallback</code> double-incremented across ladder steps</div>
+        <div class="finding-title">hourly_workers.parquet re-read on every entrant-hours mode</div>
         <div class="finding-meta">
-          <span class="file">code/02_descriptive_analysis/02a_descriptive_stats.py</span>
-          <span> · Line 141–148 · Python</span>
+          <span class="file">code/02_descriptive_analysis/02d_matching_simulation.py</span>
+          <span> · Lines 179&ndash;207 (function <code>_entrant_hours_by_mode</code>) · Python</span>
         </div>
       </div>
-      <span class="severity-badge badge-low">LOW</span>
+      <span class="severity-badge badge-suggestion">SUGGESTION</span>
     </div>
     <div class="finding-body">
       <div class="finding-section-label">Problematic Code</div>
-      <div class="code-label">02a_descriptive_stats.py:141</div>
-      <pre><code>if schedule is None:
-    schedule = _load_schedule("single_0c", state)
-    n_fallback += len(grp_idx)
-if schedule is None:
-    schedule = _load_schedule(fkey, "TX")
-    n_fallback += len(grp_idx)      # same group counted a second time
-if schedule is None:
-    schedule = _load_schedule("single_0c", "TX")</code></pre>
+      <div class="code-label">code/02_descriptive_analysis/02d_matching_simulation.py:183</div>
+      <pre><code>def _entrant_hours_by_mode(pool, mode: str) -&gt; np.ndarray:
+    ...
+    inc = pd.read_parquet(hw_path)            # re-read once per mode
+    inc_cells = _b.assign_cell(inc)           # re-computed once per mode
+    ...
+
+def entrant_hours_sensitivity(pool, beta, target):
+    for mode in cfg[...][&quot;entry_hours_modes&quot;]:   # 3 modes
+        h = _entrant_hours_by_mode(pool, mode)   # reads hourly_workers.parquet each time</code></pre>
 
       <div class="finding-section-label">Why This Is Wrong</div>
       <div class="finding-text">
-        When the first fallback (<code>single_0c</code> / same state) is missing, <code>n_fallback</code> is incremented; if that lookup also returns None, the second branch runs and adds <code>len(grp_idx)</code> for the <em>same</em> group again. A group that falls through two ladder rungs is counted twice, so the printed "Used fallback schedule for N workers" warning overstates the count. This affects only a diagnostic message, never any output file, and does not fire on the current checkout (all 408 family×state schedules resolve on the exact match), so results are unaffected.
+        Not a correctness bug. <code>_entrant_hours_by_mode</code> reads
+        <code>hourly_workers.parquet</code> and recomputes the incumbent cell assignment on every call, and
+        <code>entrant_hours_sensitivity</code> calls it once per mode (three times). Because
+        <code>entrant_hours_sensitivity</code> is itself invoked from both 02d and again from 02g on the
+        evidence-central pool, the same file is read several extra times per pipeline run.
       </div>
 
       <div class="finding-section-label">Recommended Fix</div>
-      <pre><code>if schedule is None:
-    schedule = _resolve_fallback(fkey, state)   # single ladder, count once
-    if schedule is not None:
-        n_fallback += len(grp_idx)</code></pre>
-      <div class="finding-text">Increment the counter once, after the fallback ladder resolves, so each group contributes at most <code>len(grp_idx)</code>.</div>
+      <pre><code>def entrant_hours_sensitivity(pool, beta, target):
+    inc = pd.read_parquet(PATH_DATA_PROCESSED / &quot;hourly_workers.parquet&quot;)
+    inc_cells = _b.assign_cell(inc)
+    for mode in cfg[...][&quot;entry_hours_modes&quot;]:
+        h = _entrant_hours_by_mode(pool, mode, inc=inc, inc_cells=inc_cells)</code></pre>
+      <div class="finding-text">
+        Read the incumbent file once and pass it (with its precomputed cells) into the per-mode helper. Cheap
+        change; removes redundant disk I/O and duplicated <code>assign_cell</code> work.
+      </div>
     </div>
   </div>
 
-  <!-- CE-003 SUGGESTION -->
+  <!-- ── CE-003 SUGGESTION ── -->
   <div class="finding suggestion">
     <div class="finding-header">
       <div class="finding-id">CE-003</div>
       <div class="finding-title-block">
-        <div class="finding-title">nonemployed_pool.parquet re-read on every <code>simulate()</code> call (6×)</div>
+        <div class="finding-title">Row-wise Python loops for demographic derivation could be vectorized</div>
         <div class="finding-meta">
-          <span class="file">code/02_descriptive_analysis/02d_matching_simulation.py</span>
-          <span> · Line 124–132 · Python</span>
+          <span class="file">code/01_data_preparation/01a_data_ingest.py</span>
+          <span> · Lines 245&ndash;246, 348&ndash;351 · Python</span>
         </div>
       </div>
       <span class="severity-badge badge-suggestion">SUGGESTION</span>
     </div>
     <div class="finding-body">
       <div class="finding-section-label">Problematic Code</div>
-      <div class="code-label">02d_matching_simulation.py:124</div>
-      <pre><code>pool_path = PATH_DATA_PROCESSED / "nonemployed_pool.parquet"
-if pool_path.exists():
-    pool_src = "ORG pool"
-    ge, ne, fce, induced_M, ind_by_cell, detail = _entrants_from_pool(
-        pd.read_parquet(pool_path), beta, target)   # read inside simulate()</code></pre>
+      <div class="code-label">code/01_data_preparation/01a_data_ingest.py:245</div>
+      <pre><code>out[&quot;race_ethnicity&quot;] = [_race_ethnicity(r, h) for r, h in zip(race, hisp)]
+out[&quot;age_bin&quot;] = out[&quot;age&quot;].apply(_age_bin)
+...
+eligible[&quot;family_type_key&quot;] = [
+    _family_key(int(m), int(n))
+    for m, n in zip(eligible[&quot;marst&quot;], eligible[&quot;nchild&quot;])
+]</code></pre>
 
       <div class="finding-section-label">Why This Is Wrong</div>
       <div class="finding-text">
-        <code>main()</code> calls <code>simulate()</code> six times (two wage modes × three beta values), and each call re-reads the entire pool Parquet from disk. The pool never changes across calls, so five of the six reads are pure redundant I/O (plus another read at line 320 for the band). This is a correctness-neutral efficiency issue — no results change — but it wastes disk time proportional to pool size on every run.
+        Not a correctness bug. These per-row Python comprehensions / <code>.apply()</code> calls run once per
+        record over the full pooled CPS ORG panel (many hundreds of thousands of rows). Each is a pure
+        categorical recode expressible as a vectorized <code>np.select</code> / <code>Series.map</code> on
+        integer bins, which is substantially faster and avoids per-element Python-object overhead.
       </div>
 
       <div class="finding-section-label">Recommended Fix</div>
-      <pre><code>pool = pd.read_parquet(pool_path) if pool_path.exists() else None
-for rigid in (True, False):
-    for tag, beta in mcfg["beta"].items():
-        r = simulate(w, beta, target, rho, entry_wage, rigid, pool=pool)</code></pre>
-      <div class="finding-text">Read the pool once in <code>main()</code> and pass it into <code>simulate()</code> / <code>_entrants_from_pool()</code>.</div>
+      <pre><code># age_bin via vectorized cut:
+out[&quot;age_bin&quot;] = pd.cut(out[&quot;age&quot;], [-1, 24, 34, 44, 54, 64, 200],
+                        labels=[&quot;16-24&quot;,&quot;25-34&quot;,&quot;35-44&quot;,&quot;45-54&quot;,&quot;55-64&quot;,&quot;65+&quot;])
+# race_ethnicity via np.select on the race/hisp arrays;
+# family_type_key via boolean masks on marst / nchild.</code></pre>
+      <div class="finding-text">
+        Replace the element-wise loops with vectorized pandas/NumPy operations. Behavior is unchanged; only
+        speed improves. Low priority given a single build per run.
+      </div>
     </div>
   </div>
 
-  <!-- CE-004 SUGGESTION -->
+  <!-- ── CE-004 SUGGESTION ── -->
   <div class="finding suggestion">
     <div class="finding-header">
       <div class="finding-id">CE-004</div>
       <div class="finding-title-block">
-        <div class="finding-title">External ORG file read twice for base-population totals</div>
+        <div class="finding-title">External ORG file loaded twice within the same stage</div>
         <div class="finding-meta">
           <span class="file">code/02_descriptive_analysis/02a_descriptive_stats.py</span>
-          <span> · Line 294–322, 428–454 · Python</span>
+          <span> · Lines 293&ndash;322 and 427&ndash;454 · Python</span>
         </div>
       </div>
       <span class="severity-badge badge-suggestion">SUGGESTION</span>
     </div>
     <div class="finding-body">
       <div class="finding-section-label">Problematic Code</div>
-      <div class="code-label">02a_descriptive_stats.py:294 and 428</div>
-      <pre><code># block 1 (by-state denominators)
-org_candidates = sorted((PATH_DATA / "external").glob("org_workers_*.parquet"))
-_org_raw = pd.read_parquet(org_candidates[-1])
-...
-# block 2 (demographic denominators) — same file, read again
-org_candidates = sorted((PATH_DATA / "external").glob("org_workers_*.parquet"))
-org_raw = pd.read_parquet(org_candidates[-1])</code></pre>
+      <div class="code-label">code/02_descriptive_analysis/02a_descriptive_stats.py:294 &amp; 429</div>
+      <pre><code># state-base-totals block
+org_candidates = sorted((PATH_DATA / &quot;external&quot;).glob(&quot;org_workers_*.parquet&quot;))
+if org_candidates:
+    _org_raw = pd.read_parquet(org_candidates[-1])
+    ...
+# ~130 lines later, demographic-base-totals block
+org_candidates = sorted((PATH_DATA / &quot;external&quot;).glob(&quot;org_workers_*.parquet&quot;))
+if org_candidates:
+    org_raw = pd.read_parquet(org_candidates[-1])   # same file, read again</code></pre>
 
       <div class="finding-section-label">Why This Is Wrong</div>
       <div class="finding-text">
-        The same external <code>org_workers_*.parquet</code> is read twice, and the same base mask, FIPS mapping, and <code>n_months</code> normalization are recomputed in both blocks. Reading and masking the file once and reusing it for both the state and demographic denominators halves the I/O and removes the duplicated masking logic. Purely an efficiency/readability improvement.
+        Not a correctness bug. The state-level and demographic-level <code>pct_in_group</code> denominators
+        each glob and read the same <code>org_workers_*.parquet</code> file and re-apply the same base-mask
+        filter. When the external file is present this doubles the disk read and the filtering work. (In the
+        current checkout the file is absent, so both blocks fall through the empty-glob branch; the concern is
+        latent.)
       </div>
 
       <div class="finding-section-label">Recommended Fix</div>
-      <pre><code>org_base = _load_org_base()   # read + mask + FIPS + n_months once
-_state_base_totals = _state_totals(org_base)
-_base_group_totals = _group_totals(org_base)</code></pre>
-      <div class="finding-text">Factor the shared load/mask into one helper and derive both denominator dictionaries from it.</div>
-    </div>
-  </div>
-
-  <!-- CE-005 SUGGESTION -->
-  <div class="finding suggestion">
-    <div class="finding-header">
-      <div class="finding-id">CE-005</div>
-      <div class="finding-title-block">
-        <div class="finding-title">Hard-coded overall take-up and workforce total in Figure 3</div>
-        <div class="finding-meta">
-          <span class="file">code/05_figures_tables/05c_core_figures.R</span>
-          <span> · Line 313, 344 · R</span>
-        </div>
-      </div>
-      <span class="severity-badge badge-suggestion">SUGGESTION</span>
-    </div>
-    <div class="finding-body">
-      <div class="finding-section-label">Problematic Code</div>
-      <div class="code-label">05c_core_figures.R:313</div>
-      <pre><code>overall &lt;- 15.5
-tug &lt;- pop("take_up_by_group")
-...
-note = paste0("Dashed line: overall take-up (15.5%). Denominator is the ",
-              "wage-observed hourly workforce (134.3M).")</code></pre>
-
-      <div class="finding-section-label">Why This Is Wrong</div>
       <div class="finding-text">
-        The overall take-up rate (15.5%) drives a reference line drawn on the figure, and the "134.3M" workforce total appears in the caption — both are hard-coded rather than derived from <code>take_up_by_group.parquet</code> / <code>summary.parquet</code>. If the pipeline is re-run with new data, the plotted reference line and caption silently diverge from the bars. This is not a current error (the constants match the present outputs) but it is a drift risk worth removing.
+        Load the ORG file and compute the filtered <code>org_base</code> once near the top of
+        <code>main()</code>, then derive both the state totals and the demographic-group totals from that
+        single in-memory frame. Removes the duplicated read and keeps the two denominators guaranteed
+        consistent.
       </div>
-
-      <div class="finding-section-label">Recommended Fix</div>
-      <pre><code>tug &lt;- pop("take_up_by_group")
-overall &lt;- weighted.mean(tug$take_up_pct, tug$base_k)   # or read a stored scalar
-workforce_m &lt;- sum(tug$base_k) / 1e3</code></pre>
-      <div class="finding-text">Compute the reference value and caption numbers from the same intermediate the bars use, so the annotation cannot drift from the data.</div>
-    </div>
-  </div>
-
-  <!-- CE-006 SUGGESTION -->
-  <div class="finding suggestion">
-    <div class="finding-header">
-      <div class="finding-id">CE-006</div>
-      <div class="finding-title-block">
-        <div class="finding-title">Semicolon-packed one-line helpers reduce readability</div>
-        <div class="finding-meta">
-          <span class="file">code/01_data_preparation/01h_nonemployed_pool.py</span>
-          <span> · Line 272–275, 529–530 · Python</span>
-        </div>
-      </div>
-      <span class="severity-badge badge-suggestion">SUGGESTION</span>
-    </div>
-    <div class="finding-body">
-      <div class="finding-section-label">Problematic Code</div>
-      <div class="code-label">01h_nonemployed_pool.py:272</div>
-      <pre><code>def wmed(v, w):
-    v = np.asarray(v, float); w = np.asarray(w, float); ok = ~np.isnan(v) &amp; (w &gt; 0)
-    if ok.sum() == 0: return np.nan
-    v, w = v[ok], w[ok]; i = np.argsort(v); cw = np.cumsum(w[i]); return float(v[i][np.searchsorted(cw, cw[-1]*0.5)])
-
-def wq(x, qq):
-    i = np.argsort(x); cw = np.cumsum(wt[i]); return float(np.asarray(x)[i][np.searchsorted(cw, cw[-1]*qq)])</code></pre>
-
-      <div class="finding-section-label">Why This Is Wrong</div>
-      <div class="finding-text">
-        These weighted-quantile helpers pack four to five statements onto a single line with semicolons, mixing sort, cumulative-sum, and search steps. They are correct, but the density makes the weighted-median logic hard to audit — and both files define near-identical logic. This is a readability suggestion only; behavior is fine.
-      </div>
-
-      <div class="finding-section-label">Recommended Fix</div>
-      <pre><code>def weighted_quantile(values, weights, q):
-    v = np.asarray(values, float)
-    w = np.asarray(weights, float)
-    order = np.argsort(v)
-    cw = np.cumsum(w[order])
-    return float(v[order][np.searchsorted(cw, cw[-1] * q)])</code></pre>
-      <div class="finding-text">Extract one shared, line-per-step weighted-quantile helper and reuse it for both the median and the p25/p75 diagnostics.</div>
     </div>
   </div>
 
@@ -331,51 +321,97 @@ def wq(x, qq):
 
   <table class="data-currency-table">
     <thead>
-      <tr><th>Dataset</th><th>Version in Code</th><th>Latest Available</th><th>Status</th></tr>
+      <tr>
+        <th>Dataset</th>
+        <th>Version in Code</th>
+        <th>Latest Available</th>
+        <th>Status</th>
+      </tr>
     </thead>
     <tbody>
       <tr>
-        <td>CPS Outgoing Rotation Group (basic monthly), via IPUMS CPS</td>
-        <td>2025–2026 ORG partitions (*2 era); coding per IPUMS CPS v13.0 (ASEC 2025 DDI). 01h/01i read the two most recent <code>year=*</code> partitions.</td>
-        <td>IPUMS CPS basic monthly available through May 2026 (Oct 2025 not collected — federal shutdown).</td>
-        <td><span class="status-current">Current</span></td>
-      </tr>
-      <tr>
-        <td>PolicyEngine-US (tax-benefit microsimulation model)</td>
-        <td>Simulation year 2026 (<code>cfg["ws_simulation_year"]</code>); package version pinned upstream in 01b (out of review scope), not visible in the reviewed files.</td>
-        <td>policyengine-us on PyPI (1.x line); policyengine-us-data 1.89.1 (2026-04-30). Direct microsimulation migrating to the managed policyengine.py bundle.</td>
-        <td><span class="status-unknown">Unable to Verify</span></td>
+        <td>IPUMS CPS — Current Population Survey (basic monthly ORG + ASEC)</td>
+        <td>IPUMS CPS v13.0 extract cps_00305; basic monthly ORG 2025&ndash;2026 (*2 era), ASEC 2025 (income year 2024)</td>
+        <td>IPUMS CPS basic monthly through May 2026 (Oct 2025 not collected — federal shutdown); ASEC 2025 is the latest annual supplement</td>
+        <td><span class="status-outdated">Update Available</span></td>
       </tr>
     </tbody>
   </table>
-  <p class="data-currency-note" style="margin-top:0.75rem;">
-    Note: PolicyEngine-US is a recognized public model but is not in <code>Infrastructure/references/datasets/registry.yaml</code>, and the reviewed files do not pin its version (the pre-computed schedules are built in 01b, outside this document-targeted review). Consider running <code>/document-data</code> to add a PolicyEngine-US entry (with the pinned package version and simulation year) so its currency can be verified in future reviews.
+  <p class="data-currency-note">
+    Match basis: <code>code/00_ingest/00a_download-ipums-cps.R</code> fetches an IPUMS CPS extract via
+    <code>ipumsr</code>; downstream parquet (<code>cps_org_panel</code>, extract <code>cps_00305</code>) and the
+    registry <code>cps</code> entry (file patterns <code>cps_00*</code>, variables <code>EARNWT</code>,
+    <code>ASECWT</code>, <code>WTFINL</code>) confirm the dataset. Basic monthly ORG samples newer than the
+    2025&ndash;2026 window in the extract now exist (through May 2026); ASEC 2025 is current. Advisory only —
+    a pinned vintage is appropriate for a reproducible policy simulation.
   </p>
 
   <h2>Reviewed Files</h2>
   <table class="files-table">
     <thead>
-      <tr><th>File</th><th>Language</th><th style="text-align:center">Lines</th><th style="text-align:center">Findings</th><th style="text-align:center">Highest Severity</th></tr>
+      <tr>
+        <th>File</th>
+        <th>Language</th>
+        <th style="text-align:center">Lines</th>
+        <th style="text-align:center">Errors Found</th>
+        <th style="text-align:center">Highest Severity</th>
+      </tr>
     </thead>
     <tbody>
-      <tr><td>code/00_setup/00_config.py</td><td>Python</td><td class="count-cell">237</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
-      <tr><td>code/01_data_preparation/01h_nonemployed_pool.py</td><td>Python</td><td class="count-cell">559</td><td class="count-cell has-issues">1</td><td class="count-cell">SUGGESTION</td></tr>
-      <tr><td>code/01_data_preparation/01i_household_links.py</td><td>Python</td><td class="count-cell">171</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
-      <tr><td>code/02_descriptive_analysis/02a_descriptive_stats.py</td><td>Python</td><td class="count-cell">516</td><td class="count-cell has-issues">3</td><td class="count-cell">LOW</td></tr>
-      <tr><td>code/02_descriptive_analysis/02b_behavioral_scenarios.py</td><td>Python</td><td class="count-cell">341</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
-      <tr><td>code/02_descriptive_analysis/02d_matching_simulation.py</td><td>Python</td><td class="count-cell">380</td><td class="count-cell has-issues">1</td><td class="count-cell">SUGGESTION</td></tr>
-      <tr><td>code/02_descriptive_analysis/02e_take_up_by_group.py</td><td>Python</td><td class="count-cell">102</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
-      <tr><td>code/05_figures_tables/05c_core_figures.R</td><td>R</td><td class="count-cell">488</td><td class="count-cell has-issues">1</td><td class="count-cell">SUGGESTION</td></tr>
-      <tr><td>code/05_figures_tables/05d_supporting_figures.R</td><td>R</td><td class="count-cell">539</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
-      <tr><td>code/05_figures_tables/eig_fig_utils.R</td><td>R</td><td class="count-cell">143</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
-      <tr><td>code/05_figures_tables/05z_build_manifest.py</td><td>Python</td><td class="count-cell">95</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/00_setup/00_config.py</td><td>Python</td><td class="count-cell">303</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/01_data_preparation/00_export_org_data.py</td><td>Python</td><td class="count-cell">30</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/01_data_preparation/01a_data_ingest.py</td><td>Python</td><td class="count-cell">450</td><td class="count-cell has-issues">1</td><td class="count-cell">SUGGESTION</td></tr>
+      <tr><td>code/01_data_preparation/01b_precompute_individual.py</td><td>Python</td><td class="count-cell">153</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/01_data_preparation/01d_asec_preprocess.py</td><td>Python</td><td class="count-cell">197</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/01_data_preparation/01e_match_org_to_asec.py</td><td>Python</td><td class="count-cell">352</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/01_data_preparation/01f_precompute_matched_schedules.py</td><td>Python</td><td class="count-cell">345</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/01_data_preparation/01h_nonemployed_pool.py</td><td>Python</td><td class="count-cell">788</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/01_data_preparation/01i_household_links.py</td><td>Python</td><td class="count-cell">170</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/02_descriptive_analysis/02a_descriptive_stats.py</td><td>Python</td><td class="count-cell">515</td><td class="count-cell has-issues">2</td><td class="count-cell">HIGH</td></tr>
+      <tr><td>code/02_descriptive_analysis/02b_behavioral_scenarios.py</td><td>Python</td><td class="count-cell">340</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/02_descriptive_analysis/02c_incidence.py</td><td>Python</td><td class="count-cell">267</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/02_descriptive_analysis/02d_matching_simulation.py</td><td>Python</td><td class="count-cell">543</td><td class="count-cell has-issues">1</td><td class="count-cell">SUGGESTION</td></tr>
+      <tr><td>code/02_descriptive_analysis/02e_take_up_by_group.py</td><td>Python</td><td class="count-cell">106</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/02_descriptive_analysis/02f_mpl_imputation_band.py</td><td>Python</td><td class="count-cell">134</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/02_descriptive_analysis/02g_entry_scenario_grid.py</td><td>Python</td><td class="count-cell">210</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/03_main_estimation/03a_main_model.py</td><td>Python</td><td class="count-cell">9</td><td class="count-cell ok">0</td><td class="count-cell">— (stub)</td></tr>
+      <tr><td>code/03_matched_analysis/03a_apply_matched_to_population.py</td><td>Python</td><td class="count-cell">687</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/04_robustness_heterogeneity/04a_robustness_checks.py</td><td>Python</td><td class="count-cell">9</td><td class="count-cell ok">0</td><td class="count-cell">— (stub)</td></tr>
+      <tr><td>code/04_robustness_heterogeneity/04b_org_validation_framework.py</td><td>Python</td><td class="count-cell">594</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/05_figures_tables/05a_main_outputs.py</td><td>Python</td><td class="count-cell">107</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/05_figures_tables/05b_state_choropleth.py</td><td>Python</td><td class="count-cell">214</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/05_figures_tables/05z_build_manifest.py</td><td>Python</td><td class="count-cell">101</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/_utils/intermediates.py</td><td>Python</td><td class="count-cell">85</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/run_all.py</td><td>Python</td><td class="count-cell">463</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/00_ingest/00a_download-ipums-cps.R</td><td>R</td><td class="count-cell">417</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/00_ingest/01a_load-ipums-cps.R</td><td>R</td><td class="count-cell">476</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/00_ingest/01b_build-org-panel.R</td><td>R</td><td class="count-cell">1375</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/00_setup/00_config.R</td><td>R</td><td class="count-cell">66</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/01_data_preparation/01a_data_ingest.R</td><td>R</td><td class="count-cell">31</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/01_data_preparation/01c_asec_pull.R</td><td>R</td><td class="count-cell">222</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/02_descriptive_analysis/02a_descriptive_stats.R</td><td>R</td><td class="count-cell">6</td><td class="count-cell ok">0</td><td class="count-cell">— (stub)</td></tr>
+      <tr><td>code/03_main_estimation/03a_main_model.R</td><td>R</td><td class="count-cell">6</td><td class="count-cell ok">0</td><td class="count-cell">— (stub)</td></tr>
+      <tr><td>code/04_robustness_heterogeneity/04a_robustness_checks.R</td><td>R</td><td class="count-cell">6</td><td class="count-cell ok">0</td><td class="count-cell">— (stub)</td></tr>
+      <tr><td>code/05_figures_tables/05a_main_figures.R</td><td>R</td><td class="count-cell">6</td><td class="count-cell ok">0</td><td class="count-cell">— (stub)</td></tr>
+      <tr><td>code/05_figures_tables/05c_core_figures.R</td><td>R</td><td class="count-cell">535</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/05_figures_tables/05d_supporting_figures.R</td><td>R</td><td class="count-cell">700</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/05_figures_tables/eig_fig_utils.R</td><td>R</td><td class="count-cell">142</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/_utils/00_packages.R</td><td>R</td><td class="count-cell">65</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/run_all.R</td><td>R</td><td class="count-cell">219</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/00_setup/00_config.do</td><td>Stata</td><td class="count-cell">60</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/01_data_preparation/01a_data_ingest.do</td><td>Stata</td><td class="count-cell">3</td><td class="count-cell ok">0</td><td class="count-cell">— (stub)</td></tr>
+      <tr><td>code/02_descriptive_analysis/02a_descriptive_stats.do</td><td>Stata</td><td class="count-cell">3</td><td class="count-cell ok">0</td><td class="count-cell">— (stub)</td></tr>
+      <tr><td>code/03_main_estimation/03a_main_model.do</td><td>Stata</td><td class="count-cell">3</td><td class="count-cell ok">0</td><td class="count-cell">— (stub)</td></tr>
+      <tr><td>code/04_robustness_heterogeneity/04a_robustness_checks.do</td><td>Stata</td><td class="count-cell">3</td><td class="count-cell ok">0</td><td class="count-cell">— (stub)</td></tr>
+      <tr><td>code/05_figures_tables/05a_main_outputs.do</td><td>Stata</td><td class="count-cell">3</td><td class="count-cell ok">0</td><td class="count-cell">— (stub)</td></tr>
+      <tr><td>code/run_all.do</td><td>Stata</td><td class="count-cell">274</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
     </tbody>
   </table>
 
 </div>
 
 <div class="report-footer">
-  Generated by AI review agent · code-reviewer · 2026-07-08<br>
+  Generated by AI review agent · code-reviewer · 2026-07-09<br>
   Scope: definitive code errors + efficiency/readability suggestions — see methodology-report.html for design concerns
 </div>
 

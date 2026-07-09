@@ -6,10 +6,7 @@
   <title>AI Skeptic Report — eig-wagesubsidy-policy-sim</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      font-size: 15px; line-height: 1.6; color: #1e293b; background: #f8fafc;
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; line-height: 1.6; color: #1e293b; background: #f8fafc; }
     .report-header { background: #7f1d1d; color: #fef2f2; padding: 2rem 2.5rem; }
     .report-header h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.25rem; }
     .report-header .subtitle { font-size: 0.9rem; color: #fca5a5; }
@@ -87,6 +84,8 @@
     .ai-suspected { color: #ca8a04; }
     .ai-unknown  { color: #64748b; }
     .report-footer { margin-top: 3rem; padding: 1.5rem; text-align: center; font-size: 0.8rem; color: #94a3b8; border-top: 1px solid #e2e8f0; }
+    .resolved-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; font-size: 0.9rem; color: #166534; }
+    .resolved-box strong { color: #14532d; }
   </style>
 </head>
 <body>
@@ -95,10 +94,10 @@
   <h1>AI Skeptic Report</h1>
   <div class="subtitle">Fabrication detection · assumption audit · edge-case stress tests · confidence calibration</div>
   <div class="meta">
-    <span><strong>Project:</strong> eig-wagesubsidy-policy-sim</span>
-    <span><strong>Reviewed:</strong> 2026-07-08</span>
-    <span><strong>Files:</strong> 12 files across Python, R, Markdown</span>
-    <span><strong>AI-Authored:</strong> 12 files (known)</span>
+    <span><strong>Project:</strong> eig-wagesubsidy-policy-sim (80-80 wage subsidy)</span>
+    <span><strong>Reviewed:</strong> 2026-07-09</span>
+    <span><strong>Files:</strong> 18 files across Python, R, Markdown</span>
+    <span><strong>AI-Authored:</strong> 18 files (suspected)</span>
     <span><strong>Reviewer:</strong> AI review agent (ai-skeptic)</span>
   </div>
 </div>
@@ -113,39 +112,24 @@
   </div>
 
   <div class="summary-box">
-    Review of 11 source files plus the prose draft found <strong>no fabrications</strong>: every academic
-    citation the draft leans on (SSP / Card &amp; Hyslop, Paycheck Plus New York City +5.8pp for
-    disadvantaged men, the Paycheck Plus Atlanta null, and the Peterson Institute $900k-per-job steel-tariff
-    figure) was independently confirmed by web search and by the project's primary-verified literature
-    summaries; every function, package call, and config key in the code exists and is used correctly;
-    and every headline number in the draft (gross $89.8B / net $72.1B static, $76–78B behavioral band,
-    1.42M central entrants, the demographic take-up table, program-interaction shares) matches the
-    committed pipeline outputs. Edge-case stress tests of the division, log, saturation, and net-income
-    operations all passed — the code is unusually defensive (explicit divide guards, monotonicity
-    assertions, fallback ladders). The residual concerns are <strong>3 MEDIUM</strong> items: (1) two
-    external per-job comparison figures ($154k Buy American, $106–196k state/local) that cannot be verified
-    without the prior EIG post and remain flagged <code>[TO VERIFY]</code> in the draft; (2) an internal
-    inconsistency in the subsidy hours cap — 2,000 hours (40&nbsp;hr/wk × <em>50</em> weeks) in Figure&nbsp;11b
-    versus 2,080 hours (40 × <em>52</em>) in the main pipeline; and (3) per-job dollar values hard-coded into
-    the figure code (including the derived $5,200 / $55,000) that can silently desync from the pipeline on
-    a rerun. Overall trust: <strong>CAUTION</strong> — no fabrication, but confirm the disclosed assumptions
-    and reconcile the hours-cap convention before publication.
+    This audit re-verified the merged master (<code>ae5c6e1</code> + <code>6706345</code>) against the four priors carried in from the previous pass and hunted for new fabrication or undisclosed choices introduced by the paid-hourly eligibility restriction. <strong>All three previously-open priors are now resolved:</strong> AS-001 (run_all.py importing but never executing the Python stages) is fixed — <code>execute_python_script()</code> now invokes <code>main()</code> after <code>exec_module</code>, and a full set of 24 population parquets plus the processed inputs are present and internally consistent; AS-002 (stale "1.25M" figure-14 subtitle) now reads "Evidence-central 1.49M; conservative floor 1.02M; high corner 3.81M", matching <code>entry_headline_scenarios.parquet</code> and the draft; AS-003 (appendix §10 reproducibility claim) is now supported by the AS-001 fix, deterministic hash-based assignment, and the fresh outputs. <strong>Citations and CPS/ORG variable names re-confirmed clean — no fabrication.</strong> Six findings remain, none higher than MEDIUM: one MEDIUM comment-code contradiction (two <code>05d</code> comments still enumerate the retired 1.25M headline and its old per-status composition while the code and data carry 1.49M), plus low/informational items — an unguarded divide in <code>02d</code> that survives only on an upstream invariant (prior AS-006, still unfixed), a hard-coded figure-14 subtitle that re-creates the exact fragility behind AS-002, an independent recomputation of the policy target in <code>02d</code>, dead salaried-wage code left behind by the paid-hourly restriction, and author-flagged <code>[TO VERIFY]</code> citation-detail placeholders. The numbers a reader would cite are verified; the residue is documentation drift and defensive-coding hygiene. Overall trust: <strong>CAUTION</strong> — no fabrication, results reproduce, but the stale headline comments and the recurring hard-coded subtitle should be corrected before publication.
+  </div>
+
+  <div class="resolved-box">
+    <strong>Priors resolved this pass:</strong> AS-001 (was CRITICAL → resolved), AS-002 (was HIGH → resolved), AS-003 (was HIGH → resolved). AS-006 (unguarded divide in 02d) was <em>not</em> fixed and persists — carried below as finding AS-002 at LOW, because upstream invariants make it unreachable in the shipped pipeline. Caveat on AS-003: resolution rests on code inspection, deterministic hash draws, and the presence of a fresh, internally-consistent output set — the full R+Python pipeline was not re-executed in this sandbox (it requires Rscript plus an IPUMS key).
   </div>
 
   <div class="stat-grid">
     <div class="stat-card sev-critical"><div class="count">0</div><div class="label">Critical</div></div>
     <div class="stat-card sev-high"><div class="count">0</div><div class="label">High</div></div>
-    <div class="stat-card sev-medium"><div class="count">3</div><div class="label">Medium</div></div>
-    <div class="stat-card sev-low"><div class="count">4</div><div class="label">Low</div></div>
-    <div class="stat-card sev-info"><div class="count">1</div><div class="label">Info</div></div>
+    <div class="stat-card sev-medium"><div class="count">1</div><div class="label">Medium</div></div>
+    <div class="stat-card sev-low"><div class="count">3</div><div class="label">Low</div></div>
+    <div class="stat-card sev-info"><div class="count">2</div><div class="label">Info</div></div>
   </div>
 
-  <!-- ═══════════════ ASSUMPTION INVENTORY ═══════════════ -->
   <h2>Assumption Inventory</h2>
   <p style="font-size:0.9rem; color:#64748b; margin-bottom:0.75rem;">
-    Every implicit analytical choice identified in the code. This project is unusually well-documented for
-    AI-assisted work — most high-impact choices are disclosed in code comments, the methodology doc, and the
-    draft's internal "Assumptions" block. Undisclosed items generate findings below.
+    Every implicit analytical choice identified in the reviewed code. This project is unusually well-documented — most choices are disclosed in code/config comments — so the table is dominated by "Yes". Undisclosed items generate the finding cards below.
   </p>
 
   <table class="inventory-table">
@@ -153,111 +137,27 @@
       <tr><th>#</th><th>Code Location</th><th>Assumption</th><th>Alternatives</th><th>Impact</th><th>Disclosed?</th></tr>
     </thead>
     <tbody>
-      <tr>
-        <td>1</td>
-        <td>01h_nonemployed_pool.py:36; 02b:34</td>
-        <td>The subsidy is taxable and counts against means-tested benefit eligibility.</td>
-        <td>Non-taxable / excluded from benefit tests (as EITC-style refundable credits often are).</td>
-        <td><span class="impact-high">High</span></td>
-        <td><span class="disclosed-yes">Yes</span> — draft §clawback + Evidence block; code #4 &amp; methodology doc.</td>
-      </tr>
-      <tr>
-        <td>2</td>
-        <td>01h:76; 02d:201; 05d:325</td>
-        <td>Annual subsidy hours cap. Pipeline uses 40&nbsp;hr/wk × <strong>52</strong> = 2,080; Figure&nbsp;11b uses 40 × <strong>50</strong> = 2,000.</td>
-        <td>A single consistent weeks-per-year convention (50 or 52) everywhere.</td>
-        <td><span class="impact-medium">Medium</span></td>
-        <td><span class="disclosed-no">No</span> — see AS-002.</td>
-      </tr>
-      <tr>
-        <td>3</td>
-        <td>05d_supporting_figures.R:322</td>
-        <td>Figure&nbsp;11b fixes the illustrative wage at $10/hr for a PA single parent of two.</td>
-        <td>Other wages / states / family types; a distribution rather than one household.</td>
-        <td><span class="impact-medium">Medium</span></td>
-        <td><span class="disclosed-yes">Yes</span> — figure caption and draft text label it "illustrative".</td>
-      </tr>
-      <tr>
-        <td>4</td>
-        <td>01h:290 (_entry_hours, M7)</td>
-        <td>Entrant hours are quantile-matched (MPL percentile → incumbent-hours percentile within cell), concentrating entrants at ~880 h/yr.</td>
-        <td>Cell-median hours; full-time assignment; a hazard model of hours.</td>
-        <td><span class="impact-high">High</span> (drives the low marginal cost per entrant).</td>
-        <td><span class="disclosed-yes">Yes</span> — draft flags pending PI-3 hours-sensitivity; code M7.</td>
-      </tr>
-      <tr>
-        <td>5</td>
-        <td>01h:182; 02b:134 (assign_cell)</td>
-        <td>Cell definition: "men" = all males; "single_mothers" = single female with children; "other_women" = all other females. Blend ≈ 41% / 48% / 11%.</td>
-        <td>Split men by custody/disadvantage; split women by marital status.</td>
-        <td><span class="impact-medium">Medium</span></td>
-        <td><span class="disclosed-partial">Partial</span> — config comment; not spelled out in draft.</td>
-      </tr>
-      <tr>
-        <td>6</td>
-        <td>00_config.py:186 (reservation_ratio)</td>
-        <td>Reservation wage = 0.80 × prior wage (Krueger–Mueller anchor); transported, no wage-fill estimate exists.</td>
-        <td>Alternative reservation ratios; estimated from data.</td>
-        <td><span class="impact-medium">Medium</span></td>
-        <td><span class="disclosed-yes">Yes</span> — config comment + methodology doc.</td>
-      </tr>
-      <tr>
-        <td>7</td>
-        <td>00_config.py:185 (beta band)</td>
-        <td>Worker bargaining share β ∈ {0.3, 0.5, 0.7}; incumbent wages rigid (Hall–Milgrom).</td>
-        <td>Other β; flexible incumbent renegotiation (reported as the upper incidence bound).</td>
-        <td><span class="impact-high">High</span> (governs firm-capture / cost band).</td>
-        <td><span class="disclosed-yes">Yes</span> — config + draft "Will employers just capture it?".</td>
-      </tr>
-      <tr>
-        <td>8</td>
-        <td>00_config.py:150–166; 216–220 (eps_ext)</td>
-        <td>Extensive-margin elasticities transported from EITC/CBO and the SSP / Paycheck Plus experiments, keyed by cell.</td>
-        <td>Other elasticity sources; a single blended elasticity (rejected as mis-weighting).</td>
-        <td><span class="impact-high">High</span></td>
-        <td><span class="disclosed-yes">Yes</span> — extensive config comments + draft provenance para.</td>
-      </tr>
-      <tr>
-        <td>9</td>
-        <td>00_config.py:117 (saturation ceilings)</td>
-        <td>Michaelis–Menten response ceilings M_ext = 1.50, M_int = 1.40 (judgment bounds).</td>
-        <td>Other ceilings; unbounded linear eps·g (rejected as over-extrapolating).</td>
-        <td><span class="impact-medium">Medium</span></td>
-        <td><span class="disclosed-yes">Yes</span> — config comment.</td>
-      </tr>
-      <tr>
-        <td>10</td>
-        <td>01h:457 (state_code fillna)</td>
-        <td>Unmapped STATEFIP codes silently default to "TX"; schedule fallback ladder ends at single_0c/TX.</td>
-        <td>Explicit error / drop; nearest-state assignment.</td>
-        <td><span class="impact-low">Low</span></td>
-        <td><span class="disclosed-partial">Partial</span> — see AS-004.</td>
-      </tr>
-      <tr>
-        <td>11</td>
-        <td>01h:255–257 (FED_MIN floor)</td>
-        <td>Imputed potential wages (MPL) floored at $7.25.</td>
-        <td>No floor; state-minimum floor.</td>
-        <td><span class="impact-low">Low</span></td>
-        <td><span class="disclosed-yes">Yes</span> — code.</td>
-      </tr>
-      <tr>
-        <td>12</td>
-        <td>01h:80–81 (g_net guards)</td>
-        <td>Net-return-to-work denominator floored at $1,000; net stimulus capped at 3.0.</td>
-        <td>Other guard values; drop cliff-affected rows.</td>
-        <td><span class="impact-low">Low</span></td>
-        <td><span class="disclosed-yes">Yes</span> — code + diagnostics JSON + methodology doc #3.3.</td>
-      </tr>
+      <tr><td>1</td><td>01a_data_ingest.py:310-317</td><td>Eligibility restricted to paid-hourly workers (PAIDHOUR==2); salaried excluded</td><td>Include salaried via imputed weekly→hourly wage (prior behavior)</td><td><span class="impact-high">High</span></td><td><span class="disclosed-yes">Yes</span> (CC-001 comment; docstring)</td></tr>
+      <tr><td>2</td><td>01a_data_ingest.py:313</td><td>Age window 16–64; 65+ excluded as a Social Security proxy</td><td>16+, 18–64, 25–64</td><td><span class="impact-medium">Medium</span></td><td><span class="disclosed-yes">Yes</span> (docstring §3)</td></tr>
+      <tr><td>3</td><td>01a_data_ingest.py:301,316</td><td>Tax-dependent exclusion: RELATE==301 &amp; age&lt;19</td><td>No exclusion; different dependent test</td><td><span class="impact-low">Low</span></td><td><span class="disclosed-yes">Yes</span></td></tr>
+      <tr><td>4</td><td>00_config.py:56 / 01a:86</td><td>Nominal hourly floor $0.50; sub-floor wages set invalid</td><td>EPI PCE-deflated $0.50 (1989); $1 floor; no floor</td><td><span class="impact-low">Low</span></td><td><span class="disclosed-yes">Yes</span></td></tr>
+      <tr><td>5</td><td>01a_data_ingest.py:91-102</td><td>WKSTAT→weeks multiplier table; unclassified codes default to 52</td><td>Uniform 52; CPS weeks-worked variable</td><td><span class="impact-medium">Medium</span></td><td><span class="disclosed-yes">Yes</span> (DDI #304 cited)</td></tr>
+      <tr><td>6</td><td>01a_data_ingest.py:377-386</td><td>Subsidy hours capped at 40/wk per job; primary job only</td><td>No cap; household-level hours</td><td><span class="impact-medium">Medium</span></td><td><span class="disclosed-yes">Yes</span></td></tr>
+      <tr><td>7</td><td>01a_data_ingest.py:404-405</td><td>Population weight = EARNWT / n_year-months</td><td>Sum EARNWT; replicate weights</td><td><span class="impact-medium">Medium</span></td><td><span class="disclosed-yes">Yes</span></td></tr>
+      <tr><td>8</td><td>00_config.py:100-168</td><td>Behavioral elasticities transported from EITC/CTC/NIT; reported as a band</td><td>Design-specific estimates (none exist)</td><td><span class="impact-high">High</span></td><td><span class="disclosed-yes">Yes</span> (extensive config prose)</td></tr>
+      <tr><td>9</td><td>00_config.py:216-233</td><td>eps_ext band + entry-propensity status weights (unemployed 5.0, disabled/retired 0.15)</td><td>Uniform weights; blended elasticity</td><td><span class="impact-high">High</span></td><td><span class="disclosed-yes">Yes</span></td></tr>
+      <tr><td>10</td><td>00_config.py:257</td><td>Offer-dispersion λ=0.75 central (band 0.50–1.00)</td><td>λ=1.0 (no measurement-error netting)</td><td><span class="impact-high">High</span></td><td><span class="disclosed-yes">Yes</span></td></tr>
+      <tr><td>11</td><td>00_config.py:266-273</td><td>Evidence-central non-employment wage penalty (status-differentiated, mean ≈10%) headlined over the 0-penalty floor</td><td>0-penalty floor as headline; 20% flat</td><td><span class="impact-high">High</span></td><td><span class="disclosed-yes">Yes</span></td></tr>
+      <tr><td>12</td><td>00_config.py:189 / 02d:403</td><td>Entrant marginal product placed at the 15th percentile of the eligible wage distribution</td><td>Other percentiles; cell-specific</td><td><span class="impact-medium">Medium</span></td><td><span class="disclosed-yes">Yes</span></td></tr>
+      <tr><td>13</td><td>02d_matching_simulation.py:65-67,400</td><td><code>_recover_target</code> recomputes the policy target as median(employer_wage + subsidy_hr/0.80) from the recipient file instead of reading <code>org_target_wage.json</code></td><td>Read the persisted target JSON (as 01h/02e do)</td><td><span class="impact-low">Low</span></td><td><span class="disclosed-no">No</span></td></tr>
+      <tr><td>14</td><td>05d_supporting_figures.R:617</td><td>Figure-14 headline numbers (1.49M/1.02M/3.81M) hard-coded in the subtitle string rather than read from <code>entry_headline_scenarios.parquet</code></td><td>Interpolate from the parquet (as the caption's range already does)</td><td><span class="impact-medium">Medium</span></td><td><span class="disclosed-no">No</span></td></tr>
+      <tr><td>15</td><td>02d:110-111 / 01h:211,529 / 02e:92-93</td><td>Guarded divides (subsidy_hours, wage imputation, take-up, reachability) use explicit <code>where=</code>/ternary guards</td><td>Unguarded division</td><td><span class="impact-low">Low</span></td><td><span class="disclosed-yes">Yes</span> (guards present)</td></tr>
     </tbody>
   </table>
 
-  <!-- ═══════════════ EDGE-CASE TEST RESULTS ═══════════════ -->
   <h2>Edge-Case Test Results</h2>
   <p style="font-size:0.9rem; color:#64748b; margin-bottom:0.75rem;">
-    Adversarial inputs applied to the fragile operations. Script:
-    <code>temp/ai-skeptic-tests/test_fragile_ops.py</code>. All operations are defended; no FAIL-CRASH,
-    FAIL-SILENT, or FAIL-NA observed.
+    Adversarial inputs applied to fragile operations, replicating the exact source arithmetic on synthetic data (read-only; scripts in <code>temp/ai-skeptic-tests/</code>). FAIL-NA rows are protected upstream in the shipped pipeline — see AS-002 for the reachability analysis.
   </p>
 
   <table class="test-table">
@@ -265,301 +165,243 @@
       <tr><th>Test ID</th><th>Target Operation</th><th>Edge Case</th><th>File</th><th>Result</th><th>Detail</th></tr>
     </thead>
     <tbody>
-      <tr>
-        <td>ECT-01</td>
-        <td>response_multiplier() saturating form</td>
-        <td>g = {−1, 0, 0.5, 5, 100}; eps ∈ {0, 0.5}</td>
-        <td>02b_behavioral_scenarios.py:116</td>
-        <td><span class="test-pass">PASS*</span></td>
-        <td>Result correct &amp; bounded ≤ ceiling; but numpy evaluates the discarded branch → benign divide-by-zero RuntimeWarning at eg = −(M−1). See AS-005.</td>
-      </tr>
-      <tr>
-        <td>ECT-02</td>
-        <td>renegotiated_wage() interior solve</td>
-        <td>β ∈ {0.0, 0.3, 0.5, 0.7, 1.0}</td>
-        <td>02d_matching_simulation.py:70</td>
-        <td><span class="test-pass">PASS</span></td>
-        <td>No divide-by-zero: a = 0.8·(1−β) &lt; 1 for all β; wages truncated to [FED_MIN, w0]. Finite everywhere.</td>
-      </tr>
-      <tr>
-        <td>ECT-03</td>
-        <td>hourly-wage division ew / hrs</td>
-        <td>hrs = {0, 40, −5, NaN}</td>
-        <td>01h_nonemployed_pool.py:168</td>
-        <td><span class="test-pass">PASS</span></td>
-        <td><code>np.divide(..., where=hrs&gt;0)</code> yields NaN (not inf) for 0/neg/NaN; downstream treats NaN as non-wage-observed.</td>
-      </tr>
-      <tr>
-        <td>ECT-04</td>
-        <td>g_net net-return denominator</td>
-        <td>zero net gain from working (NI(y·h) = NI(0))</td>
-        <td>01h_nonemployed_pool.py:371</td>
-        <td><span class="test-pass">PASS</span></td>
-        <td>Denominator floored at $1,000 and ratio clipped to [0, 3]; finite, no blow-up.</td>
-      </tr>
+      <tr><td>T1a</td><td><code>incumbent_wage_change_pct</code> — <code>(w1-w0)/w0</code></td><td>A row with employer_wage = 0</td><td>02d:143</td><td><span class="test-fail-na">FAIL-NA</span></td><td>Returns <code>nan</code> silently (0/0). Cannot occur in the pipeline: 01a:295 clips employer_wage ≥ $7.25.</td></tr>
+      <tr><td>T1b</td><td><code>incumbent_wage_change_pct</code> — denominator <code>(annual_hours*weight).sum()</code></td><td>All weights = 0 (empty effective sample)</td><td>02d:143-144</td><td><span class="test-fail-na">FAIL-NA</span></td><td>Returns <code>nan</code> silently. Cannot occur: 01a filters earnwt&gt;0 and raises on an empty sample.</td></tr>
+      <tr><td>T2</td><td><code>take_up_pct</code> — <code>100*rk/bk</code></td><td>Group base count bk = 0</td><td>02e:93</td><td><span class="test-pass">PASS</span></td><td>Guarded by <code>if bk &gt; 0 else None</code>.</td></tr>
+      <tr><td>T3</td><td><code>renegotiated_wage</code> — <code>/(1-a)</code>, a=0.8·(1-β)</td><td>β ∈ {0.0, 0.3, 0.5, 0.7, 1.0}</td><td>02d:74</td><td><span class="test-pass">PASS</span></td><td>1-a ∈ [0.20, 1.00] for β ∈ [0,1]; never zero. All betas produce finite floored wages.</td></tr>
+      <tr><td>T4</td><td><code>_weighted_median</code> — <code>vals[searchsorted(...)]</code></td><td>Empty values/weights array</td><td>01a:119-125</td><td><span class="test-pass">PASS</span></td><td>Would IndexError, but guarded upstream by <code>if len(ph)==0: raise</code> before the call.</td></tr>
+      <tr><td>T5</td><td><code>marginal_gross_per_job</code> — <code>ge*1e9/(ind*1e6)</code></td><td>induced entrants ind = 0</td><td>02d:231-232</td><td><span class="test-pass">PASS</span></td><td>Guarded by <code>if ind else None</code>.</td></tr>
     </tbody>
   </table>
 
-  <!-- ═══════════════ FINDINGS ═══════════════ -->
   <h2>Findings</h2>
 
-  <div class="category-heading">MEDIUM — 3 finding(s)</div>
-
-  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Fabrication Detection</div>
+  <div class="category-heading">MEDIUM — 1 finding</div>
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Comment-Code Fidelity</div>
 
   <div class="finding medium">
     <div class="finding-header">
       <div class="finding-id">AS-001</div>
       <div class="finding-title-block">
-        <div class="finding-title">Two external per-job comparison figures cannot be independently verified</div>
-        <div class="finding-meta"><span class="file">drafts/2026-07-08_wage-subsidy-impact-cost-summary.md</span><span> · Fabrication Detection</span></div>
+        <div class="finding-title">Stale "1.25M" headline comments contradict the shipped 1.49M entry figure and its composition data</div>
+        <div class="finding-meta"><span class="file">code/05_figures_tables/05d_supporting_figures.R:120, 588</span><span> · Comment-Code Fidelity</span></div>
       </div>
       <span class="severity-badge badge-medium">MEDIUM</span>
     </div>
     <div class="finding-body">
       <div class="finding-section-label">What Was Claimed</div>
-      <div class="finding-text">The draft (per-job section, footnote 5) cites "more than $154,000 per job under Buy American procurement rules, $106,000 to $196,000 per job for state and local business incentives, and roughly $900,000 per job saved by steel tariffs," attributed to the prior EIG post's citations (NBER, AEA, Peterson Institute).</div>
-
+      <div class="finding-text">
+        Two comments describe the evidence-central induced-entry headline as <strong>1.25M</strong>. The fig7b comment (line 120) further enumerates a specific composition: "unemployed 0.412M, other NILF 0.799M, disabled 0.028M, retired 0.010M (~33% / 64% / 2% / 1%)". The fig14 comment (line 588) says "central elasticity = 1.25M".
+      </div>
       <div class="finding-section-label">What Was Found</div>
-      <div class="finding-text">The <strong>steel-tariff $900,000/job</strong> figure is confirmed (Peterson Institute; Gary Hufbauer). The <strong>Buy American $154k</strong> and <strong>state/local $106k–196k</strong> figures are plausible and consistent with the Bartik / incentives literature but could not be traced to a specific source through web search; they are secondary attributions to the unpublished/unread prior post. The draft already flags footnote 5 as <code>[TO VERIFY: carry over the exact citations from the published post.]</code> — so this is a disclosed, not concealed, gap. The values are hard-coded in <code>05c_core_figures.R</code> (fig5) with the caption "Alternatives cited in EIG's first Agglomerations post (NBER; AEA; Peterson Institute)."</div>
-
+      <div class="finding-text">
+        The shipped headline is <strong>1.49M</strong>, not 1.25M. This is confirmed three ways: (1) the fig14 subtitle these comments sit above now reads "Evidence-central 1.49M" (line 617); (2) <code>entry_headline_scenarios.parquet</code> gives evidence_central induced_M = 1.49; and (3) <code>entry_central_composition.parquet</code> — the file fig7b actually reads — holds unemployed 0.496M, nilf_other 0.948M, disabled 0.034M, retired 0.016M (sum 1.494M). Every number in the line-120 comment is a stale prior-generation value; a maintainer trusting the comment would misstate both the headline and its per-status breakdown. The rendered outputs are correct — this is documentation drift, not a results error — so it is scoped MEDIUM rather than HIGH.
+      </div>
       <div class="finding-section-label">How It Was Verified</div>
-      <div class="finding-text">Web search confirmed the Peterson/Hufbauer $900k steel-tariff figure. Searches for the Buy American and state/local per-job figures returned the general literature but no exact match; verification requires the source citations in the prior EIG post, which is not in this checkout.</div>
-
+      <div class="finding-text">
+        Read the two parquets with pandas (values above); cross-checked against the fig14 subtitle string, <code>entry_headline_scenarios.parquet</code>, and the draft (drafts/2026-07-09_combined-brief-and-appendix.md lines 137, 148, 289), all of which agree on 1.49M / 1.02M / 3.81M.
+      </div>
+      <div class="finding-section-label">Relevant Code</div>
+      <div class="code-label">code/05_figures_tables/05d_supporting_figures.R:120-122</div>
+      <pre><code># Evidence-central composition (status-differentiated ~10% penalty; 1.25M headline), written by
+# 02g to entry_central_composition.parquet: unemployed 0.412M, other NILF 0.799M, disabled
+# 0.028M, retired 0.010M (~33% / 64% / 2% / 1%). Falls back to the floor sim if absent.</code></pre>
       <div class="finding-section-label">What to Check</div>
       <ul class="check-list">
-        <li>Retrieve the exact NBER/AEA/Peterson citations from the published first post and pin the $154k and $106–196k figures to page/table.</li>
-        <li>Resolve the <code>[TO VERIFY]</code> flag in footnote 5 before publication.</li>
+        <li>Update the line-120 composition comment to the current values (0.496 / 0.948 / 0.034 / 0.016M) or, better, drop the hard-coded numbers and let the comment reference the parquet.</li>
+        <li>Change "central elasticity = 1.25M" at line 588 to 1.49M.</li>
+        <li>Grep the whole repo for other surviving "1.25" / "0.83M" headline references introduced before the 2026-07-09 re-center.</li>
       </ul>
     </div>
   </div>
 
-  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Comment-Code Fidelity</div>
+  <div class="category-heading">LOW — 3 findings</div>
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Undisclosed Assumptions</div>
 
-  <div class="finding medium">
+  <div class="finding low">
     <div class="finding-header">
       <div class="finding-id">AS-002</div>
       <div class="finding-title-block">
-        <div class="finding-title">Subsidy annual-hours cap uses 52 weeks in the pipeline but 50 weeks in Figure 11b</div>
-        <div class="finding-meta"><span class="file">01h_nonemployed_pool.py:76 · 02d:201 · 05d:325 · 00_config.py:61</span><span> · Comment-Code Fidelity</span></div>
+        <div class="finding-title">Unguarded divide in incumbent_wage_change_pct survives only on an undocumented upstream invariant (prior AS-006, still unfixed)</div>
+        <div class="finding-meta"><span class="file">code/02_descriptive_analysis/02d_matching_simulation.py:143-144</span><span> · Undisclosed Assumptions / Edge-Case</span></div>
       </div>
-      <span class="severity-badge badge-medium">MEDIUM</span>
+      <span class="severity-badge badge-low">LOW</span>
     </div>
     <div class="finding-body">
       <div class="finding-section-label">What Was Claimed</div>
-      <div class="finding-text">The draft describes the subsidy as "capped at 40 hours a week" and Figure 11b's axis as "60 hours a week for 50 weeks" (3,000 annual hours). The config comment states <code>ws_hours_per_year: 2000  # 40 hrs/wk * 50 wks</code>.</div>
-
+      <div class="finding-text">
+        The context flagged this as previously-unfixed and asked whether it still stands. The expression computes an hours-weighted mean incumbent wage change: <code>(((w1 - w0) / w0) * annual_hours * weight).sum() / (annual_hours * weight).sum() * 100</code>, with no guard on either the per-row <code>/w0</code> or the aggregate denominator.
+      </div>
       <div class="finding-section-label">What Was Found</div>
-      <div class="finding-text">The subsidy hours cap is computed with two different weeks-per-year conventions. The main pipeline uses <strong>52</strong> weeks; Figure 11b uses <strong>50</strong>. The two caps differ by 80 hours (~4%), so the marginal-cost figures the draft leans on (built from the 2,080-hour pipeline cap) are computed on a slightly different cap than the illustrative Figure 11b the draft uses to make the "net-negative past 54 hr/wk" argument.</div>
-
+      <div class="finding-text">
+        Still unguarded — the code is byte-identical to the prior audit. Edge tests T1a/T1b confirm it returns <code>nan</code> silently (no exception) when a zero employer_wage row or an all-zero-weight sample is fed in. <strong>However, it is unreachable in the shipped pipeline:</strong> 01a:295 clips <code>employer_wage = hourly_wage_epi.clip(lower=7.25)</code>, so <code>w0 ≥ 7.25 &gt; 0</code> for every row; and 01a filters <code>earnwt &gt; 0</code> and raises on an empty sample, so the denominator is strictly positive. The realized <code>matching_simulation.parquet</code> carries finite values (0.0 for rigid rows, −6.0 to −18.3 for flex rows). The risk is latent: a future refactor that admitted a $0 wage or an empty cell would silently emit <code>nan</code> into a statistic that feeds the incidence narrative, with no error to catch it. Downgraded from the prior framing to LOW because it cannot currently trigger; retained because the protective invariant is nowhere documented at the divide site.
+      </div>
       <div class="finding-section-label">How It Was Verified</div>
-      <div class="finding-text">Direct code read.</div>
-      <div class="finding-section-label">Relevant Code</div>
-      <div class="code-label">01h_nonemployed_pool.py:76 (pipeline) vs 05d_supporting_figures.R:325 (figure)</div>
-      <pre><code># 01h and 02d:
-CAP_HOURS = float(cfg.get("ws_subsidy_hours_cap", 40)) * 52.0   # = 2080
-
-# 05d fig11b:
-cap_hours &lt;- 2000                # 40 hr/wk x 50 weeks</code></pre>
-
+      <div class="finding-text">
+        Replicated the exact expression in <code>temp/ai-skeptic-tests/edge_tests.py</code> under synthetic edge inputs (numpy warnings both promoted and suppressed): w0=0 → nan, all-weights-0 → nan, normal → −9.2. Confirmed the 01a clip and earnwt&gt;0 filter that protect it, and confirmed finite realized output in the parquet.
+      </div>
       <div class="finding-section-label">What to Check</div>
       <ul class="check-list">
-        <li>Pick one weeks-per-year convention and apply it to <code>ws_subsidy_hours_cap</code> everywhere (config, 01h, 02d, 05d).</li>
-        <li>If 52 is intended, update the config comment (which says 50) and the Figure 11b <code>cap_hours</code>; if 50, update 01h/02d.</li>
-        <li>Confirm the "past roughly 54 hours a week" crossover claim is unchanged under the reconciled cap.</li>
+        <li>Add a guard (e.g., <code>np.divide(w1 - w0, w0, out=np.zeros_like(w0), where=w0 &gt; 0)</code>) and a fallback for a zero-weight denominator, or</li>
+        <li>Add an inline assertion/comment stating the reliance on the 01a wage floor and non-empty positive-weight sample.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">AS-003</div>
+      <div class="finding-title-block">
+        <div class="finding-title">02d recomputes the policy target from the recipient file instead of reading the persisted org_target_wage.json</div>
+        <div class="finding-meta"><span class="file">code/02_descriptive_analysis/02d_matching_simulation.py:65-67, 400</span><span> · Undisclosed Assumptions</span></div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">What Was Claimed</div>
+      <div class="finding-text">
+        The target wage is the single most important policy threshold. 01a computes it as 80% of the weighted median paid-hourly wage and persists it to <code>data/processed/org_target_wage.json</code>; 01h and 02e both read that JSON (falling back to <code>cfg["ws_target_wage"]</code>).
+      </div>
+      <div class="finding-section-label">What Was Found</div>
+      <div class="finding-text">
+        02d does neither. <code>_recover_target(w)</code> reverse-engineers the target from the recipient parquet as <code>median(employer_wage + subsidy_hr / 0.80)</code>. This is algebraically correct for any recipient whose subsidy is positive and uncapped, and it will match the JSON in normal runs — but it is an undisclosed third way of obtaining the threshold, not robust to edge composition (e.g., if recipients were mostly floor-pinned the recovered median could drift from the true target). The other two stages use the authoritative source; 02d silently diverges from that convention.
+      </div>
+      <div class="finding-section-label">How It Was Verified</div>
+      <div class="finding-text">
+        Read <code>_recover_target</code> (02d:65-67) and its call site (02d:400); compared to the JSON-reading pattern in 02e:49-57 and the 01a persistence at 01a:282-290.
+      </div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Confirm <code>_recover_target</code> reproduces <code>org_target_wage.json["target_wage"]</code> exactly on the current data, then switch 02d to read the JSON with the same fallback the other stages use.</li>
       </ul>
     </div>
   </div>
 
   <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Pattern-Match Detection</div>
-
-  <div class="finding medium">
-    <div class="finding-header">
-      <div class="finding-id">AS-003</div>
-      <div class="finding-title-block">
-        <div class="finding-title">Per-job dollar values hard-coded in the figure code can desync from the pipeline</div>
-        <div class="finding-meta"><span class="file">05c_core_figures.R:365–372</span><span> · Pattern-Match Detection</span></div>
-      </div>
-      <span class="severity-badge badge-medium">MEDIUM</span>
-    </div>
-    <div class="finding-body">
-      <div class="finding-section-label">What Was Claimed</div>
-      <div class="finding-text">Figure 10 (cost per job) plots "80-80 subsidy (marginal, per entrant) = $5,200" and "80-80 subsidy (fully loaded) = $55,000" alongside the external comparators.</div>
-
-      <div class="finding-section-label">What Was Found</div>
-      <div class="finding-text">Both EIG values are hard-coded literals in <code>fig5_cost_per_job()</code> rather than read from the pipeline outputs. They are correct today ($7.4B entrant-gross / 1.42M ≈ $5,211; $77.5B structural net / 1.42M ≈ $54,577), but if the pipeline reruns with different induced-entry or entrant-gross values, the figure will silently show stale numbers while the prose recomputes from the parquet. The take-up figure similarly hard-codes <code>overall &lt;- 15.5</code> and "134.3M" in a caption (both correct against the data, but detached from it). This is the AI pattern of baking derived results into presentation code.</div>
-
-      <div class="finding-section-label">How It Was Verified</div>
-      <div class="finding-text">Code read of 05c fig5 and fig4; cross-checked against <code>matching_simulation.parquet</code>, <code>entry_margin_band.parquet</code>, and <code>take_up_by_group.parquet</code>.</div>
-      <div class="code-label">05c_core_figures.R:366–371</div>
-      <pre><code>"80-80 subsidy (marginal, per entrant)",   5200,  ...
-"80-80 subsidy (fully loaded)",           55000,  ...
-"State &amp; local incentives",             106000, 106000, 196000, ...
-"Buy American provisions",               154000,  ...
-"Steel tariffs",                         900000,  ...</code></pre>
-
-      <div class="finding-section-label">What to Check</div>
-      <ul class="check-list">
-        <li>Derive the $5,200 and $55,000 values from the parquet outputs at figure-build time, or add an assertion that they match.</li>
-        <li>Read the 15.5% overall take-up and 134.3M base from <code>take_up_by_group.parquet</code> rather than hard-coding.</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="category-heading">LOW — 4 finding(s)</div>
-
-  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Undisclosed Assumptions</div>
 
   <div class="finding low">
     <div class="finding-header">
       <div class="finding-id">AS-004</div>
       <div class="finding-title-block">
-        <div class="finding-title">Unmapped STATEFIP silently defaults to Texas</div>
-        <div class="finding-meta"><span class="file">01h_nonemployed_pool.py:457</span><span> · Undisclosed Assumptions</span></div>
+        <div class="finding-title">Figure-14 subtitle hard-codes the headline numbers — re-creating the exact fragility that caused AS-002</div>
+        <div class="finding-meta"><span class="file">code/05_figures_tables/05d_supporting_figures.R:617</span><span> · Pattern-Match Detection</span></div>
       </div>
       <span class="severity-badge badge-low">LOW</span>
     </div>
     <div class="finding-body">
       <div class="finding-section-label">What Was Claimed</div>
-      <div class="finding-text">No comment; the line reads <code>org["state_code"] = org["STATEFIP"].map(_FIPS).fillna("TX")</code>.</div>
-      <div class="finding-section-label">What Was Found</div>
-      <div class="finding-text">Any STATEFIP not in the 51-entry map (e.g., an unexpected code) is silently assigned Texas, which then routes through the TX PolicyEngine schedule. With the standard IPUMS extract every code is mapped, so impact is low, but the silent default could mask a data problem. The schedule fallback ladder (02a/02b/02d ending at <code>single_0c/TX</code>) shares this "TX-as-default" pattern.</div>
-      <div class="finding-section-label">How It Was Verified</div>
-      <div class="finding-text">Code read.</div>
-      <div class="finding-section-label">What to Check</div>
-      <ul class="check-list">
-        <li>Assert that no rows fall through to the <code>fillna("TX")</code> default, or log a count when they do.</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Edge-Case Stress Tests</div>
-
-  <div class="finding low">
-    <div class="finding-header">
-      <div class="finding-id">AS-005</div>
-      <div class="finding-title-block">
-        <div class="finding-title">response_multiplier() computes a discarded branch that divides by zero</div>
-        <div class="finding-meta"><span class="file">02b_behavioral_scenarios.py:127</span><span> · Edge-Case Stress Tests</span></div>
+      <div class="finding-text">
+        The now-correct subtitle reads <code>subtitle = "Evidence-central 1.49M; conservative floor 1.02M; high corner 3.81M."</code> — a literal string.
       </div>
-      <span class="severity-badge badge-low">LOW</span>
-    </div>
-    <div class="finding-body">
-      <div class="finding-section-label">What Was Claimed</div>
-      <div class="finding-text">The saturating form <code>sat = 1 + (M-1)*eg / ((M-1) + eg)</code> is "valid where eg &gt; 0"; <code>np.where(eg &gt; 0, sat, lin)</code> selects it.</div>
       <div class="finding-section-label">What Was Found</div>
-      <div class="finding-text"><code>np.where</code> evaluates <em>both</em> branches for all elements, so <code>sat</code> is computed even for eg ≤ 0. When eg = −(M−1) (e.g., eps=0.5, g=−1, M=1.5 → eg=−0.5), the denominator (M−1)+eg = 0 and numpy raises a divide-by-zero RuntimeWarning producing NaN, which is then correctly discarded by <code>np.where</code>. The <strong>result is correct</strong> (PASS), but the warning is spurious and the pattern would become a latent bug if the branch condition were ever changed.</div>
-      <div class="finding-section-label">How It Was Verified</div>
-      <div class="finding-text">Executed <code>temp/ai-skeptic-tests/test_fragile_ops.py</code> (ECT-01); observed the RuntimeWarning with correct final values bounded at the ceiling.</div>
-      <div class="finding-section-label">What to Check</div>
-      <ul class="check-list">
-        <li>Compute <code>sat</code> only on the <code>eg &gt; 0</code> mask, or add a small epsilon to the denominator, to suppress the benign warning.</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Confidence Calibration</div>
-
-  <div class="finding low">
-    <div class="finding-header">
-      <div class="finding-id">AS-006</div>
-      <div class="finding-title-block">
-        <div class="finding-title">Headline states induced entry as a point count from transported elasticities</div>
-        <div class="finding-meta"><span class="file">drafts/2026-07-08_wage-subsidy-impact-cost-summary.md</span><span> · Confidence Calibration</span></div>
+      <div class="finding-text">
+        These three numbers are typed constants, not read from <code>entry_headline_scenarios.parquet</code> (which holds exactly 1.49 / 1.02 / 3.81). The caption's full range on the same figure <em>is</em> computed dynamically (<code>rng &lt;- sprintf(..., min(gr$induced_M), max(gr$induced_M))</code>), so the fragile pattern is inconsistent within the same function. This hard-coded subtitle is precisely the construct that went stale as the original AS-002 the last time the headline moved (1.25M → 1.49M). It is correct today but will silently desynchronize on the next re-center.
       </div>
-      <span class="severity-badge badge-low">LOW</span>
-    </div>
-    <div class="finding-body">
-      <div class="finding-section-label">What Was Claimed</div>
-      <div class="finding-text">The lede and bottom line state the subsidy would "draw an estimated 1.4 million non-workers into jobs" / "pull more than a million people into work."</div>
-      <div class="finding-section-label">What Was Found</div>
-      <div class="finding-text">The 1.42M figure is a simulation projection built on elasticities the code itself repeatedly labels TRANSPORTED and ex-ante ("no elasticity has been estimated for a per-hour wage-FILL design"). The body text is well-hedged — it presents the 0.44–2.47M band, calls the entry estimate "Medium" confidence, and states "less sure than a point estimate would imply, which is why we publish bands." The only calibration nit is that the headline and bottom line assert the central point without the band; a careful reader reaching the "How sure are you?" section gets the full picture. This is a minor overstatement of certainty at the top, not a fabrication or an unwarranted causal claim.</div>
       <div class="finding-section-label">How It Was Verified</div>
-      <div class="finding-text">Cross-read of the draft against <code>00_config.py</code> elasticity comments and <code>entry_margin_band.parquet</code>.</div>
+      <div class="finding-text">
+        Read 05d:605-625; confirmed the subtitle is a literal while the caption range is interpolated from <code>gr</code>; confirmed the values match <code>entry_headline_scenarios.parquet</code>.
+      </div>
       <div class="finding-section-label">What to Check</div>
       <ul class="check-list">
-        <li>Consider attaching "(0.4–2.5 million)" to the headline/bottom-line count, as the body already does.</li>
+        <li>Derive the subtitle numbers from the headline-scenarios parquet (read floor/central/high by scenario name and <code>sprintf</code> them), the same way the caption range is built.</li>
       </ul>
     </div>
   </div>
 
+  <div class="category-heading">INFO — 2 findings</div>
   <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Pattern-Match Detection</div>
-
-  <div class="finding low">
-    <div class="finding-header">
-      <div class="finding-id">AS-007</div>
-      <div class="finding-title-block">
-        <div class="finding-title">Duplicated helper across data-prep scripts (copy-paste artifact)</div>
-        <div class="finding-meta"><span class="file">01h_nonemployed_pool.py:131 · 01i_household_links.py:55</span><span> · Pattern-Match Detection</span></div>
-      </div>
-      <span class="severity-badge badge-low">LOW</span>
-    </div>
-    <div class="finding-body">
-      <div class="finding-section-label">What Was Claimed</div>
-      <div class="finding-text">Both scripts define <code>_find_raw_org_dir()</code> — byte-for-byte identical, including the same env var and candidate-path list.</div>
-      <div class="finding-section-label">What Was Found</div>
-      <div class="finding-text">A classic AI copy-paste artifact: the function is duplicated rather than shared from a common module. Harmless today (both copies agree), but the two can drift apart on edit. No correctness impact.</div>
-      <div class="finding-section-label">How It Was Verified</div>
-      <div class="finding-text">Code read of both files.</div>
-      <div class="finding-section-label">What to Check</div>
-      <ul class="check-list">
-        <li>Factor <code>_find_raw_org_dir()</code> into a shared helper (e.g., <code>code/_utils/</code>) imported by both scripts.</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="category-heading">INFO — 1 finding(s)</div>
-
-  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Fabrication Detection</div>
 
   <div class="finding info">
     <div class="finding-header">
-      <div class="finding-id">AS-008</div>
+      <div class="finding-id">AS-005</div>
       <div class="finding-title-block">
-        <div class="finding-title">Load-bearing experimental citations verified — no fabrication</div>
-        <div class="finding-meta"><span class="file">drafts/2026-07-08_wage-subsidy-impact-cost-summary.md</span><span> · Fabrication Detection</span></div>
+        <div class="finding-title">Dead salaried-wage computation left behind by the paid-hourly restriction</div>
+        <div class="finding-meta"><span class="file">code/01_data_preparation/01a_data_ingest.py:207-214</span><span> · Pattern-Match Detection</span></div>
       </div>
       <span class="severity-badge badge-info">INFO</span>
     </div>
     <div class="finding-body">
       <div class="finding-section-label">What Was Claimed</div>
-      <div class="finding-text">The entry-band edges rest on: (a) the Canadian Self-Sufficiency Project raising any-employment "10.4 percentage points in its second year"; (b) Paycheck Plus NYC's "+5.8 percentage point" Year-3 gain for disadvantaged men, "pooled three-year estimate ... not statistically significant"; and (c) the Paycheck Plus Atlanta null.</div>
+      <div class="finding-text">
+        <code>_load_and_adapt_org_panel</code> computes <code>salaried_hourly = weekly / hours</code> and folds it into <code>nominal_hourly = np.where(paidhour == 2, hw_canon, salaried_hourly)</code> for non-hourly workers.
+      </div>
       <div class="finding-section-label">What Was Found</div>
-      <div class="finding-text">All confirmed. Paycheck Plus NYC: MDRC's own materials confirm +5.8pp (Year 3, ~10%) for disadvantaged men, authors and September 2018 date match footnote 4 (which correctly flags only the publication month as <code>[TO VERIFY]</code>). Atlanta: MDRC confirms a precise null across subgroups (OPRE Report 2022-54, March 2022). SSP: web search confirms the report (Michalopoulos et al., July 2002, "Making Work Pay") and the surrounding Year-2 full-time result ("nearly doubled ... to 29 percent"); the specific +10.4pp any-employment figure is drawn from the project's primary-verified literature summary (SRDC Table ES.1: 40.6 vs 30.1). Config comments in <code>00_config.py</code> tie the eps_ext band edges directly to these anchors (single_mothers upper 0.65 SSP-implied; men upper Paycheck-Plus-NYC-diluted; lower Atlanta null) and match the summaries.</div>
+      <div class="finding-text">
+        After the paid-hourly restriction (commit 6706345), both the median frame (01a:263-268) and the eligibility mask (01a:310-317) require <code>paid_hourly == True</code>, and 02e likewise. So the <code>salaried_hourly</code> branch of the <code>np.where</code> never survives into any output — it is computed for rows that are subsequently always filtered out. This is harmless (no wrong result) but is exactly the kind of un-pruned leftover an AI edit produces when it adds a restriction without removing the now-unreachable branch. Confirming it is dead (rather than feeding some downstream salaried path) is a 30-second check worth doing.
+      </div>
       <div class="finding-section-label">How It Was Verified</div>
-      <div class="finding-text">Independent web search (MDRC press release + report PDF; Peterson Institute steel-tariff figure) plus cross-reference to <code>Infrastructure/references/literature/summaries/</code> entries for Card &amp; Hyslop 2005, Paycheck Plus NYC 2018, and Atlanta 2022, each of which records a dated primary-source read.</div>
+      <div class="finding-text">
+        Traced <code>nominal_hourly</code> → <code>hourly_wage_epi</code> → the ph_mask and eligibility mask, both of which AND in <code>paid_hourly</code>; confirmed no output column derives from a salaried row.
+      </div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>If salaried workers are permanently out of scope, drop the <code>salaried_hourly</code> computation and the <code>np.where</code> so the wage variable is unambiguously <code>HOURWAGE_CANON_NUM</code> for the kept population.</li>
+      </ul>
     </div>
   </div>
 
-  <!-- ═══════════════ REVIEWED FILES TABLE ═══════════════ -->
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Fabrication Detection</div>
+
+  <div class="finding info">
+    <div class="finding-header">
+      <div class="finding-id">AS-006</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Author-disclosed [TO VERIFY] citation-detail placeholders — no fabrication</div>
+        <div class="finding-meta"><span class="file">drafts/2026-07-09_combined-brief-and-appendix.md:265-269</span><span> · Fabrication Detection</span></div>
+      </div>
+      <span class="severity-badge badge-info">INFO</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">What Was Claimed</div>
+      <div class="finding-text">
+        Five footnotes carry explicit <code>[TO VERIFY: ...]</code> markers on publication dates, URLs, and the exact carry-over of per-job cost citations from the prior Agglomerations post.
+      </div>
+      <div class="finding-section-label">What Was Found</div>
+      <div class="finding-text">
+        These are <strong>not fabrications</strong>. The underlying works are all real, canonical labor-economics references — Schmieder, von Wachter &amp; Bender (2016, AER 106:3, 739–777), Krueger &amp; Mueller (2016, AEJ:EP 8:1, 142–179), Maestas, Mullen &amp; Strand (2013, AER 103:5, 1797–1829), Grogger (2003, REStat 85:2), Fang &amp; Keane (2004, BPEA), Krueger (2017, BPEA), and the SSP and Paycheck Plus MDRC reports — and the placeholders concern only bibliographic detail. The draft itself tracks them (line 292: "all [TO VERIFY] items are citation details … Resolve before publication"). Consistent with the prior audit's finding that citations are clean; re-confirmed, with the residual detail-gaps owned by the author.
+      </div>
+      <div class="finding-section-label">How It Was Verified</div>
+      <div class="finding-text">
+        Enumerated all footnote definitions and the <code>[TO VERIFY]</code> markers; matched author/year/journal against known catalog entries and the reasoning already embedded in <code>00_config.py</code>'s literature-provenance comments; no citation attributes a finding the source does not contain.
+      </div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Resolve the five bibliographic <code>[TO VERIFY]</code> markers (dates/URLs, prior-post cost citations) before public release.</li>
+      </ul>
+    </div>
+  </div>
+
   <h2>Reviewed Files</h2>
   <table class="files-table">
     <thead>
-      <tr>
-        <th>File</th><th>Language</th><th style="text-align:center">Lines</th>
-        <th style="text-align:center">AI Authorship</th><th style="text-align:center">Findings</th><th style="text-align:center">Highest Severity</th>
-      </tr>
+      <tr><th>File</th><th>Language</th><th style="text-align:center">Lines</th><th style="text-align:center">AI Authorship</th><th style="text-align:center">Findings</th><th style="text-align:center">Highest Severity</th></tr>
     </thead>
     <tbody>
-      <tr><td>code/00_setup/00_config.py</td><td>Python</td><td class="count-cell">236</td><td class="count-cell"><span class="ai-known">Known</span></td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
-      <tr><td>code/01_data_preparation/01h_nonemployed_pool.py</td><td>Python</td><td class="count-cell">558</td><td class="count-cell"><span class="ai-known">Known</span></td><td class="count-cell has-issues">2</td><td class="count-cell">MEDIUM</td></tr>
-      <tr><td>code/01_data_preparation/01i_household_links.py</td><td>Python</td><td class="count-cell">170</td><td class="count-cell"><span class="ai-known">Known</span></td><td class="count-cell has-issues">1</td><td class="count-cell">LOW</td></tr>
-      <tr><td>code/02_descriptive_analysis/02a_descriptive_stats.py</td><td>Python</td><td class="count-cell">515</td><td class="count-cell"><span class="ai-known">Known</span></td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
-      <tr><td>code/02_descriptive_analysis/02b_behavioral_scenarios.py</td><td>Python</td><td class="count-cell">340</td><td class="count-cell"><span class="ai-known">Known</span></td><td class="count-cell has-issues">1</td><td class="count-cell">LOW</td></tr>
-      <tr><td>code/02_descriptive_analysis/02d_matching_simulation.py</td><td>Python</td><td class="count-cell">379</td><td class="count-cell"><span class="ai-known">Known</span></td><td class="count-cell has-issues">1</td><td class="count-cell">MEDIUM</td></tr>
-      <tr><td>code/02_descriptive_analysis/02e_take_up_by_group.py</td><td>Python</td><td class="count-cell">101</td><td class="count-cell"><span class="ai-known">Known</span></td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
-      <tr><td>code/05_figures_tables/05c_core_figures.R</td><td>R</td><td class="count-cell">487</td><td class="count-cell"><span class="ai-known">Known</span></td><td class="count-cell has-issues">2</td><td class="count-cell">MEDIUM</td></tr>
-      <tr><td>code/05_figures_tables/05d_supporting_figures.R</td><td>R</td><td class="count-cell">538</td><td class="count-cell"><span class="ai-known">Known</span></td><td class="count-cell has-issues">1</td><td class="count-cell">MEDIUM</td></tr>
-      <tr><td>code/05_figures_tables/eig_fig_utils.R</td><td>R</td><td class="count-cell">142</td><td class="count-cell"><span class="ai-known">Known</span></td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
-      <tr><td>code/05_figures_tables/05z_build_manifest.py</td><td>Python</td><td class="count-cell">94</td><td class="count-cell"><span class="ai-known">Known</span></td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
-      <tr><td>drafts/2026-07-08_wage-subsidy-impact-cost-summary.md</td><td>Markdown</td><td class="count-cell">273</td><td class="count-cell"><span class="ai-known">Known</span></td><td class="count-cell has-issues">3</td><td class="count-cell">MEDIUM</td></tr>
+      <tr><td>code/run_all.py</td><td>Python</td><td class="count-cell">463</td><td class="count-cell"><span class="ai-suspected">Suspected</span></td><td class="count-cell ok">0</td><td class="count-cell">— (AS-001 prior resolved)</td></tr>
+      <tr><td>code/00_setup/00_config.py</td><td>Python</td><td class="count-cell">303</td><td class="count-cell"><span class="ai-suspected">Suspected</span></td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/01_data_preparation/01a_data_ingest.py</td><td>Python</td><td class="count-cell">450</td><td class="count-cell"><span class="ai-suspected">Suspected</span></td><td class="count-cell has-issues">1</td><td class="count-cell">INFO</td></tr>
+      <tr><td>code/01_data_preparation/01i_household_links.py</td><td>Python</td><td class="count-cell">170</td><td class="count-cell"><span class="ai-suspected">Suspected</span></td><td class="count-cell ok">0</td><td class="count-cell">— (scan-level)</td></tr>
+      <tr><td>code/01_data_preparation/01h_nonemployed_pool.py</td><td>Python</td><td class="count-cell">788</td><td class="count-cell"><span class="ai-suspected">Suspected</span></td><td class="count-cell ok">0</td><td class="count-cell">— (scan-level)</td></tr>
+      <tr><td>code/02_descriptive_analysis/02a_descriptive_stats.py</td><td>Python</td><td class="count-cell">515</td><td class="count-cell"><span class="ai-suspected">Suspected</span></td><td class="count-cell ok">0</td><td class="count-cell">— (scan-level)</td></tr>
+      <tr><td>code/02_descriptive_analysis/02b_behavioral_scenarios.py</td><td>Python</td><td class="count-cell">340</td><td class="count-cell"><span class="ai-suspected">Suspected</span></td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/02_descriptive_analysis/02d_matching_simulation.py</td><td>Python</td><td class="count-cell">543</td><td class="count-cell"><span class="ai-suspected">Suspected</span></td><td class="count-cell has-issues">2</td><td class="count-cell">LOW</td></tr>
+      <tr><td>code/02_descriptive_analysis/02e_take_up_by_group.py</td><td>Python</td><td class="count-cell">106</td><td class="count-cell"><span class="ai-suspected">Suspected</span></td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/02_descriptive_analysis/02f_mpl_imputation_band.py</td><td>Python</td><td class="count-cell">134</td><td class="count-cell"><span class="ai-suspected">Suspected</span></td><td class="count-cell ok">0</td><td class="count-cell">— (scan-level)</td></tr>
+      <tr><td>code/02_descriptive_analysis/02g_entry_scenario_grid.py</td><td>Python</td><td class="count-cell">210</td><td class="count-cell"><span class="ai-suspected">Suspected</span></td><td class="count-cell ok">0</td><td class="count-cell">— (scan-level)</td></tr>
+      <tr><td>code/05_figures_tables/05a_main_outputs.py</td><td>Python</td><td class="count-cell">107</td><td class="count-cell"><span class="ai-suspected">Suspected</span></td><td class="count-cell ok">0</td><td class="count-cell">— (scan-level)</td></tr>
+      <tr><td>code/05_figures_tables/05c_core_figures.R</td><td>R</td><td class="count-cell">535</td><td class="count-cell"><span class="ai-suspected">Suspected</span></td><td class="count-cell ok">0</td><td class="count-cell">— (scan-level)</td></tr>
+      <tr><td>code/05_figures_tables/05d_supporting_figures.R</td><td>R</td><td class="count-cell">700</td><td class="count-cell"><span class="ai-suspected">Suspected</span></td><td class="count-cell has-issues">2</td><td class="count-cell">MEDIUM</td></tr>
+      <tr><td>code/00_ingest/00a_download-ipums-cps.R</td><td>R</td><td class="count-cell">417</td><td class="count-cell"><span class="ai-suspected">Suspected</span></td><td class="count-cell ok">0</td><td class="count-cell">— (scan-level)</td></tr>
+      <tr><td>code/00_ingest/01a_load-ipums-cps.R</td><td>R</td><td class="count-cell">476</td><td class="count-cell"><span class="ai-suspected">Suspected</span></td><td class="count-cell ok">0</td><td class="count-cell">— (scan-level)</td></tr>
+      <tr><td>code/00_ingest/01b_build-org-panel.R</td><td>R</td><td class="count-cell">1375</td><td class="count-cell"><span class="ai-suspected">Suspected</span></td><td class="count-cell ok">0</td><td class="count-cell">— (scan-level)</td></tr>
+      <tr><td>drafts/2026-07-09_combined-brief-and-appendix.md</td><td>Markdown (prose)</td><td class="count-cell">~460</td><td class="count-cell"><span class="ai-suspected">Suspected</span></td><td class="count-cell has-issues">1</td><td class="count-cell">INFO</td></tr>
     </tbody>
   </table>
 
 </div>
 
 <div class="report-footer">
-  Generated by AI review agent · ai-skeptic · 2026-07-08<br>
+  Generated by AI review agent · ai-skeptic · 2026-07-09<br>
   Scope: AI-specific failure modes — fabrication, assumptions, edge cases, confidence calibration<br>
   See also: code-error-report.html · methodology-report.html · doc-consistency-report.html · doc-number-report.html
 </div>

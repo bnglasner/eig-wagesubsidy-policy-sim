@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EIG Style Review — 80-80 Combined Brief and Technical Appendix</title>
+<style>
+  :root{--err:#b3261e;--sug:#8a6d00;--ink:#1a1a1a;--muted:#5a5a5a;--line:#e2e2e2;--bg:#faf9f7;}
+  *{box-sizing:border-box;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;color:var(--ink);
+       line-height:1.5;margin:0;background:#fff;}
+  .wrap{max-width:960px;margin:0 auto;padding:32px 24px 80px;}
+  h1{font-size:1.7rem;margin:0 0 4px;}
+  h2{font-size:1.2rem;margin:34px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--ink);}
+  .sub{color:var(--muted);font-size:.92rem;margin-bottom:20px;}
+  .counts{display:flex;gap:14px;flex-wrap:wrap;margin:18px 0 8px;}
+  .pill{border:1px solid var(--line);border-radius:8px;padding:10px 16px;background:var(--bg);}
+  .pill b{font-size:1.4rem;display:block;}
+  table{border-collapse:collapse;width:100%;margin:12px 0;font-size:.92rem;}
+  th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top;}
+  th{background:var(--bg);}
+  .tag{font-weight:700;font-size:.72rem;letter-spacing:.03em;padding:2px 7px;border-radius:4px;color:#fff;white-space:nowrap;}
+  .tag.ERROR{background:var(--err);}
+  .tag.SUGGESTION{background:var(--sug);}
+  .item{border:1px solid var(--line);border-left-width:5px;border-radius:6px;padding:12px 14px;margin:12px 0;}
+  .item.ERROR{border-left-color:var(--err);}
+  .item.SUGGESTION{border-left-color:var(--sug);}
+  .item .loc{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.82rem;color:var(--muted);}
+  .item .lbl{font-weight:700;margin-top:6px;}
+  .item p{margin:5px 0;}
+  code{background:var(--bg);padding:1px 5px;border-radius:4px;font-size:.85rem;}
+  blockquote{margin:6px 0;padding:6px 12px;border-left:3px solid var(--line);background:var(--bg);font-size:.9rem;}
+  .fix{background:#f2f7f2;border-left:3px solid #2e7d32;padding:6px 12px;margin:6px 0;font-size:.9rem;}
+  .note{background:#eef3fb;border:1px solid #cfe0f5;border-radius:6px;padding:10px 14px;font-size:.9rem;}
+  .idx{color:var(--muted);font-weight:700;margin-right:6px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>EIG Style Review: 80-80 Wage Subsidy — Combined Policy Brief and Technical Appendix</h1>
+<div class="sub">
+  Target: <code>drafts/2026-07-09_combined-brief-and-appendix.md</code><br>
+  Scope: full document (brief + technical appendix, 456 lines). Rules applied: EIG writing style, citation style, figure style.
+  Reviewed 2026-07-09.
+</div>
+
+<div class="counts">
+  <div class="pill"><b>7</b>Errors</div>
+  <div class="pill"><b>8</b>Suggestions</div>
+</div>
+
+<div class="note">
+  <b>Overall.</b> The prose is clean on the mechanical EIG rules that most drafts fail: no contractions, no bare
+  <code>US</code>, no <code>%</code> in body text, correct footnote-marker placement, correct em-dash spacing, and
+  correct spelled/numeral number treatment. The errors cluster in two places: (1) <b>every figure is missing the
+  required <code>Source:</code> line</b> (tables have one; figures do not), and (2) the document mixes <b>two citation
+  systems</b> — footnotes in the brief, author-date prose in the appendix — with unresolved <code>[TO VERIFY]</code>
+  placeholders and Chicago-style journal formatting that departs from EIG citation rules. All are fixable before publication.
+</div>
+
+<h2>Numbers And Percentages</h2>
+
+<div class="item SUGGESTION">
+  <span class="tag SUGGESTION">SUGGESTION</span>
+  <div class="loc">Lines 251, 253, 341, 425 (body/caption); e.g. &ldquo;the $72&ndash;78 billion net range&rdquo;</div>
+  <div class="lbl">Rule: EIG numbers &mdash; use &ldquo;to&rdquo; for ranges in body text; reserve the en dash for tables and charts.</div>
+  <p>Dollar ranges in running text and in a figure caption use an en dash (<code>$72&ndash;78 billion</code>) rather than
+     &ldquo;to.&rdquo; The document already uses &ldquo;to&rdquo; correctly elsewhere (&ldquo;$106,000 to $196,000,&rdquo; &ldquo;10 to 15 million&rdquo;), so this is an internal consistency fix.</p>
+  <div class="fix">Fix: render body/caption ranges as &ldquo;$72 to $78 billion&rdquo;; keep en dashes only inside tables and chart labels.</div>
+</div>
+
+<div class="item SUGGESTION">
+  <span class="tag SUGGESTION">SUGGESTION</span>
+  <div class="loc">Internal &ldquo;Evidence&rdquo; blocks, lines 289 and 455 (both marked &ldquo;strip before publication&rdquo;)</div>
+  <div class="lbl">Rule: EIG numbers &mdash; write &ldquo;percent&rdquo; in body text; do not abbreviate millions/billions as &ldquo;M&rdquo;/&ldquo;B.&rdquo;</div>
+  <p>The internal evidence sections use <code>~10%</code>, <code>47.8%/23.6%</code>, <code>1.48M</code>, <code>$8.5B</code>, etc. These are inside blocks
+     explicitly flagged for removal, so they are not publication text &mdash; but confirm the whole &ldquo;Evidence (internal, strip before publication)&rdquo;
+     block is deleted before the piece ships, since it also contains file paths and internal review IDs.</p>
+  <div class="fix">Fix: delete both &ldquo;Evidence (internal&hellip;)&rdquo; sections (lines 276&ndash;305 and 451&ndash;456) at publication; they are not EIG-formatted and are internal-only.</div>
+</div>
+
+<h2>Punctuation</h2>
+
+<p>No violations found. Footnote markers appear outside closing punctuation throughout (lines 10, 16, 130, 160, 162, 176, 178, 196, 239); em dashes are set without surrounding spaces in body text (e.g., line 6). No stray serial-comma omissions detected in prose lists.</p>
+
+<h2>Capitalization</h2>
+
+<div class="item SUGGESTION">
+  <span class="tag SUGGESTION">SUGGESTION</span>
+  <div class="loc">Line 312: &ldquo;# Technical Appendix: How the 80-80 Wage Subsidy Simulation Works&rdquo;</div>
+  <div class="lbl">Rule: EIG headlines (digital/blog) use sentence case; capitalize only the first word and proper nouns.</div>
+  <p>The appendix H1 is in title case, while the brief H1 (line 1) is correctly sentence case. The two titles should match the same convention.</p>
+  <div class="fix">Fix: &ldquo;Technical appendix: how the 80-80 wage subsidy simulation works&rdquo; (keep &ldquo;80-80&rdquo; as the proper policy name).</div>
+</div>
+
+<div class="item SUGGESTION">
+  <span class="tag SUGGESTION">SUGGESTION</span>
+  <div class="loc">Footnote [^2] (line 266) &ldquo;80-80 Wage Subsidy Simulation&rdquo; vs. table source lines (lines 39, 82, 101, 146) &ldquo;80-80 wage subsidy simulation&rdquo;</div>
+  <div class="lbl">Rule: one term per concept / consistent capitalization of a named source.</div>
+  <p>The simulation is capitalized differently in the footnote than in the four table source lines.</p>
+  <div class="fix">Fix: pick one form for the source name and use it everywhere (recommend title case for the formal citation: &ldquo;Economic Innovation Group, 80-80 Wage Subsidy Simulation, 2026.&rdquo;).</div>
+</div>
+
+<h2>Spelling And Word Form</h2>
+
+<p>No violations found. No contractions; &ldquo;COVID-19&rdquo; and &ldquo;homeownership&rdquo; not present; &ldquo;U.S.&rdquo; correctly punctuated (line 176, 270); no bare &ldquo;US&rdquo; in prose (the <code>PolicyEngine-US</code> matches are a product name).</p>
+
+<h2>Voice And Style</h2>
+
+<p>No violations found. The draft is predominantly active voice with strong, specific verbs (&ldquo;claws back,&rdquo; &ldquo;concentrates,&rdquo; &ldquo;brackets&rdquo;). Terminology is stable (&ldquo;entrants,&rdquo; &ldquo;non-employed pool,&rdquo; &ldquo;evidence-central&rdquo; used consistently).</p>
+
+<h2>Smart Brevity And Structure</h2>
+
+<p>Compliant: single-sentence lede (line 6), a &ldquo;Why it matters&rdquo; frame placed early (line 8), bulleted lists with bold lead phrases (lines 115&ndash;118, 238&ndash;241). See the figure-ordering suggestion below, which also affects reading flow.</p>
+
+<h2>Figure Labels And Source Lines</h2>
+
+<div class="item ERROR">
+  <span class="tag ERROR">ERROR</span>
+  <div class="loc">Every displayed figure: Figures 1, 2, 3, 4, 5, 6, 7, 7b, 9, 10, 11, 11b, 13, 14, 15 (lines 12&ndash;255)</div>
+  <div class="lbl">Rule: EIG figure style &mdash; every figure must carry a source line: &ldquo;Source: [Organization], [Year].&rdquo;</div>
+  <p>No figure has a <code>Source:</code> line. The only four <code>Source:</code> lines in the document (lines 39, 82, 101, 146)
+     sit under <b>tables</b>. Each figure has a bold &ldquo;<b>Figure N.</b> caption&rdquo; and the image, but nothing beneath it.
+     Captions are correctly sentence-cased and numbered, so the sole defect is the missing source (and, where relevant, note) line.</p>
+  <div class="fix">Fix: add a source line under each image, matching the table convention, e.g.:<br>
+     <code>*Source: Economic Innovation Group, 80-80 Wage Subsidy Simulation, 2026.*</code><br>
+     For figures that also carry a methodological caveat (e.g., Figure 7 scenario bands, Figure 10 log scale), add a <code>*Note: &hellip;*</code> line above the source line.</div>
+</div>
+
+<div class="item SUGGESTION">
+  <span class="tag SUGGESTION">SUGGESTION</span>
+  <div class="loc">Lines 239&ndash;255: Figure 14 (line 239) and Figure 15 (line 240) are referenced and displayed before Figure 13 (lines 251, 253)</div>
+  <div class="lbl">Rule: structure/clarity &mdash; figures should be numbered in order of first reference.</div>
+  <p>In the &ldquo;How sure are you?&rdquo; section the reading order is 14, 15, then 13, which is confusing for a skimmer.</p>
+  <div class="fix">Fix: renumber so the cost-band figure (currently 13) precedes the two uncertainty-grid figures, or move the Figure 13 discussion above the Figure 14/15 bullets. Renumber all downstream references consistently.</div>
+</div>
+
+<div class="item SUGGESTION">
+  <span class="tag SUGGESTION">SUGGESTION</span>
+  <div class="loc">Figures &ldquo;7b&rdquo; (lines 154&ndash;156) and &ldquo;11b&rdquo; (lines 222&ndash;224)</div>
+  <div class="lbl">Rule: EIG figure style &mdash; &ldquo;Figure N.&rdquo; with a plain Arabic numeral.</div>
+  <p>Sub-lettered figure numbers deviate from the &ldquo;Figure N.&rdquo; convention. Acceptable if intentional, but cleaner to fold them into the main sequence.</p>
+  <div class="fix">Fix: renumber 7b&nbsp;&rarr;&nbsp;8 and 11b&nbsp;&rarr;&nbsp;12 (etc.) and cascade the rest, or keep the b-suffix and document it as a deliberate pairing convention.</div>
+</div>
+
+<div class="note">
+  <b>Missing figure files (not a style error).</b> <code>fig08_pool_wage_distribution</code> (referenced line 172) and
+  <code>fig12_clawback_net_gain</code> (referenced line 230) have no PNG in <code>output/figures/main/</code>; per the task
+  these depend on a data file absent from this checkout. Their captions and references are present and correctly formatted.
+  Confirm the images are generated before publication.
+</div>
+
+<h2>Citations</h2>
+
+<div class="item ERROR">
+  <span class="tag ERROR">ERROR</span>
+  <div class="loc">Whole document: brief (lines 265&ndash;272) uses footnotes; appendix (Sections 4&ndash;10 and &ldquo;Key sources,&rdquo; lines 360&ndash;447) uses author-date prose citations</div>
+  <div class="lbl">Rule: EIG citation style &mdash; EIG publications use footnotes, not in-text author-date citations.</div>
+  <p>The two halves of one document use incompatible citation systems. The appendix cites inline as
+     &ldquo;(Heckman 1979),&rdquo; &ldquo;(Schmieder, von Wachter, and Bender 2016),&rdquo; &ldquo;Krueger and Mueller 2016,&rdquo; and lists
+     &ldquo;Card and Hyslop (2005),&rdquo; etc. in &ldquo;Key sources.&rdquo; The appendix&rsquo;s own internal note (line 455) acknowledges this.</p>
+  <div class="fix">Fix: convert every appendix author-date reference and the entire &ldquo;Key sources&rdquo; block to EIG footnotes matching the brief&rsquo;s style. Remove parenthesized years throughout.</div>
+</div>
+
+<div class="item ERROR">
+  <span class="tag ERROR">ERROR</span>
+  <div class="loc">Footnotes [^1] (line 265), [^3] (267), [^4] (268), [^5] (269)</div>
+  <div class="lbl">Rule: citations must be complete before publication.</div>
+  <p>Four footnotes carry unresolved <code>[TO VERIFY]</code> placeholders: [^1] is missing publication date and URL entirely;
+     [^3] and [^4] are missing publication month; [^5] is a note deferring to &ldquo;the first post&rdquo; rather than a citation.</p>
+  <div class="fix">Fix: resolve each placeholder &mdash; supply the &ldquo;How to End Low-Wage Work Forever&rdquo; publication date, URL, and access date ([^1]);
+     the SSP and Paycheck Plus report months ([^3], [^4]); and, for [^5], the actual NBER, American Economic Association, and Peterson Institute citations in EIG format.</div>
+</div>
+
+<div class="item ERROR">
+  <span class="tag ERROR">ERROR</span>
+  <div class="loc">Footnotes [^6] (line 270), [^7] (271), [^8] (272)</div>
+  <div class="lbl">Rule: EIG citation style &mdash; no parentheses around the year; journal format is &ldquo;Journal, Volume (Issue), Year, pages.&rdquo;</div>
+  <p>These use Chicago-style journal formatting with a parenthesized year, e.g. &ldquo;<i>American Economic Review</i> 103, no. 5 (2013): 1797&ndash;1829.&rdquo;
+     EIG puts the year after the title with no parentheses and uses &ldquo;Volume (Issue), Year, pages.&rdquo;</p>
+  <div class="fix">Fix (example): &ldquo;Maestas, Nicole, Kathleen J. Mullen, and Alexander Strand, &lsquo;Does Disability Insurance Receipt Discourage Work?,&rsquo; <i>American Economic Review</i>, 103 (5), 2013, 1797&ndash;1829.&rdquo; Apply the same to Grogger 2003, Fang and Keane 2004, Schmieder et al. 2016, and Krueger and Mueller 2016.</div>
+</div>
+
+<div class="item ERROR">
+  <span class="tag ERROR">ERROR</span>
+  <div class="loc">Footnotes [^3] (267), [^4] (268), [^6] (270), [^7] (271)</div>
+  <div class="lbl">Rule: EIG citation style &mdash; hyperlink the title; the linked text is the title, not a bare URL.</div>
+  <p>These footnotes drop raw URLs (e.g., <code>https://www.srdc.org/&hellip;/SSP54.pdf</code>) inline instead of hyperlinking the work&rsquo;s title.</p>
+  <div class="fix">Fix: wrap the title in a markdown link, e.g. <code>[Making Work Pay: Final Report&hellip;](https://www.srdc.org/&hellip;/SSP54.pdf)</code>, and keep the &ldquo;(accessed &hellip;)&rdquo; date after it. Do not leave bare URLs in the citation.</div>
+</div>
+
+<div class="item ERROR">
+  <span class="tag ERROR">ERROR</span>
+  <div class="loc">Footnote [^5], line 269</div>
+  <div class="lbl">Rule: EIG citation style &mdash; a footnote must be a citation, not an editorial deferral.</div>
+  <p>&ldquo;Per-job cost figures &hellip; are as cited in the first post (NBER, American Economic Association, and Peterson Institute &hellip;). [TO VERIFY: carry over the exact citations from the published post.]&rdquo; This names no specific works, dates, or URLs.</p>
+  <div class="fix">Fix: replace with full EIG-format citations for each of the three underlying sources (Buy American procurement, state/local incentives, steel tariffs) carried over from the first post.</div>
+</div>
+
+<div class="item SUGGESTION">
+  <span class="tag SUGGESTION">SUGGESTION</span>
+  <div class="loc">Appendix &ldquo;Key sources,&rdquo; lines 435&ndash;447</div>
+  <div class="lbl">Rule: EIG citation style &mdash; full citations (title, publisher, year, URL) required for publication.</div>
+  <p>The list gives only shorthand author-date entries with parenthesized years (&ldquo;Card and Hyslop (2005), <i>Econometrica</i>&rdquo;). The draft points to the project catalog for full details, which is fine internally but insufficient for a public appendix.</p>
+  <div class="fix">Fix: expand each entry to a full EIG footnote (or convert the section to numbered footnotes as above) when the appendix ships publicly.</div>
+</div>
+
+<h2>Summary</h2>
+<ul>
+  <li>Errors: <b>7</b></li>
+  <li>Suggestions: <b>8</b></li>
+  <li>Overall assessment: Prose mechanics are strong and largely EIG-compliant; the blocking issues are (1) missing
+      <code>Source:</code> lines on all figures and (2) an inconsistent, incomplete citation apparatus (footnote vs. author-date,
+      unresolved <code>[TO VERIFY]</code> placeholders, Chicago-style journal formatting, and bare URLs). None require rewriting
+      content &mdash; they are formatting and completeness fixes to make before publication.</li>
+</ul>
+
+</div>
+</body>
+</html>

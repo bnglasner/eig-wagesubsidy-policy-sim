@@ -63,16 +63,20 @@
     .check-list { list-style: none; padding: 0; margin: 0.5rem 0; font-size: 0.9rem; color: #334155; }
     .check-list li { padding: 0.25rem 0 0.25rem 1.5rem; position: relative; }
     .check-list li::before { content: "→"; position: absolute; left: 0; color: #581c87; font-weight: 700; }
-    .inv-table, .files-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-bottom: 1rem; }
-    .inv-table th, .files-table th { background: #f1f5f9; text-align: left; padding: 0.6rem 0.8rem; font-weight: 600; color: #475569; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; }
-    .inv-table td, .files-table td { padding: 0.5rem 0.8rem; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: top; }
-    .inv-table tr:last-child td, .files-table tr:last-child td { border-bottom: none; }
-    .files-table td:first-child { font-family: monospace; font-size: 0.8rem; color: #1e293b; }
+    .files-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+    .files-table th { background: #f1f5f9; text-align: left; padding: 0.65rem 1rem; font-weight: 600; color: #475569; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; }
+    .files-table td { padding: 0.6rem 1rem; border-bottom: 1px solid #f1f5f9; color: #334155; }
+    .files-table tr:last-child td { border-bottom: none; }
+    .files-table td:first-child { font-family: monospace; font-size: 0.82rem; color: #1e293b; }
     .files-table .count-cell { text-align: center; font-weight: 600; }
     .files-table .ok { color: #16a34a; }
     .files-table .has-issues { color: #dc2626; }
-    .st-ok { color: #16a34a; font-weight: 600; }
-    .st-flag { color: #ea580c; font-weight: 600; }
+    .inv-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+    .inv-table th { background: #f1f5f9; text-align: left; padding: 0.5rem 0.75rem; font-weight: 600; color: #475569; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #e2e8f0; }
+    .inv-table td { padding: 0.45rem 0.75rem; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: top; }
+    .inv-table tr:last-child td { border-bottom: none; }
+    .inv-table .st-ok { color: #16a34a; font-weight: 600; }
+    .inv-table .st-flag { color: #2563eb; font-weight: 600; }
     .report-footer { margin-top: 3rem; padding: 1.5rem; text-align: center; font-size: 0.8rem; color: #94a3b8; border-top: 1px solid #e2e8f0; }
   </style>
 </head>
@@ -83,9 +87,9 @@
   <div class="subtitle">Every empirical claim cross-referenced against the code — err on side of flagging</div>
   <div class="meta">
     <span><strong>Project:</strong> eig-wagesubsidy-policy-sim</span>
-    <span><strong>Reviewed:</strong> 2026-07-08</span>
-    <span><strong>Document:</strong> drafts/2026-07-08_wage-subsidy-impact-cost-summary.md</span>
-    <span><strong>Code files:</strong> 9 across Python, R</span>
+    <span><strong>Reviewed:</strong> 2026-07-09</span>
+    <span><strong>Document:</strong> 2026-07-09_combined-brief-and-appendix.md</span>
+    <span><strong>Code files:</strong> 3 across R, Python</span>
     <span><strong>Reviewer:</strong> AI review agent (conceptual-consistency-reviewer)</span>
   </div>
 </div>
@@ -96,79 +100,62 @@
 
   <div class="risk-row">
     <span class="risk-label">Overall Consistency Risk:</span>
-    <span class="risk-pill risk-medium">MEDIUM</span>
+    <span class="risk-pill risk-low">LOW</span>
   </div>
 
   <div class="consistency-row">
-    <div class="consistency-stat examined"><div class="num">34</div><div class="lbl">Claims Examined</div></div>
-    <div class="consistency-stat consistent"><div class="num">29</div><div class="lbl">Consistent</div></div>
-    <div class="consistency-stat flagged"><div class="num">5</div><div class="lbl">Flagged</div></div>
+    <div class="consistency-stat examined"><div class="num">50</div><div class="lbl">Claims Examined</div></div>
+    <div class="consistency-stat consistent"><div class="num">46</div><div class="lbl">Consistent</div></div>
+    <div class="consistency-stat flagged"><div class="num">4</div><div class="lbl">Flagged</div></div>
   </div>
 
   <div class="summary-box">
-    Extracted 34 empirical claims from the draft and cross-referenced each against nine source files
-    (00_config.py, 01h/01i data-prep, 02a/02b/02d/02e analysis, and the 05c/05d figure scripts), plus
-    the intermediate output parquets that feed the tables and figures. The document is unusually faithful
-    to the code: every headline number in Tables 1–4, the demographic and geographic breakdowns, the
-    program-interaction shares, the cost band, the entry band, firm-capture percentages, the
-    per-job-cost arithmetic, and the Figure 11b anchors were reproduced from the pipeline output and match.
-    No direct contradiction (HIGH) was found. Two MEDIUM issues remain: (1) the prose "about 13 percent /
-    about 25 percent" net-return-to-work figures for single mothers vs. other groups are quoted from the
-    methodology memo's older values, whereas the current pipeline (and Figure 12) produce ~15.2 percent /
-    ~27.5 / ~25.3 percent; and (2) two limitations the methodology doc discloses (deferred fixed-cost-of-work,
-    and the UI / part-year-timing caveat) — both of which the doc says bias the headline entry number upward —
-    are not carried into the draft's "How sure are you?" section. Three LOW items concern the exact wage-band
-    phrasing, the "12 months" data-vintage wording, and an undisclosed dependent-child exclusion in the
-    published Table 2 note.
+    Final confirmatory document&ndash;code consistency pass on the combined EIG 80-80 brief and technical appendix (master commit 63cbd4e), focused on the paid-hourly resync. <strong>Zero HIGH inconsistencies.</strong> The previously outstanding HIGH &mdash; Figure&nbsp;3 (<code>fig4_takeup_by_group</code> in 05c) hard-coding <code>overall=15.5</code> and a 134.3M denominator caption &mdash; is <strong>confirmed RESOLVED</strong>: the overall take-up line and the denominator caption are now computed data-driven from <code>take_up_by_group.parquet</code> (overall 21.7&nbsp;percent, denominator 73.3M), and the title reads &ldquo;paid-hourly workers.&rdquo; A grep sweep of both figure scripts (05c, 05d) for the old-frame constants (15.5, 134.3, 72.12, 89.x, 20.8, 4314, 1.25, 0.83) returned clean. All prior-resolved items re-confirmed: fig10 $47K/$32K/$13K/$5.3K; fig13 $45&ndash;48B band and axis; fig14 subtitle 1.49M/1.02M/3.81M; appendix clawback 18/27/23; paid-hourly eligibility 15.88M. The four remaining flags are all LOW: a rounding note on the &ldquo;$45&ndash;48 billion&rdquo; band, two figure-construction fragility/comment notes, and the known-acceptable historical all-earner-frame narrative in Appendix &sect;4. No REMAINING figure hard-codes a resync-changed headline number that disagrees with the document (the fig10 constants were re-centered and match the data and text exactly).
   </div>
 
   <div class="stat-grid">
     <div class="stat-card sev-high"><div class="count">0</div><div class="label">High</div></div>
-    <div class="stat-card sev-medium"><div class="count">2</div><div class="label">Medium</div></div>
-    <div class="stat-card sev-low"><div class="count">3</div><div class="label">Low</div></div>
+    <div class="stat-card sev-medium"><div class="count">0</div><div class="label">Medium</div></div>
+    <div class="stat-card sev-low"><div class="count">4</div><div class="label">Low</div></div>
   </div>
 
-  <!-- ═══════════════ CLAIM INVENTORY ═══════════════ -->
-  <h2>Claim Inventory</h2>
+  <h2>Claim Inventory (key resync-sensitive claims)</h2>
   <table class="inv-table">
     <thead>
-      <tr><th>#</th><th>Claim (document)</th><th>Doc location</th><th>Code / output source</th><th>Status</th></tr>
+      <tr><th>#</th><th>Claim (document)</th><th>Doc location</th><th>Code / data source</th><th>Status</th></tr>
     </thead>
     <tbody>
-      <tr><td>1</td><td>20.8M workers reached; avg subsidy $4,314; gross &lt;$90B; net $72.1B</td><td>Lede, "What does it cost?"</td><td>summary.parquet (20.81M, 4314, 89.75, 72.12)</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>2</td><td>Recipient keeps ~$3,400–$3,500 net</td><td>"What does it cost?"</td><td>net 72.12B / 20.81M = $3,466; by_sex 3440/3504</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>3</td><td>Table 1 cost matrix (static / reduced-form / structural / bound)</td><td>Table 1</td><td>summary, behavioral_scenarios, matching_simulation</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>4</td><td>Central ≈ $97B gross / $76B net</td><td>"What does it cost?"</td><td>RF central 96.9/76.1; struct 97.2/77.5</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>5</td><td>Structural sticky band 96.4–97.9 gross / 76.6–78.1 net</td><td>Table 1</td><td>matching_simulation rigid rows</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>6</td><td>Incidence upper bound up to $164.6B</td><td>Table 1 / "capture" section</td><td>flex-rigid gross 164.6</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>7</td><td>Reduced-form uses employment + hours elasticities; EITC/CBO benchmark</td><td>"What does it cost?"</td><td>02b eps_ext + eps_int; cfg["behavioral"] sources</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>8</td><td>Structural search-and-matching; bargaining share 0.3–0.7; sticky incumbent wages</td><td>"What does it cost?" / capture</td><td>02d; cfg["matching"]["beta"] {0.3,0.5,0.7}; incumbent_wage_rigid</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>9</td><td>Eligibility = paid-hourly, earning $7.25–$16.80</td><td>"Who gets the money?"</td><td>02a/02e employer_wage.clip(7.25) &lt; target</td><td class="st-flag">Flagged (CC-003)</td></tr>
-      <tr><td>10</td><td>Table 2 sex/age/education/race/family splits</td><td>Table 2</td><td>by_sex, by_age_bin, by_education, by_race_ethnicity, by_family_type</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>11</td><td>Men avg $4,481 vs women $4,199</td><td>"Who gets the money?"</td><td>by_sex (4481 / 4199)</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>12</td><td>Denominator = wage-observed hourly workforce, 134.3M, ages 16–64</td><td>Table 2 note</td><td>02e base mask; base_k sum 134.3M</td><td class="st-flag">Flagged (CC-005)</td></tr>
-      <tr><td>13</td><td>Overall take-up 15.5%</td><td>Table 2 note</td><td>20.81 / 134.3 = 15.5% (02e)</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>14</td><td>Table 3 subsidy by wage band</td><td>Table 3</td><td>by_wage_bracket.parquet</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>15</td><td>State avgs: LA $5,521, MS $5,529, CA $3,751; LA 404k, WV 134k @ $4,734</td><td>"Who gets the money?"</td><td>by_state.parquet</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>16</td><td>Program interactions: SNAP −13.0%, Medicaid/CHIP −14.4%, TANF −3.2%, EITC −1.6%, ACA +26.4%</td><td>"Who gets the money?"</td><td>program_interactions.parquet (pct_of_gross_cost)</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>17</td><td>Table 4 entrants: 0.44 / 1.42 / 2.47; SM 0.23, OW 1.03, Men 0.16</td><td>Table 4</td><td>entry_margin_band.parquet (as-modeled)</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>18</td><td>Household-coordination sensitivity: 1.42 → 1.29 (zero) / 1.35 (halve)</td><td>"Does it pull people in?"</td><td>entry_margin_band spouse-employed rows</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>19</td><td>Band-edge provenance: SSP +10.4pp (SM upper); Paycheck Plus NYC (men upper); Atlanta null (lower)</td><td>"Where do numbers come from?"</td><td>cfg comments + entry_from_nonemployment_methodology.md §2</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>20</td><td>Men Year-3 +5.8pp subgroup; pooled +2.8pp not significant</td><td>"What about men?" / fn 4</td><td>methodology doc §2 men</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>21</td><td>Entrants average ~880 hours/year</td><td>"Does it pull people in?"</td><td>matching_simulation mean_entry_hours 879</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>22</td><td>Male entry 160,000</td><td>"What about men?"</td><td>induced_men_M 0.16</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>23</td><td>55.9% of the non-employed pool below the $16.80 target</td><td>"Does it pull people in?" / Fig 8</td><td>nonemployed_pool.parquet (computed 55.9%)</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>24</td><td>Firm capture 1.6–3.5% (sticky); up to 54% / $164.6B (all renegotiate)</td><td>"Will employers capture it?"</td><td>matching_simulation firm_capture_pct_of_gross</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>25</td><td>Marginal: $7.4B gross → ~$5,200 gross / $3,700 net per entrant</td><td>"Cost per new job"</td><td>7.4/1.42=5211; 5.3/1.42=3732 (entry_margin_band)</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>26</td><td>Fully loaded ~$55,000/job ($77.5B ÷ 1.42M, structural)</td><td>"Cost per new job"</td><td>77.5/1.42=54,577 (matching rigid-central net)</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>27</td><td>Median net-return gain ~13% (single mothers) vs ~25% (others)</td><td>"Play badly with safety net?" / Fig 12</td><td>g_net medians 15.2% / 27.5% / 25.3%</td><td class="st-flag">Flagged (CC-001)</td></tr>
-      <tr><td>28</td><td>~140,000 knife-edge (cliff pay-up) entrants</td><td>"Play badly with safety net?"</td><td>cliff_payup_entrants_M 0.143</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>29</td><td>Fig 11b: $10/hr PA single parent of two, 0–3000 hrs, 40hr cap, subsidy as income</td><td>Fig 11b / prose</td><td>05d fig11b (wage=10, single_2c_PA, cap 2000)</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>30</td><td>Fig 11b gains: ~$7,800 @ 20hr/wk, ~$5,600 @ 40hr/wk, worse off past ~54hr/wk</td><td>Fig 11b prose</td><td>anchors $7,817 / $5,628; crossover 53.9 hr/wk</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>31</td><td>Median hourly wage $21.00, target $16.80, 2025m5–2026m5</td><td>Housekeeping note / fn 2</td><td>org_target_wage.json (median 21.0); pool months</td><td class="st-flag">Flagged (CC-004)</td></tr>
-      <tr><td>32</td><td>Subsidy modeled as taxable / countable against benefits (disclosed)</td><td>"Play badly with safety net?"</td><td>methodology doc §4; 01h/02d NI treatment</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>33</td><td>Figures 11/11b are one illustrative household (disclosed)</td><td>Fig 11 / 11b prose</td><td>05d captions ("illustrative")</td><td class="st-ok">Consistent</td></tr>
-      <tr><td>34</td><td>Uncertainty drivers: elasticities, wage renegotiation, statutory treatment</td><td>"How sure are you?"</td><td>methodology doc §5 lists more (fixed cost, UI/timing)</td><td class="st-flag">Flagged (CC-002)</td></tr>
+      <tr><td>1</td><td>Fig&nbsp;3 title &ldquo;paid-hourly workers&rdquo;</td><td>Fig&nbsp;3 caption</td><td>05c <code>fig4_takeup_by_group</code> title</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>2</td><td>Fig&nbsp;3 overall take-up = 21.7%</td><td>Fig&nbsp;3 / Table&nbsp;2 note</td><td><code>take_up_by_group</code> Sex rows &rarr; 15884.4/73267.9 = 21.68%</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>3</td><td>Fig&nbsp;3 denominator = 73.3M paid-hourly</td><td>Fig&nbsp;3 / Table&nbsp;2 note</td><td><code>take_up_by_group</code> Sex base_k sum = 73267.9k</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>4</td><td>Eligible base = 15.88M workers</td><td>Table&nbsp;2, Appendix &sect;1</td><td><code>summary.parquet</code> n_workers_mn = 15.88</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>5</td><td>Fig&nbsp;10 fully-loaded $32K central</td><td>Fig&nbsp;10 body</td><td>05c <code>full_mid=32148</code> = 47.9/1.49</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>6</td><td>Fig&nbsp;10 range $13K (high) &ndash; $47K (floor)</td><td>Fig&nbsp;10 body</td><td>05c <code>full_lo=12572</code>, <code>full_hi=46961</code></td><td class="st-ok">Consistent</td></tr>
+      <tr><td>7</td><td>Fig&nbsp;10 marginal $5,300 gross / $3,900 net</td><td>Fig&nbsp;10 body</td><td><code>entrant_hours_sensitivity</code> rank = 5266 / 3876</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>8</td><td>Fig&nbsp;10 independent-hours ~$9,800 gross</td><td>Fig&nbsp;10 body</td><td><code>entrant_hours_sensitivity</code> independent = 9838</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>9</td><td>Fig&nbsp;13 net band $45&ndash;48B / shaded axis</td><td>Fig&nbsp;13, &sect;How sure</td><td>05d <code>rect 45..48</code>; static 45.11, rf 45.9&ndash;47.6, rigid 47.4&ndash;48.4</td><td class="st-flag">Flagged (CC-001)</td></tr>
+      <tr><td>10</td><td>Fig&nbsp;14 subtitle 1.49M / 1.02M / 3.81M</td><td>Fig&nbsp;14</td><td>05d subtitle; <code>entry_headline_scenarios</code></td><td class="st-ok">Consistent</td></tr>
+      <tr><td>11</td><td>Fig&nbsp;14 full grid 0.23&ndash;3.81M (27 cells)</td><td>Fig&nbsp;14, Appendix &sect;9</td><td><code>entry_scenario_grid</code> 27 rows, min 0.23 max 3.81</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>12</td><td>Clawback medians 18/27/23 percent</td><td>&sect;Safety net, Appendix &sect;7</td><td>05c <code>fig6</code> reads evidence-central pool &rarr; 18.1/26.9/23.1</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>13</td><td>Table&nbsp;4 by group: SM 0.24, OW 1.07, Men 0.18</td><td>Table&nbsp;4</td><td><code>entry_headline_scenarios</code> evidence_central</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>14</td><td>Stress: spouse-zeroed 1.21M; 80% take-up 1.20M</td><td>&sect;5, main &sect;stress</td><td><code>entry_central_stress.parquet</code></td><td class="st-ok">Consistent</td></tr>
+      <tr><td>15</td><td>Male entry 180k central / 120k floor / 800k high</td><td>&sect;What about men</td><td><code>entry_headline_scenarios</code> men 0.18/0.12/0.80</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>16</td><td>Composition: ~1/3 unemployed, ~3% disabled/retired</td><td>&sect;5, Fig&nbsp;7b</td><td><code>entry_central_composition</code> 33.2% / 3.3%</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>17</td><td>Fig&nbsp;7b in-code comment composition (0.412/0.799/&hellip;)</td><td>05d comment</td><td>parquet holds 0.496/0.948/0.034/0.016</td><td class="st-flag">Flagged (CC-003)</td></tr>
+      <tr><td>18</td><td>Fig&nbsp;15 hours 0.06/0.19/0.28M FTE, $0.5&ndash;$2.4B</td><td>&sect;6, Fig&nbsp;15</td><td><code>incumbent_hours_margin.parquet</code></td><td class="st-ok">Consistent</td></tr>
+      <tr><td>19</td><td>Firm capture ~3% central, &le;4% range, &lt;2% high&nbsp;&beta;</td><td>&sect;Employers, Appendix &sect;7</td><td><code>matching_simulation</code> rigid 2.9/1.7/3.9</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>20</td><td>Incidence bound: $109.1B gross, 58% capture</td><td>&sect;Employers, Table&nbsp;1</td><td><code>matching_simulation</code> flex-rigid 109.1 / 58.4</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>21</td><td>Table&nbsp;1 static gross 55.9 / net 45.1</td><td>Table&nbsp;1</td><td><code>summary</code> 55.88 / 45.11</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>22</td><td>Table&nbsp;1 reduced-form gross/net rows</td><td>Table&nbsp;1</td><td><code>behavioral_scenarios</code> 57.3/45.9, 59.8/46.7, 63.6/47.6</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>23</td><td>Table&nbsp;1 structural sticky 59.6&ndash;60.7 / 47.4&ndash;48.4</td><td>Table&nbsp;1</td><td><code>matching_simulation</code> rigid net 47.4/47.9/48.4</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>24</td><td>Program interactions SNAP&minus;12.6, Medicaid&minus;13.4, ACA+24.9</td><td>&sect;Who / bullets</td><td><code>program_interactions</code> pct_of_gross</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>25</td><td>Table&nbsp;3 wage bands (0.84/1.07/2.22/11.75M; subsidies)</td><td>Table&nbsp;3, Fig&nbsp;4</td><td><code>by_wage_bracket.parquet</code></td><td class="st-ok">Consistent</td></tr>
+      <tr><td>26</td><td>State: LA $4,981/317k, MS $4,990, CA $2,392, WV 105k/$4,229</td><td>&sect;Who (geography)</td><td><code>by_state.parquet</code></td><td class="st-ok">Consistent</td></tr>
+      <tr><td>27</td><td>Pool below target 47.8% vs 21.7% of workers; pool 59.3M</td><td>&sect;3, &sect;4, Fig&nbsp;8</td><td><code>nonemployed_pool.parquet</code> mpl&lt;16.80 = 47.8%</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>28</td><td>Avg subsidy by sex $3,602 men / $3,464 women</td><td>&sect;Who</td><td><code>by_sex.parquet</code></td><td class="st-ok">Consistent</td></tr>
+      <tr><td>29</td><td>Reduced-form entry benchmark 0.48M</td><td>Appendix &sect;2</td><td><code>behavioral_scenarios</code> central induced 0.48</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>30</td><td>$16.80 target / $21.00 median / $7.25 base</td><td>Throughout, Fig&nbsp;1</td><td>05c <code>fig2</code> target 16.80, base 7.25, match 0.80</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>31</td><td>Appendix &sect;4 superseded all-earner frame (historical)</td><td>Appendix &sect;4</td><td>Narrative; current pipeline is paid-hourly frame</td><td class="st-flag">Flagged (CC-004)</td></tr>
     </tbody>
   </table>
 
@@ -176,176 +163,106 @@
 
   <div class="category-heading">HIGH — 0 finding(s)</div>
   <div class="summary-box" style="color: #16a34a; border-color: #bbf7d0;">
-    No direct contradictions found. Every headline result, table cell, geographic figure, program-interaction
-    share, and figure anchor reproduced from the pipeline output matched the draft.
+    No HIGH inconsistencies identified. Every empirical claim touched by the paid-hourly resync &mdash; Figure&nbsp;3 take-up (title, 21.7&nbsp;percent overall, 73.3M denominator), Figure&nbsp;10 cost-per-job ($5.3K/$13K/$32K/$47K), Figure&nbsp;13 $45&ndash;48B band, Figure&nbsp;14 headline scenarios and 0.23&ndash;3.81M grid, the 18/27/23 clawback medians, and 15.88M eligibility &mdash; is consistent between the document and the code/data.
   </div>
 
-  <div class="category-heading">MEDIUM — 2 finding(s)</div>
+  <div class="category-heading">MEDIUM — 0 finding(s)</div>
+  <div class="summary-box" style="color: #16a34a; border-color: #bbf7d0;">
+    No MEDIUM inconsistencies identified.
+  </div>
+
+  <div class="category-heading">LOW — 4 finding(s)</div>
 
   <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Results &amp; Interpretation</div>
 
-  <div class="finding medium">
+  <div class="finding low">
     <div class="finding-header">
       <div class="finding-id">CC-001</div>
       <div class="finding-title-block">
-        <div class="finding-title">"About 13 percent / about 25 percent" net-return figures do not match the current pipeline (and Figure 12)</div>
-        <div class="finding-meta"><span class="file">drafts/2026-07-08_wage-subsidy-impact-cost-summary.md</span><span> · Results &amp; Interpretation</span></div>
+        <div class="finding-title">&ldquo;$45&ndash;48 billion&rdquo; net band rounds the structural sticky upper (48.4) down to 48</div>
+        <div class="finding-meta"><span class="file">2026-07-09_combined-brief-and-appendix.md</span><span> &middot; Results &amp; Interpretation</span></div>
       </div>
-      <span class="severity-badge badge-medium">MEDIUM</span>
+      <span class="severity-badge badge-low">LOW</span>
     </div>
     <div class="finding-body">
       <div class="finding-section-label">Document Claims</div>
       <div class="doc-excerpt">
-        "For the median single mother in the entry pool, the subsidy raises the net return to working by
-        <span class="highlight">about 13 percent</span>; for the median person in every other group, it raises the net return by
-        <span class="highlight">about 25 percent</span>." (and Figure 12, "median net gain from working, by group")
+        &ldquo;Static, reduced-form, and structural approaches all land between <span class="highlight">$45 billion and $48 billion net per year</span>&hellip;&rdquo; (How sure are you?); Figure&nbsp;13 title: &ldquo;only full wage renegotiation escapes the $45&ndash;48 billion range.&rdquo;
       </div>
       <div class="finding-section-label">What the Code Does</div>
-      <pre><code># 05c_core_figures.R  fig6_clawback_net_gain(): weighted median of g_net by cell (g_net &gt; 0)
-# Recomputed from data/processed/nonemployed_pool.parquet (2026-07-08 run):
-#   single_mothers  median g_net = 15.2%   (draft: ~13%)
-#   other_women     median g_net = 27.5%   (draft folds into "~25%")
-#   men             median g_net = 25.3%
-# Restricting to reachable (mpl &lt; 16.80) gives 14.2% / 27.0% / 25.1% — still not 13%.
-# docs/entry_from_nonemployment_methodology.md §3.3 states the OLDER values
-# ("median g_net for single mothers (≈0.13) … men/other women (≈0.25)").</code></pre>
+      <pre><code>fig8_cost_band():  annotate("rect", xmin = 45, xmax = 48, ...)   # shaded core band
+# matching_simulation rigid net_cost_bn: 47.9 (central), 47.4 (measured), 48.4 (rigid)
+# Table 1 discloses the structural sticky range as 47.4-48.4</code></pre>
       <div class="finding-section-label">Why This Is Inconsistent</div>
-      <div class="finding-text">
-        The prose appears to quote the methodology memo's earlier "≈0.13 / ≈0.25" figures, but the current
-        pipeline output — the same <code>g_net</code> that Figure 12 plots — gives ~15.2 percent for single
-        mothers and ~27.5 / ~25.3 percent for the other two cells. Figure 12 will render with a single-mothers
-        bar labelled roughly 15 percent, visibly disagreeing with the "about 13 percent" in the body text. The
-        qualitative narrative ("claws back roughly half") survives either way (15.2 vs ~26 is still ~40–45 percent
-        lower), so this is not a HIGH contradiction, but the specific percentages should be reconciled to the
-        rendered figure before publication.
-      </div>
+      <div class="finding-text">The structural sticky upper endpoint is 48.4B (Table&nbsp;1 discloses it precisely), which strictly exceeds the &ldquo;$45&ndash;48 billion&rdquo; headline band and the figure&rsquo;s shaded rectangle (45&ndash;48). The figure and prose agree with each other, and the 0.4B overrun is disclosed in Table&nbsp;1, so this is a rounding/labeling nicety rather than a contradiction &mdash; but a careful reader comparing Table&nbsp;1 (48.4) with the &ldquo;$48 billion&rdquo; ceiling could notice the band is inclusive-by-rounding.</div>
       <div class="finding-section-label">What to Check</div>
       <ul class="check-list">
-        <li>Re-read the median <code>g_net</code> by cell from the current <code>nonemployed_pool.parquet</code> and update the prose to match Figure 12 (≈15% / ≈27% / ≈25%).</li>
-        <li>Update methodology doc §3.3 ("≈0.13 … ≈0.25") in the same pass so the memo and draft agree.</li>
-        <li>Confirm "every other group … about 25 percent" is acceptable given other women is 27.5 percent, not 25.</li>
+        <li>Confirm the intended band ceiling is &ldquo;about $48 billion&rdquo; (rounding 48.4) rather than a hard bound.</li>
+        <li>If a hard bound is intended, consider &ldquo;$45&ndash;48.4 billion&rdquo; or &ldquo;roughly $45&ndash;48 billion&rdquo; to match Table&nbsp;1 exactly.</li>
       </ul>
     </div>
   </div>
 
-  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Omissions</div>
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Tables &amp; Figures</div>
 
-  <div class="finding medium">
+  <div class="finding low">
     <div class="finding-header">
       <div class="finding-id">CC-002</div>
       <div class="finding-title-block">
-        <div class="finding-title">Draft's uncertainty section omits two disclosed limitations that bias the entry number upward</div>
-        <div class="finding-meta"><span class="file">drafts/2026-07-08_wage-subsidy-impact-cost-summary.md</span><span> · Omissions</span></div>
+        <div class="finding-title">Figure&nbsp;10 cost-per-job values are hard-coded constants, not read from the intermediate</div>
+        <div class="finding-meta"><span class="file">code/05_figures_tables/05c_core_figures.R</span><span> &middot; Tables &amp; Figures</span></div>
       </div>
-      <span class="severity-badge badge-medium">MEDIUM</span>
+      <span class="severity-badge badge-low">LOW</span>
     </div>
     <div class="finding-body">
       <div class="finding-section-label">Document Claims</div>
       <div class="doc-excerpt">
-        "What would move the estimates: <span class="highlight">larger-than-benchmark labor supply elasticities, faster incumbent
-        wage renegotiation, and above all the statutory treatment of the subsidy in benefit eligibility</span>."
-        (the "How sure are you?" section — the draft's only enumeration of what could move the entry estimate)
+        &ldquo;&hellip;about <span class="highlight">$32,000 per new job</span>&hellip; (ranging from roughly $13,000 in the high scenario to $47,000 at the conservative floor)&hellip; about $5,300 gross and $3,900 net per new worker&hellip; (to around $9,800 gross).&rdquo; (Fig&nbsp;10 body)
       </div>
       <div class="finding-section-label">What the Code Does</div>
-      <pre><code># docs/entry_from_nonemployment_methodology.md §5 "Disclosed limitations":
-#  - Fixed cost of work (M6) — DEFERRED: "the net viability test therefore still
-#    OVERSTATES entry likelihood, most for single mothers."
-#  - UI and part-year timing (ST-3): NI(0) omits unemployment insurance and the annual
-#    schedule is applied to a survey-month state — "Both cut toward OVERSTATING entry."
-# 01h carries `is_unemployed` explicitly to flag the UI subset; the fixed-cost gap is
-# acknowledged in code comments but not priced.</code></pre>
+      <pre><code>fig5_cost_per_job():
+  marginal &lt;- 5266
+  full_lo  &lt;- 12572    # high joint corner (3.81M)
+  full_hi  &lt;- 46961    # conservative floor (1.02M)
+  full_mid &lt;- 32148    # evidence-central (1.49M)
+# entrant_hours_sensitivity.parquet already stores marginal_gross_per_job = 5266 (rank),
+# 9838 (independent); the fully-loaded figures are 47.9/1.49, 47.9/1.02, 47.9/3.81.</code></pre>
       <div class="finding-section-label">Why This Is Inconsistent</div>
-      <div class="finding-text">
-        The methodology doc names two limitations that both push the headline "1.42 million entrants" (and
-        especially the single-mother component) upward: the deferred fixed-cost-of-work adjustment and the
-        UI / part-year-timing simplification. The draft's uncertainty discussion lists elasticities, wage
-        renegotiation, and statutory treatment, but not these two directional biases. A reader of the published
-        piece would not learn that the central entry estimate is, by the authors' own account, likely an
-        overstatement for the group the piece foregrounds. The household-coordination and taxable-treatment
-        caveats <em>are</em> carried, so this is a partial omission, not a wholesale one.
-      </div>
+      <div class="finding-text">These four constants match the current data and the document exactly (verified: rank marginal = 5266, independent = 9838; 47.9/1.49 = 32,148; 47.9/1.02 = 46,961; 47.9/3.81 = 12,572), so there is no present inconsistency. The flag is fragility: unlike every other figure in 05c/05d, Figure&nbsp;10 does not read from <code>entrant_hours_sensitivity.parquet</code> or recompute from <code>summary</code>/<code>entry_headline_scenarios</code>. A future pipeline change (as happened in the resync) would leave these numbers stale and silently desync the figure from the text.</div>
       <div class="finding-section-label">What to Check</div>
       <ul class="check-list">
-        <li>Add a sentence to "How sure are you?" noting the entry estimate omits fixed costs of work (childcare/commuting) and UI, both of which bias it upward.</li>
-        <li>Confirm whether the internal-only Evidence block's "PI-3 hours-mapping sensitivity" caveat also needs a public-facing counterpart.</li>
-        <li>Decide whether the single-mother-specific overstatement warrants a line in the "safety net" section where single mothers are the focus.</li>
+        <li>Confirm the four constants are intended to be manual, or wire them to <code>entrant_hours_sensitivity.parquet</code> + <code>summary$net_cost_bn</code> / <code>entry_headline_scenarios$induced_M</code>.</li>
+        <li>If left hard-coded, add them to the resync grep watchlist so they are re-checked on any future reweighting.</li>
       </ul>
     </div>
   </div>
-
-  <div class="category-heading">LOW — 3 finding(s)</div>
-
-  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Sample Definition</div>
 
   <div class="finding low">
     <div class="finding-header">
       <div class="finding-id">CC-003</div>
       <div class="finding-title-block">
-        <div class="finding-title">"Earning between $7.25 and $16.80" — $7.25 is a floor applied to all workers, and the upper bound is strict</div>
-        <div class="finding-meta"><span class="file">drafts/2026-07-08_wage-subsidy-impact-cost-summary.md</span><span> · Sample Definition</span></div>
+        <div class="finding-title">Figure&nbsp;7b in-code comment lists a stale composition (rendered figure is correct)</div>
+        <div class="finding-meta"><span class="file">code/05_figures_tables/05d_supporting_figures.R</span><span> &middot; Tables &amp; Figures</span></div>
       </div>
       <span class="severity-badge badge-low">LOW</span>
     </div>
     <div class="finding-body">
       <div class="finding-section-label">Document Claims</div>
       <div class="doc-excerpt">
-        "The eligible population looks like the low-wage workforce … <span class="highlight">every paid-hourly worker earning between
-        $7.25 and $16.80 per hour</span>."
+        &ldquo;&hellip;about <span class="highlight">a third are unemployed job-seekers</span>&hellip; The disabled and retired&hellip; contribute about 3 percent of modeled entrants.&rdquo; (&sect;5 / Fig&nbsp;7b)
       </div>
       <div class="finding-section-label">What the Code Does</div>
-      <pre><code># 02e_take_up_by_group.py (and mirrored in 02a):
-base["employer_wage"] = base["hourly_wage_epi"].clip(lower=FED)   # FED = 7.25
-recip = base[base["employer_wage"] &lt; target]                     # target = 16.80 (strict &lt;)</code></pre>
+      <pre><code># 05d fig7b_entrants_by_status() comment:
+#   "unemployed 0.412M, other NILF 0.799M, disabled 0.028M, retired 0.010M (~33% / 64% / 2% / 1%)"
+# But entry_central_composition.parquet actually holds:
+#   unemployed 0.496, nilf_other 0.948, disabled 0.034, retired 0.016  (total 1.494M)
+# The figure READS the parquet (getc(...)), so the rendered bars use the correct values.</code></pre>
       <div class="finding-section-label">Why This Is Inconsistent</div>
-      <div class="finding-text">
-        The $7.25 lower bound is not an exclusion criterion but a floor: a worker paid below $7.25 (e.g. tipped
-        or sub-minimum) has their creditable wage clipped up to $7.25 and is <em>included</em>, not excluded.
-        The upper bound is strict (<code>&lt; 16.80</code>), so a worker at exactly $16.80 is excluded. "Earning
-        between $7.25 and $16.80" reads as an interval membership test and slightly misstates both edges. The
-        footnote's mention that the $7.25 base "blunts any incentive to misreport pay" hints at the floor, so the
-        risk of misleading a careful reader is small.
-      </div>
+      <div class="finding-text">The rendered figure and the document are both consistent with the parquet (unemployed 33.2&nbsp;percent; disabled+retired 3.3&nbsp;percent &rarr; &ldquo;about a third&rdquo; and &ldquo;about 3 percent&rdquo;). Only the explanatory code comment is stale &mdash; it predates a composition update. Because it does not affect rendered output, this is properly an AI-skeptic (comment&ndash;code) matter and is flagged here at LOW for cross-reference only.</div>
       <div class="finding-section-label">What to Check</div>
       <ul class="check-list">
-        <li>Consider "every paid-hourly worker whose employer wage is below the $16.80 target (with the creditable base wage floored at $7.25)".</li>
-        <li>Confirm the population of sub-$7.25 workers is small enough that the phrasing is immaterial.</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Data Sources</div>
-
-  <div class="finding low">
-    <div class="finding-header">
-      <div class="finding-id">CC-004</div>
-      <div class="finding-title-block">
-        <div class="finding-title">"Most recent 12 months (May 2025 through May 2026)" spans 13 calendar months; October 2025 is absent</div>
-        <div class="finding-meta"><span class="file">drafts/2026-07-08_wage-subsidy-impact-cost-summary.md</span><span> · Data Sources</span></div>
-      </div>
-      <span class="severity-badge badge-low">LOW</span>
-    </div>
-    <div class="finding-body">
-      <div class="finding-section-label">Document Claims</div>
-      <div class="doc-excerpt">
-        "The simulation uses the <span class="highlight">most recent 12 months of Current Population Survey data (May 2025 through
-        May 2026)</span> …"
-      </div>
-      <div class="finding-section-label">What the Code Does</div>
-      <pre><code># Months present in data/processed/nonemployed_pool.parquet:
-# 2025m5, m6, m7, m8, m9, [m10 MISSING], m11, m12, 2026m1, m2, m3, m4, m5
-# => 12 monthly samples, but the span May-2025..May-2026 is 13 calendar months
-#    with October 2025 absent. Footnote [^2] correctly says "12 monthly samples 2025m5-2026m5".</code></pre>
-      <div class="finding-section-label">Why This Is Inconsistent</div>
-      <div class="finding-text">
-        The body text implies a continuous 12-month window, but the endpoints (May 2025 <em>and</em> May 2026)
-        describe a 13-month span, and the actual data has 12 samples because October 2025 is missing. The internal
-        footnote is precise ("12 monthly samples 2025m5–2026m5"); only the body wording is loose. Immaterial to any
-        result (all quantities are weighted by <code>earnwt / n_months</code>), but worth a one-word fix for accuracy.
-      </div>
-      <div class="finding-section-label">What to Check</div>
-      <ul class="check-list">
-        <li>Reword to "12 monthly CPS samples spanning May 2025 to May 2026" to avoid implying a continuous window.</li>
-        <li>Confirm whether October 2025 is genuinely absent from source or only from this checkout.</li>
+        <li>Update the fig7b comment to the current 0.496/0.948/0.034/0.016 values (defer to AI-skeptic report).</li>
+        <li>No document change needed &mdash; the prose already matches the parquet.</li>
       </ul>
     </div>
   </div>
@@ -354,37 +271,29 @@ recip = base[base["employer_wage"] &lt; target]                     # target = 1
 
   <div class="finding low">
     <div class="finding-header">
-      <div class="finding-id">CC-005</div>
+      <div class="finding-id">CC-004</div>
       <div class="finding-title-block">
-        <div class="finding-title">Published Table 2 note omits the dependent-child exclusion applied to the denominator (and numerator)</div>
-        <div class="finding-meta"><span class="file">drafts/2026-07-08_wage-subsidy-impact-cost-summary.md</span><span> · Omissions</span></div>
+        <div class="finding-title">Appendix &sect;4 references the superseded all-earner wage frame (historical narrative)</div>
+        <div class="finding-meta"><span class="file">2026-07-09_combined-brief-and-appendix.md</span><span> &middot; Omissions</span></div>
       </div>
       <span class="severity-badge badge-low">LOW</span>
     </div>
     <div class="finding-body">
       <div class="finding-section-label">Document Claims</div>
       <div class="doc-excerpt">
-        "The denominator is the wage-observed hourly workforce; it <span class="highlight">excludes the self-employed and workers
-        without a measurable hourly wage</span>." (Table 2 note — the reader-facing description of the 134.3M base)
+        &ldquo;An earlier version of this model estimated the wage equation on <span class="highlight">all employed earners</span>&hellip; median hourly-equivalent wage of $26.00&hellip; the selection correction looked large (&rho;&sigma; &asymp; +0.30)&hellip; moved the entry estimate by a factor of seven.&rdquo; (Appendix &sect;4)
       </div>
       <div class="finding-section-label">What the Code Does</div>
-      <pre><code># 02e_take_up_by_group.py:
-base = org[epi_sample_eligible &amp; hourly_wage_epi_valid &amp; age.between(16,64) &amp; earnwt&gt;0]
-base = base[~((base["relate"] == 301) &amp; (base["age"] &lt; 19))]   # dependent-child exclusion
-recip = base[base["employer_wage"] &lt; target]                     # numerator inherits the same exclusion</code></pre>
+      <pre><code># The current pipeline estimates on the paid-hourly frame; median $21.00, target $16.80,
+# rho*sigma ~ +0.11 (per the draft's own re-estimated numbers). The $26.00 / +0.30 /
+# "factor of seven" figures describe the OLD frame and are presented as history, not
+# current output. No current intermediate reproduces the all-earner-frame numbers.</code></pre>
       <div class="finding-section-label">Why This Is Inconsistent</div>
-      <div class="finding-text">
-        The base (and therefore the numerator) drops children of the householder under age 19 (<code>relate == 301
-        &amp; age &lt; 19</code>). The published Table 2 note lists only the self-employed and no-hourly-wage exclusions;
-        the dependent-child exclusion is disclosed only in the internal "Evidence (strip before publication)" block.
-        Because the exclusion is applied consistently to numerator and denominator the take-up rates are internally
-        correct, but a published reader is not told the 134.3M base already removes teen dependents. Low risk, but a
-        one-clause addition to the note would fully align text and code.
-      </div>
+      <div class="finding-text">These all-earner-frame values ($26.00, &rho;&sigma;&asymp;+0.30, factor-of-seven) do not correspond to any current pipeline output because the frame was deliberately superseded. The passage is explicitly labeled as the earlier/contaminated approach and used to motivate the paid-hourly choice, which is the flagged known-acceptable case. Included at LOW only so the reviewer can confirm the historical framing is intentional and clearly demarcated.</div>
       <div class="finding-section-label">What to Check</div>
       <ul class="check-list">
-        <li>Add "and dependent children under 19 living with a householder" to the Table 2 note's exclusion list.</li>
-        <li>Confirm the same exclusion is applied in 01a's construction of the 20.8M eligible base (recipient counts match 02e exactly, which implies it is).</li>
+        <li>Confirm the $26.00 / +0.30 / factor-of-seven values are intended as historical illustration and not expected to trace to a current intermediate.</li>
+        <li>Ensure the &ldquo;earlier version&rdquo; framing remains unambiguous so no reader mistakes it for a current result.</li>
       </ul>
     </div>
   </div>
@@ -400,25 +309,42 @@ recip = base[base["employer_wage"] &lt; target]                     # numerator 
       </tr>
     </thead>
     <tbody>
-      <tr><td>drafts/2026-07-08_wage-subsidy-impact-cost-summary.md</td><td>Document</td><td>Markdown</td><td class="count-cell">273</td><td class="count-cell has-issues">34 claims / 5 flagged</td><td class="count-cell">MEDIUM</td></tr>
-      <tr><td>docs/entry_from_nonemployment_methodology.md</td><td>Document (ref)</td><td>Markdown</td><td class="count-cell">45</td><td class="count-cell has-issues">2</td><td class="count-cell">MEDIUM</td></tr>
-      <tr><td>code/00_setup/00_config.py</td><td>Code</td><td>Python</td><td class="count-cell">236</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
-      <tr><td>code/01_data_preparation/01h_nonemployed_pool.py</td><td>Code</td><td>Python</td><td class="count-cell">558</td><td class="count-cell has-issues">1</td><td class="count-cell">MEDIUM</td></tr>
-      <tr><td>code/01_data_preparation/01i_household_links.py</td><td>Code</td><td>Python</td><td class="count-cell">170</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
-      <tr><td>code/02_descriptive_analysis/02a_descriptive_stats.py</td><td>Code</td><td>Python</td><td class="count-cell">515</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
-      <tr><td>code/02_descriptive_analysis/02b_behavioral_scenarios.py</td><td>Code</td><td>Python</td><td class="count-cell">340</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
-      <tr><td>code/02_descriptive_analysis/02d_matching_simulation.py</td><td>Code</td><td>Python</td><td class="count-cell">379</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
-      <tr><td>code/02_descriptive_analysis/02e_take_up_by_group.py</td><td>Code</td><td>Python</td><td class="count-cell">101</td><td class="count-cell has-issues">2</td><td class="count-cell">LOW</td></tr>
-      <tr><td>code/05_figures_tables/05c_core_figures.R</td><td>Code</td><td>R</td><td class="count-cell">487</td><td class="count-cell has-issues">1</td><td class="count-cell">MEDIUM</td></tr>
-      <tr><td>code/05_figures_tables/05d_supporting_figures.R</td><td>Code</td><td>R</td><td class="count-cell">538</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr>
+        <td>drafts/2026-07-09_combined-brief-and-appendix.md</td>
+        <td>Document</td><td>Markdown</td>
+        <td class="count-cell">455</td>
+        <td class="count-cell has-issues">31 claims / 2 flags</td>
+        <td class="count-cell">LOW</td>
+      </tr>
+      <tr>
+        <td>code/05_figures_tables/05c_core_figures.R</td>
+        <td>Code</td><td>R</td>
+        <td class="count-cell">539</td>
+        <td class="count-cell has-issues">1</td>
+        <td class="count-cell">LOW</td>
+      </tr>
+      <tr>
+        <td>code/05_figures_tables/05d_supporting_figures.R</td>
+        <td>Code</td><td>R</td>
+        <td class="count-cell">700</td>
+        <td class="count-cell has-issues">1</td>
+        <td class="count-cell">LOW</td>
+      </tr>
+      <tr>
+        <td>code/05_figures_tables/05b_state_choropleth.py</td>
+        <td>Code</td><td>Python</td>
+        <td class="count-cell">214</td>
+        <td class="count-cell ok">0</td>
+        <td class="count-cell">&mdash;</td>
+      </tr>
     </tbody>
   </table>
 
 </div>
 
 <div class="report-footer">
-  Generated by AI review agent · conceptual-consistency-reviewer · 2026-07-08<br>
-  Scope: document–code consistency — see code-error-report.html for code bugs, methodology-report.html for design concerns
+  Generated by AI review agent &middot; conceptual-consistency-reviewer &middot; 2026-07-09<br>
+  Scope: document&ndash;code consistency &mdash; see code-error-report.html for code bugs, methodology-report.html for design concerns
 </div>
 
 </body>
