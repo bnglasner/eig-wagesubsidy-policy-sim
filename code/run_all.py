@@ -31,6 +31,13 @@ def execute_python_script(script_path: Path) -> None:
         raise RuntimeError(f"Could not load Python script: {script_path}")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
+    # exec_module only *imports* the stage (module name is the file stem, never
+    # "__main__"), so the stage's `if __name__ == "__main__": main()` guard never
+    # fires. Invoke main() explicitly so the analysis actually runs. Stages
+    # without a main() callable do their work at import time (guard for them).
+    main_fn = getattr(mod, "main", None)
+    if callable(main_fn):
+        main_fn()
 
 
 env_root = os.environ.get("EIG_PROJECT_ROOT", "")

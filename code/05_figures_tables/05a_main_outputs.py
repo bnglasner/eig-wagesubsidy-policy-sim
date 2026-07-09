@@ -93,7 +93,10 @@ def main() -> None:
         df = pd.read_parquet(path)
         print(f"\n-- {title} {'--' * (28 - len(title) // 2)}")
         for _, row in df.iterrows():
-            print(f"  {str(row[group_col]):30s}  {row['pct_workers']:5.1f}%  "
+            # Demographic breakdowns expose share-of-recipients as
+            # `pct_of_recipients` (the analogue of `pct_workers` used above for
+            # family type / wage bracket); `pct_workers` is not written here.
+            print(f"  {str(row[group_col]):30s}  {row['pct_of_recipients']:5.1f}%  "
                   f"${row['avg_annual_subsidy']:,.0f} avg subsidy  "
                   f"{row['n_workers_k']:,.0f}k workers")
 
