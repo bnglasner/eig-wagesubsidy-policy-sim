@@ -117,7 +117,7 @@ fig7_entry_band_by_cell <- function() {
 # FIGURE 7b - Who the model predicts will enter, by prior status
 # ===========================================================================
 fig7b_entrants_by_status <- function() {
-  # Evidence-central composition (status-differentiated ~10% penalty; 1.25M headline), written by
+  # Evidence-central composition (status-differentiated ~10% penalty; 1.49M headline), written by
   # 02g to entry_central_composition.parquet: unemployed 0.412M, other NILF 0.799M, disabled
   # 0.028M, retired 0.010M (~33% / 64% / 2% / 1%). Falls back to the floor sim if absent.
   comp_path <- file.path(DATA_POP, "entry_central_composition.parquet")
@@ -184,7 +184,7 @@ fig8_cost_band <- function() {
     mutate(group = factor(group, levels = rev(group)))
 
   p <- ggplot(rows, aes(y = group, color = kind)) +
-    annotate("rect", xmin = 72, xmax = 78, ymin = -Inf, ymax = Inf,
+    annotate("rect", xmin = 45, xmax = 48, ymin = -Inf, ymax = Inf,
              fill = COL[["eig_green_500"]], alpha = 0.12) +
     geom_linerange(aes(xmin = lo, xmax = hi, linetype = kind), linewidth = 1.8) +
     geom_point(aes(x = lo), size = 3) +
@@ -197,7 +197,7 @@ fig8_cost_band <- function() {
               data = filter(rows, lo == hi),
               hjust = -0.3, vjust = 0.5, size = 2.6,
               family = tokens$EIG_FONT_BODY_PRIMARY, color = COL[["eig_black"]]) +
-    annotate("text", x = 135, y = 1, label = "disclosed upper bound,\nnot a forecast",
+    annotate("text", x = 88, y = 1, label = "disclosed upper bound,\nnot a forecast",
              size = 2.4, color = GRAY, fontface = "italic",
              family = tokens$EIG_FONT_BODY_PRIMARY, vjust = -0.9) +
     scale_color_manual(values = c("core" = COL[["eig_green_700"]], "bound" = GRAY),
@@ -205,13 +205,13 @@ fig8_cost_band <- function() {
     scale_linetype_manual(values = c("core" = "solid", "bound" = "22"),
                           guide = "none") +
     scale_x_continuous(labels = scales::label_dollar(suffix = "B"),
-                       limits = c(60, 165),
+                       limits = c(40, 125),
                        expand = expansion(mult = c(0.01, 0.06))) +
     labs(
-      title = "Figure 13. Net annual cost is stable across models; only full\nwage renegotiation escapes the $72–78 billion range.",
+      title = "Figure 13. Net annual cost is stable across models; only full\nwage renegotiation escapes the $45–48 billion range.",
       x = "Net annual cost", y = NULL,
       caption = eig_caption(
-        note = "Shaded band marks the $72–78B core range. Values in billions of dollars."
+        note = "Shaded band marks the $45–48B core range. Values in billions of dollars."
       )
     ) +
     eig_theme_ggplot(tokens = tokens, base_size = 10) +
@@ -585,8 +585,8 @@ fig14_mpl_uncertainty <- function() {
   # Re-centered (2026-07-09): the full 27-cell joint decomposition of induced entry —
   #   non-employment wage penalty {0,10,20%} × offer dispersion λ {0.5,0.75,1.0} × participation
   #   elasticity {lower,central,upper} — faceted by elasticity, penalty on the y-axis, λ by color.
-  #   The evidence-central (status-differentiated ~10% penalty, λ 0.75, central elasticity = 1.25M)
-  #   is the headline; the no-penalty/λ0.75/central cell (0.83M) is the labeled conservative floor.
+  #   The evidence-central (status-differentiated ~10% penalty, λ 0.75, central elasticity = 1.49M)
+  #   is the headline; the no-penalty/λ0.75/central cell (1.02M) is the labeled conservative floor.
   gr <- pop("entry_scenario_grid")
 
   d <- gr %>%

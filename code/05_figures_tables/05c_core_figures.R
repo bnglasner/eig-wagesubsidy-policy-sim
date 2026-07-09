@@ -362,19 +362,19 @@ fig4_takeup_by_group <- function() {
 # FIGURE 5 - Cost per new job (log scale)
 # ===========================================================================
 fig5_cost_per_job <- function() {
-  # Re-centered 2026-07-09 (evidence-central headline; scenario grid):
+  # Re-centered 2026-07-09 (paid-hourly eligibility; evidence-central headline):
   #   marginal    = gross subsidy paid per entrant-year at the evidence-central
-  #                 (entrant gross $8.5B / 1.48M entrants ~ $5,731; PI-3: the rank
+  #                 (entrant gross $7.8B / 1.49M entrants ~ $5,266; PI-3: the rank
   #                 hours mapping; an independent draw ~doubles it — see caption).
-  #   fully loaded = total net cost ($75.2B) / induced entrants, shown as a range:
-  #                 conservative floor (1.02M) ~ $73,700; evidence-central (1.48M)
-  #                 ~ $50,800; high joint corner (3.80M) ~ $19,800.
+  #   fully loaded = total net cost ($47.9B, structural) / induced entrants, as a range:
+  #                 conservative floor (1.02M) ~ $47,000; evidence-central (1.49M)
+  #                 ~ $32,100; high joint corner (3.81M) ~ $12,600.
   #                 The whole range sits BELOW the state & local incentive band
   #                 ($106K-$196K). Alternatives unchanged.
-  marginal <- 5731
-  full_lo <- 19800    # high joint corner (3.80M)
-  full_hi <- 73700    # conservative floor (1.02M)
-  full_mid <- 50800   # evidence-central (1.48M)
+  marginal <- 5266
+  full_lo <- 12572    # high joint corner (3.81M)
+  full_hi <- 46961    # conservative floor (1.02M)
+  full_mid <- 32148   # evidence-central (1.49M)
 
   d <- tibble::tribble(
     ~policy,                                        ~value,   ~lo,     ~hi,     ~grp,
