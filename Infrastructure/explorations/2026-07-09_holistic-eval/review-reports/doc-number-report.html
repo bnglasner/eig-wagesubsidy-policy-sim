@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Number Verification Report — 80-80 Wage Subsidy Policy Simulation</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 15px; line-height: 1.6; color: #1e293b; background: #f8fafc;
+    }
+    .report-header { background: #312e81; color: #eef2ff; padding: 2rem 2.5rem; }
+    .report-header h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.25rem; }
+    .report-header .subtitle { font-size: 0.9rem; color: #a5b4fc; }
+    .report-header .meta { margin-top: 1rem; display: flex; gap: 2rem; flex-wrap: wrap; font-size: 0.85rem; color: #c7d2fe; }
+    .report-header .meta span strong { color: #eef2ff; }
+    .container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+    h2 { font-size: 1.15rem; font-weight: 600; color: #1e293b; margin: 2rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid #e2e8f0; }
+    .summary-box { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; font-size: 0.95rem; color: #334155; line-height: 1.7; }
+    .verify-row { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .verify-stat { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 1.25rem; text-align: center; flex: 1; min-width: 140px; }
+    .verify-stat .num { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+    .verify-stat .lbl { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem; color: #64748b; }
+    .verify-stat.extracted .num { color: #312e81; }
+    .verify-stat.verified  .num { color: #16a34a; }
+    .verify-stat.flagged   .num { color: #dc2626; }
+    .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem; margin-bottom: 2rem; }
+    .stat-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; text-align: center; }
+    .stat-card .count { font-size: 2rem; font-weight: 700; line-height: 1; }
+    .stat-card .label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.3rem; }
+    .sev-critical .count, .sev-critical .label { color: #dc2626; }
+    .sev-high .count, .sev-high .label { color: #ea580c; }
+    .sev-medium .count, .sev-medium .label { color: #ca8a04; }
+    .sev-low .count, .sev-low .label { color: #2563eb; }
+    .sev-info .count, .sev-info .label { color: #64748b; }
+    .inventory-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-bottom: 2rem; }
+    .inventory-table th { background: #f1f5f9; text-align: left; padding: 0.6rem 0.75rem; font-weight: 600; color: #475569; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; }
+    .inventory-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: top; }
+    .inventory-table tr:last-child td { border-bottom: none; }
+    .inventory-table .mono { font-family: monospace; font-size: 0.8rem; }
+    .inventory-table .context { font-size: 0.78rem; color: #64748b; max-width: 240px; }
+    .status-badge { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.15rem 0.45rem; border-radius: 3px; white-space: nowrap; }
+    .status-verified     { background: #f0fdf4; color: #16a34a; }
+    .status-mismatch     { background: #fef2f2; color: #dc2626; }
+    .status-unverifiable { background: #fefce8; color: #ca8a04; }
+    .status-approximate  { background: #eff6ff; color: #2563eb; }
+    .finding { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 1.25rem; overflow: hidden; }
+    .finding-header { display: flex; align-items: flex-start; gap: 1rem; padding: 1rem 1.25rem; border-left: 5px solid transparent; }
+    .finding.critical .finding-header { border-left-color: #dc2626; }
+    .finding.high     .finding-header { border-left-color: #ea580c; }
+    .finding.medium   .finding-header { border-left-color: #ca8a04; }
+    .finding.low      .finding-header { border-left-color: #2563eb; }
+    .finding.info     .finding-header { border-left-color: #94a3b8; }
+    .finding-id { font-size: 0.75rem; font-weight: 700; font-family: monospace; color: #64748b; min-width: 4.5rem; padding-top: 0.15rem; }
+    .finding-title-block { flex: 1; }
+    .finding-title { font-weight: 600; font-size: 1rem; color: #1e293b; }
+    .finding-meta { font-size: 0.8rem; color: #64748b; margin-top: 0.2rem; }
+    .finding-meta .file { font-family: monospace; }
+    .severity-badge { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.2rem 0.55rem; border-radius: 4px; }
+    .badge-critical { background: #fef2f2; color: #dc2626; }
+    .badge-high     { background: #fff7ed; color: #ea580c; }
+    .badge-medium   { background: #fefce8; color: #ca8a04; }
+    .badge-low      { background: #eff6ff; color: #2563eb; }
+    .badge-info     { background: #f1f5f9; color: #64748b; }
+    .finding-body { padding: 0 1.25rem 1.25rem 3.75rem; }
+    .finding-section-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #94a3b8; margin: 0.85rem 0 0.35rem; }
+    .finding-text { font-size: 0.9rem; color: #334155; }
+    .doc-excerpt { background: #faf5ff; border-left: 3px solid #312e81; padding: 0.65rem 1rem; margin: 0.5rem 0; font-size: 0.88rem; color: #334155; border-radius: 0 6px 6px 0; }
+    .doc-excerpt .highlight { background: #fde68a; padding: 0.05rem 0.25rem; border-radius: 2px; font-weight: 600; }
+    .value-compare { display: flex; gap: 1rem; margin: 0.5rem 0; font-size: 0.88rem; }
+    .value-box { flex: 1; padding: 0.6rem 0.85rem; border-radius: 6px; font-family: monospace; font-weight: 600; }
+    .value-claimed { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+    .value-actual { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+    .value-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-weight: 600; margin-bottom: 0.2rem; }
+    pre { background: #0f172a; color: #e2e8f0; border-radius: 6px; padding: 1rem; overflow-x: auto; font-size: 0.82rem; line-height: 1.55; margin: 0.5rem 0; }
+    code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
+    .code-label { font-size: 0.7rem; color: #64748b; font-family: monospace; margin-bottom: 0.15rem; }
+    .files-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+    .files-table th { background: #f1f5f9; text-align: left; padding: 0.65rem 1rem; font-weight: 600; color: #475569; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; }
+    .files-table td { padding: 0.6rem 1rem; border-bottom: 1px solid #f1f5f9; color: #334155; }
+    .files-table tr:last-child td { border-bottom: none; }
+    .files-table td:first-child { font-family: monospace; font-size: 0.82rem; color: #1e293b; }
+    .files-table .count-cell { text-align: center; font-weight: 600; }
+    .files-table .ok { color: #16a34a; }
+    .files-table .has-issues { color: #dc2626; }
+    .report-footer { margin-top: 3rem; padding: 1.5rem; text-align: center; font-size: 0.8rem; color: #94a3b8; border-top: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+
+<div class="report-header">
+  <h1>Number Verification Report</h1>
+  <div class="subtitle">Every number in the document checked against the live 2026-07-09 pipeline outputs</div>
+  <div class="meta">
+    <span><strong>Project:</strong> 80-80 Wage Subsidy Policy Simulation</span>
+    <span><strong>Reviewed:</strong> 2026-07-09</span>
+    <span><strong>Documents:</strong> 2026-07-08_wage-subsidy-impact-cost-summary.md, 2026-07-09_technical-appendix.md</span>
+    <span><strong>Live sources:</strong> 20 across JSON, Parquet (pandas/pyarrow)</span>
+    <span><strong>Reviewer:</strong> AI review agent (data-consistency-reviewer)</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <h2>Executive Summary</h2>
+
+  <div class="verify-row">
+    <div class="verify-stat extracted"><div class="num">96</div><div class="lbl">Numbers Extracted</div></div>
+    <div class="verify-stat verified"><div class="num">82</div><div class="lbl">Verified Correct</div></div>
+    <div class="verify-stat flagged"><div class="num">14</div><div class="lbl">Flagged</div></div>
+  </div>
+
+  <div class="summary-box">
+    Extracted 96 numerical claims from the two drafts and traced each to the authoritative 2026-07-09 live sources
+    (<code>nonemployed_pool_diagnostics.json</code>, <code>org_target_wage.json</code>, and the population intermediate parquets).
+    <strong>The three rebased headlines all match the live data.</strong> Entry central 0.83M (sm 0.13 / ow 0.61 / men 0.09),
+    rigid-central gross $93.1B / net $74.2B, below-target 41.4%, clawback medians ≈14/19/15 percent, cliff pay-up 0.115M,
+    hours-margin central 0.25M FTE, and entry 0.32M FTE all reconcile to the current parquets — <strong>no stale 0.46M/1.42M-era
+    survivors were found in the headline figures, and none of the flagged old markers (clawback 8.2/13/25, gross $91.0/$97.2B,
+    entry hours 741/880/2000, firm-capture percentages) appear in the drafts.</strong> Findings are minor: one HIGH — the technical
+    appendix states the all-renegotiate gross bound as <strong>$158 billion</strong>, whereas the live value and the main draft both say
+    <strong>$160.3 / $160 billion</strong>. The remaining flags are a firm-capture characterization ("under one percent" vs a 1.5% headline),
+    a stale-looking potential-wage range, an unverifiable 23.6% worker below-target share, illustrative single-household figure numbers
+    not in the supplied sources, and a few small text-vs-text wording gaps. No CRITICAL issues.
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card sev-critical"><div class="count">0</div><div class="label">Critical</div></div>
+    <div class="stat-card sev-high"><div class="count">1</div><div class="label">High</div></div>
+    <div class="stat-card sev-medium"><div class="count">4</div><div class="label">Medium</div></div>
+    <div class="stat-card sev-low"><div class="count">3</div><div class="label">Low</div></div>
+    <div class="stat-card sev-info"><div class="count">1</div><div class="label">Info</div></div>
+  </div>
+
+  <h2>Number Inventory</h2>
+  <table class="inventory-table">
+    <thead>
+      <tr><th>#</th><th>Claimed Value</th><th>Document Location</th><th>Code Source</th><th>Verified Value</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="mono">1</td><td class="mono"><strong>20.8M workers</strong></td><td class="context">Summary lede / cost / bottom line</td><td class="mono">summary.parquet:n_workers_mn</td><td class="mono">20.81</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">2</td><td class="mono"><strong>$72B–$78B net</strong></td><td class="context">Summary lede & "How sure"</td><td class="mono">summary/behavioral/matching net_cost_bn</td><td class="mono">72.1–77.9</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">3</td><td class="mono"><strong>0.8M entrants</strong></td><td class="context">Summary lede</td><td class="mono">entry_margin_band:induced_M (central)</td><td class="mono">0.83</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">4</td><td class="mono"><strong>quarter-million FTE hours</strong></td><td class="context">Summary lede</td><td class="mono">incumbent_hours_margin:added_fte_M (central)</td><td class="mono">0.25</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">5</td><td class="mono"><strong>80% / 80% / $7.25</strong></td><td class="context">Summary §refresher; Appendix §1</td><td class="mono">org_target_wage:target_pct=0.8; proposal</td><td class="mono">0.8; $7.25</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">6</td><td class="mono"><strong>$20 median / $16 target (2024)</strong></td><td class="context">Summary §refresher</td><td class="mono">Prior post (external, disclosed vintage)</td><td class="mono">—</td><td><span class="status-badge status-approximate">Approximate</span></td></tr>
+      <tr><td class="mono">7</td><td class="mono"><strong>$21.00 median</strong></td><td class="context">Summary §refresher; Appendix §1</td><td class="mono">org_target_wage:median_wage</td><td class="mono">21.0</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">8</td><td class="mono"><strong>$16.80 target</strong></td><td class="context">Summary §refresher; Appendix §1</td><td class="mono">org_target_wage:target_wage</td><td class="mono">16.8</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">9</td><td class="mono"><strong>just under $90B gross</strong></td><td class="context">Summary §What does it cost</td><td class="mono">summary.parquet:gross_cost_bn</td><td class="mono">89.75</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">10</td><td class="mono"><strong>$72.1B net</strong></td><td class="context">Summary §What does it cost</td><td class="mono">summary.parquet:net_cost_bn</td><td class="mono">72.12</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">11</td><td class="mono"><strong>$4,314 avg subsidy</strong></td><td class="context">Summary §cost; Appendix §1</td><td class="mono">summary.parquet:avg_annual_subsidy</td><td class="mono">4314.0</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">12</td><td class="mono"><strong>$3,400–$3,500 net income</strong></td><td class="context">Summary §cost</td><td class="mono">by_sex:avg_net_income_gain (wtd 3466)</td><td class="mono">3466</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">13</td><td class="mono"><strong>β = 0.3 to 0.7</strong></td><td class="context">Summary §cost; Appendix §7</td><td class="mono">matching_simulation:beta</td><td class="mono">0.3/0.5/0.7</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">14</td><td class="mono"><strong>Static 89.8 / 72.1</strong></td><td class="context">Summary Table 1</td><td class="mono">summary / behavioral static</td><td class="mono">89.75 / 72.12</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">15</td><td class="mono"><strong>RF lower 92.3 / 73.6</strong></td><td class="context">Summary Table 1</td><td class="mono">behavioral_scenarios lower</td><td class="mono">92.33 / 73.57</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">16</td><td class="mono"><strong>RF central 96.9 / 76.1</strong></td><td class="context">Summary Table 1</td><td class="mono">behavioral_scenarios central</td><td class="mono">96.86 / 76.12</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">17</td><td class="mono"><strong>RF upper 103.9 / 77.9</strong></td><td class="context">Summary Table 1</td><td class="mono">behavioral_scenarios upper</td><td class="mono">103.88 / 77.86</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">18</td><td class="mono"><strong>Structural 92.6–93.5 / 73.7–74.6</strong></td><td class="context">Summary Table 1</td><td class="mono">matching_simulation rigid rows</td><td class="mono">92.6–93.5 / 73.7–74.6</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">19</td><td class="mono"><strong>Hours +0.8 to +3.3 / +0.3 to +1.9</strong></td><td class="context">Summary Table 1</td><td class="mono">incumbent_hours_margin gross/net</td><td class="mono">0.8–3.3 / 0.3–1.9</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">20</td><td class="mono"><strong>Incidence bound up to 160.3</strong></td><td class="context">Summary Table 1</td><td class="mono">matching_simulation flex-rigid gross</td><td class="mono">160.3</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">21</td><td class="mono"><strong>rigid-central $93.1B / $74.2B</strong></td><td class="context">Summary §cost (implied central)</td><td class="mono">matching_simulation rigid-central</td><td class="mono">93.1 / 74.2</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">22</td><td class="mono"><strong>~$2B hours add</strong></td><td class="context">Summary §cost & bottom line</td><td class="mono">incumbent_hours_margin net (central 1.9)</td><td class="mono">1.9</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">23</td><td class="mono"><strong>one in seven or eight workers</strong></td><td class="context">Summary §cost</td><td class="mono">20.81 / ~all US workers (~158M)</td><td class="mono">~13%</td><td><span class="status-badge status-approximate">Approximate</span></td></tr>
+      <tr><td class="mono">24</td><td class="mono"><strong>eligible base 20.81M</strong></td><td class="context">Summary Table 2 header; Appendix §1</td><td class="mono">summary.parquet:n_workers_mn</td><td class="mono">20.81</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">25</td><td class="mono"><strong>Women 12.34 / 59.3 / 19.0</strong></td><td class="context">Summary Table 2 (Sex)</td><td class="mono">by_sex + take_up_by_group (Female)</td><td class="mono">12.34 / 59.3 / 19.0</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">26</td><td class="mono"><strong>Men 8.46 / 40.7 / 12.2</strong></td><td class="context">Summary Table 2 (Sex)</td><td class="mono">by_sex + take_up_by_group (Male)</td><td class="mono">8.46 / 40.7 / 12.2</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">27</td><td class="mono"><strong>16–24: 6.55 / 31.5 / 40.3</strong></td><td class="context">Summary Table 2 (Age)</td><td class="mono">by_age_bin + take_up</td><td class="mono">6.55 / 31.5 / 40.3</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">28</td><td class="mono"><strong>25–34: 4.98 / 23.9 / 14.6</strong></td><td class="context">Summary Table 2 (Age)</td><td class="mono">by_age_bin + take_up</td><td class="mono">4.98 / 23.9 / 14.6</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">29</td><td class="mono"><strong>35–44: 3.56 / 17.1 / 10.7</strong></td><td class="context">Summary Table 2 (Age)</td><td class="mono">by_age_bin + take_up</td><td class="mono">3.56 / 17.1 / 10.7</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">30</td><td class="mono"><strong>45–54: 2.94 / 14.1 / 10.4</strong></td><td class="context">Summary Table 2 (Age)</td><td class="mono">by_age_bin + take_up</td><td class="mono">2.94 / 14.1 / 10.4</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">31</td><td class="mono"><strong>55–64: 2.78 / 13.3 / 12.2</strong></td><td class="context">Summary Table 2 (Age)</td><td class="mono">by_age_bin + take_up</td><td class="mono">2.78 / 13.3 / 12.2</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">32</td><td class="mono"><strong>&lt;HS: 2.26 / 10.9 / 37.9</strong></td><td class="context">Summary Table 2 (Education)</td><td class="mono">by_education + take_up</td><td class="mono">2.26 / 10.9 / 37.9</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">33</td><td class="mono"><strong>HS/GED: 8.57 / 41.2 / 23.6</strong></td><td class="context">Summary Table 2 (Education)</td><td class="mono">by_education + take_up</td><td class="mono">8.57 / 41.2 / 23.6</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">34</td><td class="mono"><strong>Some college: 6.56 / 31.5 / 19.3</strong></td><td class="context">Summary Table 2 (Education)</td><td class="mono">by_education + take_up</td><td class="mono">6.56 / 31.5 / 19.3</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">35</td><td class="mono"><strong>Bachelor's: 2.68 / 12.9 / 7.4</strong></td><td class="context">Summary Table 2 (Education)</td><td class="mono">by_education + take_up</td><td class="mono">2.68 / 12.9 / 7.4</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">36</td><td class="mono"><strong>Graduate: 0.73 / 3.5 / 3.4</strong></td><td class="context">Summary Table 2 (Education)</td><td class="mono">by_education + take_up</td><td class="mono">0.73 / 3.5 / 3.4</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">37</td><td class="mono"><strong>White NH: 9.41 / 45.2 / 12.6</strong></td><td class="context">Summary Table 2 (Race)</td><td class="mono">by_race_ethnicity + take_up</td><td class="mono">9.41 / 45.2 / 12.6</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">38</td><td class="mono"><strong>Hispanic: 5.95 / 28.6 / 21.1</strong></td><td class="context">Summary Table 2 (Race)</td><td class="mono">by_race_ethnicity + take_up</td><td class="mono">5.95 / 28.6 / 21.1</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">39</td><td class="mono"><strong>Black NH: 3.43 / 16.5 / 21.3</strong></td><td class="context">Summary Table 2 (Race)</td><td class="mono">by_race_ethnicity + take_up</td><td class="mono">3.43 / 16.5 / 21.3</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">40</td><td class="mono"><strong>Other: 2.02 / 9.7 / 13.3</strong></td><td class="context">Summary Table 2 (Race)</td><td class="mono">by_race_ethnicity + take_up</td><td class="mono">2.02 / 9.7 / 13.3</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">41</td><td class="mono"><strong>Single 0c: 11.37 / 54.6 / 22.2</strong></td><td class="context">Summary Table 2 (Family)</td><td class="mono">by_family_type + take_up</td><td class="mono">11.37 / 54.6 / 22.2</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">42</td><td class="mono"><strong>Married 2c: 4.13 / 19.9 / 9.3</strong></td><td class="context">Summary Table 2 (Family)</td><td class="mono">by_family_type + take_up</td><td class="mono">4.13 / 19.9 / 9.3</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">43</td><td class="mono"><strong>Single 2c: 2.73 / 13.1 / 19.8</strong></td><td class="context">Summary Table 2 (Family)</td><td class="mono">by_family_type + take_up</td><td class="mono">2.73 / 13.1 / 19.8</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">44</td><td class="mono"><strong>Married 0c: 2.58 / 12.4 / 10.4</strong></td><td class="context">Summary Table 2 (Family)</td><td class="mono">by_family_type + take_up</td><td class="mono">2.58 / 12.4 / 10.4</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">45</td><td class="mono"><strong>134.3M denominator</strong></td><td class="context">Summary Table 2 note; Appendix §1</td><td class="mono">take_up_by_group:base_k (Sex sum)</td><td class="mono">134.33</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">46</td><td class="mono"><strong>15.5% receive</strong></td><td class="context">Summary Table 2 note; Appendix §1</td><td class="mono">20.81 / 134.3</td><td class="mono">15.5%</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">47</td><td class="mono"><strong>men $4,481 vs women $4,199</strong></td><td class="context">Summary §Who gets money</td><td class="mono">by_sex:avg_annual_subsidy</td><td class="mono">4481 / 4199</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">48</td><td class="mono"><strong>$7.25–9: 1.93 / 11,773</strong></td><td class="context">Summary Table 3</td><td class="mono">by_wage_bracket</td><td class="mono">1.93 / 11773</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">49</td><td class="mono"><strong>$9–11: 1.70 / 8,573</strong></td><td class="context">Summary Table 3</td><td class="mono">by_wage_bracket</td><td class="mono">1.70 / 8573</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">50</td><td class="mono"><strong>$11–13: 3.31 / 6,221</strong></td><td class="context">Summary Table 3</td><td class="mono">by_wage_bracket</td><td class="mono">3.31 / 6221</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">51</td><td class="mono"><strong>$13–16.80: 13.87 / 2,301</strong></td><td class="context">Summary Table 3</td><td class="mono">by_wage_bracket</td><td class="mono">13.87 / 2301</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">52</td><td class="mono"><strong>LA $5,521; MS $5,529; CA $3,751</strong></td><td class="context">Summary §geography</td><td class="mono">by_state:avg_annual_subsidy</td><td class="mono">5521 / 5529 / 3751</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">53</td><td class="mono"><strong>LA 404,000; WV 134,000 @ $4,734</strong></td><td class="context">Summary §geography</td><td class="mono">by_state:n_workers_k / avg_subsidy</td><td class="mono">404.4 / 134.3 / 4734</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">54</td><td class="mono"><strong>SNAP 13.0%</strong></td><td class="context">Summary §program interactions</td><td class="mono">program_interactions:snap pct</td><td class="mono">-13.0</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">55</td><td class="mono"><strong>Medicaid/CHIP 14.4%</strong></td><td class="context">Summary §program interactions</td><td class="mono">program_interactions:medicaid_chip</td><td class="mono">-14.4</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">56</td><td class="mono"><strong>TANF 3.2%; EITC 1.6%</strong></td><td class="context">Summary §program interactions</td><td class="mono">program_interactions:tanf / eitc</td><td class="mono">-3.2 / -1.6</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">57</td><td class="mono"><strong>ACA PTC 26.4%</strong></td><td class="context">Summary §program interactions</td><td class="mono">program_interactions:aca_ptc</td><td class="mono">26.4</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">58</td><td class="mono"><strong>59M non-employed</strong></td><td class="context">Summary §pull into work; Appendix §3</td><td class="mono">diagnostics:summary.population_M</td><td class="mono">59.28</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">59</td><td class="mono"><strong>7M unemployed</strong></td><td class="context">Summary §denominator; Appendix §3</td><td class="mono">Appendix §3 table (7.0)</td><td class="mono">7.0</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">60</td><td class="mono"><strong>34M other NILF</strong></td><td class="context">Summary §denominator</td><td class="mono">Appendix §3 (33.8)</td><td class="mono">33.8</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">61</td><td class="mono"><strong>~10M disabled; ~9M retired</strong></td><td class="context">Summary §denominator; Appendix §3</td><td class="mono">Appendix §3 (9.7 / 8.7)</td><td class="mono">9.7 / 8.7</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">62</td><td class="mono"><strong>reachable 10–15M</strong></td><td class="context">Summary §denominator; Appendix §3</td><td class="mono">Disclosed judgment (reachable pool ≈24.5M gross)</td><td class="mono">—</td><td><span class="status-badge status-approximate">Approximate</span></td></tr>
+      <tr><td class="mono">63</td><td class="mono"><strong>Entry lower 0.25</strong></td><td class="context">Summary Table 4</td><td class="mono">entry_margin_band lower:induced_M</td><td class="mono">0.25</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">64</td><td class="mono"><strong>Entry central 0.83</strong></td><td class="context">Summary Table 4 / throughout</td><td class="mono">entry_margin_band central; matching</td><td class="mono">0.83</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">65</td><td class="mono"><strong>Entry upper 1.47</strong></td><td class="context">Summary Table 4</td><td class="mono">entry_margin_band upper:induced_M</td><td class="mono">1.47</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">66</td><td class="mono"><strong>Offer-dispersion 0.62–1.12</strong></td><td class="context">Summary Table 4; §How sure; Appendix</td><td class="mono">mpl_imputation_band lam050 / lam100</td><td class="mono">0.62 / 1.12</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">67</td><td class="mono"><strong>10% penalty 1.21</strong></td><td class="context">Summary Table 4; Appendix §4</td><td class="mono">mpl_imputation_band pen10:induced_M</td><td class="mono">1.21</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">68</td><td class="mono"><strong>20% penalty 1.70</strong></td><td class="context">Summary Table 4; Appendix §4</td><td class="mono">mpl_imputation_band pen20:induced_M</td><td class="mono">1.70</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">69</td><td class="mono"><strong>Employment-stock 0.71</strong></td><td class="context">Summary Table 4; §stress; Appendix §5</td><td class="mono">entry_margin_band employment-stock</td><td class="mono">0.71</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">70</td><td class="mono"><strong>By group sm 0.13 / ow 0.61 / men 0.09</strong></td><td class="context">Summary Table 4; §clawback; Appendix</td><td class="mono">entry_margin_band / matching central</td><td class="mono">0.13 / 0.61 / 0.09</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">71</td><td class="mono"><strong>~2/5 entrants unemployed</strong></td><td class="context">Summary §entrants look like</td><td class="mono">matching:entrants_unemployed_M/induced_M</td><td class="mono">38.0%</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">72</td><td class="mono"><strong>disabled+retired ~1/3 of pool; ~2% of entrants</strong></td><td class="context">Summary §entrants look like</td><td class="mono">(9.7+8.7)/59.28; matching entrants</td><td class="mono">31%; 1.93%</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">73</td><td class="mono"><strong>~770 entry hours</strong></td><td class="context">Summary §entrants; Appendix implied</td><td class="mono">entry_margin_band:mean_entry_hours</td><td class="mono">768</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">74</td><td class="mono"><strong>spouse-zeroed 0.69</strong></td><td class="context">Summary §stress tests; Appendix §5</td><td class="mono">entry_margin_band spouse-employed zeroed</td><td class="mono">0.69</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">75</td><td class="mono"><strong>80% take-up 0.66</strong></td><td class="context">Summary §stress tests; Appendix §5</td><td class="mono">entry_margin_band take-up 0.80</td><td class="mono">0.66</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">76</td><td class="mono"><strong>estock sm 0.13→0.19</strong></td><td class="context">Summary §stress; Appendix §5</td><td class="mono">entry_margin_band estock:single_mothers</td><td class="mono">0.19</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">77</td><td class="mono"><strong>41.4% pool below target</strong></td><td class="context">Summary §reachable; Appendix §4</td><td class="mono">diagnostics:pct_mpl_below_target; pool</td><td class="mono">41.4 (41.43)</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">78</td><td class="mono"><strong>23.6% of paid-hourly workers below target</strong></td><td class="context">Summary §reachable; Appendix §4</td><td class="mono">Not in supplied live sources</td><td class="mono">Not found</td><td><span class="status-badge status-unverifiable">Unverifiable</span></td></tr>
+      <tr><td class="mono">79</td><td class="mono"><strong>men ~90,000 central; 240,000 upper</strong></td><td class="context">Summary §men</td><td class="mono">entry_margin_band induced_men_M</td><td class="mono">0.09 / 0.24</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">80</td><td class="mono"><strong>firm capture ≤~2% (sticky)</strong></td><td class="context">Summary §employers capture</td><td class="mono">matching rigid firm_capture_pct (max 2.0)</td><td class="mono">0.8–2.0</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">81</td><td class="mono"><strong>gross $160B; capture 55% (bound)</strong></td><td class="context">Summary §employers capture</td><td class="mono">matching flex-rigid gross / capture</td><td class="mono">160.3 / 54.8</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">82</td><td class="mono"><strong>entrant cost $3.3B gross; ~$4,000/$2,500</strong></td><td class="context">Summary §cost per job</td><td class="mono">entry_margin_band gross/net /0.83</td><td class="mono">3.3 / 3976 / 2530</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">83</td><td class="mono"><strong>net ~$74B; $44,000 & $89,000/job</strong></td><td class="context">Summary §cost per job</td><td class="mono">matching rigid-central net /1.70 /0.83</td><td class="mono">74.2 / 43.6k / 89.4k</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">84</td><td class="mono"><strong>a fifth of hourly workforce</strong></td><td class="context">Summary §cost per job & bottom line</td><td class="mono">20.81 / 134.3 = 15.5%</td><td class="mono">15.5%</td><td><span class="status-badge status-approximate">Approximate</span></td></tr>
+      <tr><td class="mono">85</td><td class="mono"><strong>clawback sm ~14 / ow ~19 / men ~15</strong></td><td class="context">Summary §safety net; Appendix §7</td><td class="mono">pool g_net wtd median (reachable); diag</td><td class="mono">13.6 / 18.9 / 14.8</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">86</td><td class="mono"><strong>clawback eats ~1/4 of advantage</strong></td><td class="context">Summary §safety net</td><td class="mono">(18.9−14.4)/18.9</td><td class="mono">~24%</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">87</td><td class="mono"><strong>115,000 of 830,000 cliff (1 in 7)</strong></td><td class="context">Summary §safety net; Appendix §7</td><td class="mono">entry_margin_band:cliff_payup / induced</td><td class="mono">0.115 / 0.83</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">88</td><td class="mono"><strong>Fig 11b: $7,800@20h, $5,600@40h, cap 2,080, ~53h/wk</strong></td><td class="context">Summary Figure 11b</td><td class="mono">Illustrative household schedule (not in supplied sources)</td><td class="mono">Not found</td><td><span class="status-badge status-unverifiable">Unverifiable</span></td></tr>
+      <tr><td class="mono">89</td><td class="mono"><strong>hours band 0.08/0.25/0.36 FTE; $0.8–3.3B</strong></td><td class="context">Summary §How sure; Appendix §6</td><td class="mono">incumbent_hours_margin added_fte / gross</td><td class="mono">0.08/0.25/0.36; 0.8–3.3</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">90</td><td class="mono"><strong>entry margin 0.32M FTE</strong></td><td class="context">Summary §How sure; Appendix §6</td><td class="mono">0.83 × 768 / ~2000–2080</td><td class="mono">0.31–0.32</td><td><span class="status-badge status-approximate">Approximate</span></td></tr>
+      <tr><td class="mono">91</td><td class="mono"><strong>ρσ ≈ +0.08</strong></td><td class="context">Summary Evidence; Appendix §4</td><td class="mono">diagnostics:heckman.imr_coef_rho_sigma</td><td class="mono">0.0755</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">92</td><td class="mono"><strong>residual SDs 0.29–0.55; λ=0.75</strong></td><td class="context">Summary Evidence; Appendix §4</td><td class="mono">diagnostics:offer_dispersion</td><td class="mono">0.29–0.553; 0.75</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">93</td><td class="mono"><strong>RF entry central 0.72</strong></td><td class="context">Appendix §2</td><td class="mono">entry_reconciliation:b02; behavioral</td><td class="mono">0.72</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">94</td><td class="mono"><strong>44% salaried; salaried median $26.00</strong></td><td class="context">Appendix §4 (contrast to rejected frame)</td><td class="mono">diagnostics:employed_earner_share (0.561→44%); $26 not in sources</td><td class="mono">43.9%; $26 not found</td><td><span class="status-badge status-unverifiable">Unverifiable</span></td></tr>
+      <tr><td class="mono">95</td><td class="mono"><strong>weighted median potential wage $19.62–$22.17</strong></td><td class="context">Appendix §4</td><td class="mono">mpl_imputation_band:pool_median_mpl (variants)</td><td class="mono">18.28–20.65</td><td><span class="status-badge status-mismatch">Mismatch</span></td></tr>
+      <tr><td class="mono">96</td><td class="mono"><strong>elasticities sm .25/.50/.65; ow .05/.20/.40; men 0/.05/.15</strong></td><td class="context">Appendix §5 table</td><td class="mono">diagnostics:calibration edges eps</td><td class="mono">match exactly</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">97</td><td class="mono"><strong>eligible stock sm 2.2 / ow 10.1 / men 8.5; E/R 1.41/0.72/0.94</strong></td><td class="context">Appendix §5</td><td class="mono">diagnostics:base_semantics</td><td class="mono">2.22/10.12/8.46; 1.413/0.723/0.942</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">98</td><td class="mono"><strong>52.1–63.6% pool below target (penalty)</strong></td><td class="context">Appendix §4</td><td class="mono">mpl_imputation_band pen10/pen20 pct</td><td class="mono">52.1 / 63.6</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">99</td><td class="mono"><strong>3.4% of reachable pool</strong></td><td class="context">Appendix §5 reality checks</td><td class="mono">0.83 / 24.55 (reachable pool sum)</td><td class="mono">3.38%</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">100</td><td class="mono"><strong>$10/hr marginal hour $15.44 = 54% raise</strong></td><td class="context">Appendix §6</td><td class="mono">$10 + 0.8×(16.8−10); 5.44/10</td><td class="mono">15.44; 54.4%</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">101</td><td class="mono"><strong>~10M work &lt;40h/wk</strong></td><td class="context">Appendix §6</td><td class="mono">incumbent_hours_margin:workers_below_cap_M</td><td class="mono">10.3</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">102</td><td class="mono"><strong>appendix all-renegotiate gross $158B</strong></td><td class="context">Appendix §7</td><td class="mono">matching flex-rigid gross_cost_bn</td><td class="mono">160.3</td><td><span class="status-badge status-mismatch">Mismatch</span></td></tr>
+      <tr><td class="mono">103</td><td class="mono"><strong>firms capture "under one percent" (headline)</strong></td><td class="context">Appendix §7</td><td class="mono">matching rigid-central firm_capture_pct</td><td class="mono">1.5%</td><td><span class="status-badge status-mismatch">Mismatch</span></td></tr>
+      <tr><td class="mono">104</td><td class="mono"><strong>"about a third" entrants unemployed</strong></td><td class="context">Appendix §5</td><td class="mono">matching:entrants_unemployed_M/induced_M</td><td class="mono">38.0%</td><td><span class="status-badge status-approximate">Approximate</span></td></tr>
+      <tr><td class="mono">105</td><td class="mono"><strong>"roughly one percent" disabled/retired entrants</strong></td><td class="context">Appendix §5</td><td class="mono">matching entrants disabled+retired/induced</td><td class="mono">1.93%</td><td><span class="status-badge status-mismatch">Mismatch</span></td></tr>
+      <tr><td class="mono">106</td><td class="mono"><strong>predicted wage $31 (college man), $15.34 (dropout)</strong></td><td class="context">Appendix §4 (illustrative)</td><td class="mono">Per-person example, not in supplied sources</td><td class="mono">Not found</td><td><span class="status-badge status-unverifiable">Unverifiable</span></td></tr>
+      <tr><td class="mono">107</td><td class="mono"><strong>ρσ ≈ +0.30 (rejected frame)</strong></td><td class="context">Appendix §4 (historical contrast)</td><td class="mono">Prior/rejected estimation, not current output</td><td class="mono">Not found</td><td><span class="status-badge status-unverifiable">Unverifiable</span></td></tr>
+    </tbody>
+  </table>
+
+  <h2>Findings</h2>
+
+  <!-- DN-001 HIGH -->
+  <div class="finding high">
+    <div class="finding-header">
+      <div class="finding-id">DN-001</div>
+      <div class="finding-title-block">
+        <div class="finding-title">All-renegotiate gross bound stated as $158B in appendix; live value and main draft say $160B</div>
+        <div class="finding-meta"><span class="file">2026-07-09_technical-appendix.md</span><span> · §7 Wages, incidence, and the safety net</span></div>
+      </div>
+      <span class="severity-badge badge-high">HIGH</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">In the Document</div>
+      <div class="doc-excerpt">The disclosed worst case—every wage in the economy renegotiates immediately—raises gross cost to <span class="highlight">$158 billion</span> with 55 percent firm capture.</div>
+      <div class="finding-section-label">Claimed vs. Actual</div>
+      <div class="value-compare">
+        <div class="value-box value-claimed"><div class="value-label">Document says</div>$158 billion</div>
+        <div class="value-box value-actual"><div class="value-label">Live value</div>$160.3 billion</div>
+      </div>
+      <div class="finding-section-label">Source in Code</div>
+      <div class="code-label">output/data/intermediate_results/population/matching_simulation.parquet — row scenario="flex-rigid"</div>
+      <pre><code>flex-rigid  gross_cost_bn = 160.3   firm_capture_pct_of_gross = 54.8</code></pre>
+      <div class="finding-section-label">Explanation</div>
+      <div class="finding-text">The live all-renegotiate (flex, β=0.3) gross cost is <strong>160.3</strong>. The main summary draft reports this correctly in both Table 1 ("up to 160.3") and its prose ("$160 billion"). The technical appendix instead says <strong>$158 billion</strong>, which matches no row in the current <code>matching_simulation.parquet</code> and is the kind of figure that survives from an earlier run. The 55 percent capture in the same sentence is correct (live 54.8%), which makes the stale gross figure easy to miss. This is a same-quantity inconsistency across the two documents.</div>
+      <div class="finding-section-label">Recommendation</div>
+      <div class="finding-text">Change "$158 billion" to "$160 billion" (or "$160.3 billion") in appendix §7 so the appendix, the main draft, and the live parquet agree.</div>
+    </div>
+  </div>
+
+  <!-- DN-002 MEDIUM -->
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">DN-002</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Firm capture described as "under one percent" for the headline case; live rigid-central is 1.5%</div>
+        <div class="finding-meta"><span class="file">2026-07-09_technical-appendix.md</span><span> · §7</span></div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">In the Document</div>
+      <div class="doc-excerpt">Our headline case holds incumbent wages fixed … firms capture <span class="highlight">under one percent</span> of the subsidy, entirely on new hires…</div>
+      <div class="finding-section-label">Claimed vs. Actual</div>
+      <div class="value-compare">
+        <div class="value-box value-claimed"><div class="value-label">Appendix says</div>under 1%</div>
+        <div class="value-box value-actual"><div class="value-label">Live (rigid-central)</div>1.5%</div>
+      </div>
+      <div class="finding-section-label">Source in Code</div>
+      <div class="code-label">matching_simulation.parquet — rigid rows firm_capture_pct_of_gross</div>
+      <pre><code>rigid-central (β=0.5): 1.5    rigid-measured (β=0.7): 0.8    rigid-rigid (β=0.3): 2.0</code></pre>
+      <div class="finding-section-label">Explanation</div>
+      <div class="finding-text">The appendix's headline structural case is rigid-central (β=0.5) — the same row that produces the $93.1B/$74.2B costs used throughout. Its firm capture is <strong>1.5%</strong>, not "under one percent." Only the β=0.7 "measured" row is under 1% (0.8%). The main summary draft states this correctly ("no more than about 2 percent … across the full range of bargaining assumptions"; live max is 2.0%). The appendix wording understates the headline value and is inconsistent with the main draft. It may be a survivor from an earlier run when central capture was below 1%.</div>
+      <div class="finding-section-label">Recommendation</div>
+      <div class="finding-text">Either restate as "roughly 1 to 2 percent" / "about 1.5 percent" for the headline, or make explicit that "under one percent" refers to the β=0.7 case. Align with the main draft's "about 2 percent" framing.</div>
+    </div>
+  </div>
+
+  <!-- DN-003 MEDIUM -->
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">DN-003</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Converged potential-wage range ($19.62–$22.17) does not match live variant medians ($18.28–$20.65)</div>
+        <div class="finding-meta"><span class="file">2026-07-09_technical-appendix.md</span><span> · §4 Potential wages</span></div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">In the Document</div>
+      <div class="doc-excerpt">Re-estimated on the paid-hourly frame … all three imputation variants converge (weighted median potential wage <span class="highlight">$19.62 to $22.17</span>).</div>
+      <div class="finding-section-label">Claimed vs. Actual</div>
+      <div class="value-compare">
+        <div class="value-box value-claimed"><div class="value-label">Document says</div>$19.62 – $22.17</div>
+        <div class="value-box value-actual"><div class="value-label">Live (3 variants)</div>$18.28 – $20.65</div>
+      </div>
+      <div class="finding-section-label">Source in Code</div>
+      <div class="code-label">mpl_imputation_band.parquet — pool_median_mpl (imputation axis); confirmed weighted by diagnostics pool_mpl_weighted_pctiles p50=18.28</div>
+      <pre><code>conditional (headline): 18.28   mills0: 19.49   plain OLS: 20.65</code></pre>
+      <div class="finding-section-label">Explanation</div>
+      <div class="finding-text">The three current imputation-variant weighted median potential wages span <strong>18.28 to 20.65</strong> (conditional Mills, Mills=0, plain OLS). The claimed range $19.62–$22.17 is roughly $1.5 higher on both ends and matches none of the current variants; the pre-remodel unweighted medians in the diagnostics (mills0 19.94, plain 21.12) are closer, suggesting the quoted range is a pre-remodel survivor. Classified MEDIUM rather than HIGH because the exact statistic the authors intended (weighted vs. unweighted, which variants, dispersed vs. undispersed) cannot be fully pinned from the supplied outputs, but it clearly does not reproduce.</div>
+      <div class="finding-section-label">Recommendation</div>
+      <div class="finding-text">Regenerate the converged-median range from the current <code>mpl_imputation_band.parquet</code> (weighted medians 18.28–20.65) and update the parenthetical, or specify precisely which statistic/frame produced $19.62–$22.17.</div>
+    </div>
+  </div>
+
+  <!-- DN-004 MEDIUM -->
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">DN-004</div>
+      <div class="finding-title-block">
+        <div class="finding-title">"23.6 percent of paid-hourly workers" below target cannot be traced to the supplied live sources</div>
+        <div class="finding-meta"><span class="file">both drafts</span><span> · Summary §reachable; Appendix §4</span></div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">In the Document</div>
+      <div class="doc-excerpt">41.4 percent fall below the $16.80 target, compared with <span class="highlight">23.6 percent</span> of paid-hourly workers…</div>
+      <div class="finding-section-label">Claimed vs. Actual</div>
+      <div class="value-compare">
+        <div class="value-box value-claimed"><div class="value-label">Document says</div>23.6%</div>
+        <div class="value-box value-actual"><div class="value-label">Live</div>Not found</div>
+      </div>
+      <div class="finding-section-label">Source in Code</div>
+      <div class="code-label">Search across diagnostics JSON + population parquets</div>
+      <pre><code># pct of pool below target = 41.4 (verified). The comparison share for
+# paid-hourly WORKERS with dispersed offers below target is not persisted in
+# nonemployed_pool_diagnostics.json, org_target_wage.json, or the population
+# parquets. Note: 20.81M eligible / 134.3M workers = 15.5% earn below target on
+# their ACTUAL wage — a different concept than a dispersed-offer draw.</code></pre>
+      <div class="finding-section-label">Explanation</div>
+      <div class="finding-text">The 41.4% pool figure verifies exactly. The paired 23.6% "of paid-hourly workers" is a dispersed-offer comparison statistic that is not present in any of the authoritative sources provided. It is stated consistently in both drafts, so it is likely a real figure from a figure-generation script (Figure 8) rather than an error — but it cannot be confirmed from the supplied outputs.</div>
+      <div class="finding-section-label">Recommendation</div>
+      <div class="finding-text">Persist the worker below-target share to a diagnostic (or point the reviewer to the Figure 8 script) so this comparison number is auditable alongside the 41.4% pool share.</div>
+    </div>
+  </div>
+
+  <!-- DN-005 MEDIUM -->
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">DN-005</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Figure 11b single-household illustrative numbers not traceable to supplied sources</div>
+        <div class="finding-meta"><span class="file">2026-07-08_wage-subsidy-impact-cost-summary.md</span><span> · Figure 11b narrative</span></div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">In the Document</div>
+      <div class="doc-excerpt">…the subsidy adds real net income, roughly <span class="highlight">$7,800</span> at 20 hours a week and <span class="highlight">$5,600</span> at 40. … Past roughly <span class="highlight">53 hours a week</span> the subsidized household is actually worse off on net…</div>
+      <div class="finding-section-label">Claimed vs. Actual</div>
+      <div class="value-compare">
+        <div class="value-box value-claimed"><div class="value-label">Document says</div>$7,800 / $5,600 / 53h</div>
+        <div class="value-box value-actual"><div class="value-label">Live</div>Not found in supplied sources</div>
+      </div>
+      <div class="finding-section-label">Source in Code</div>
+      <div class="code-label">Per-household schedule (e.g., individual_schedules/single_2c_PA.parquet) — outside the supplied authoritative source list</div>
+      <pre><code># These are illustrative values for one representative PA single-parent
+# household at $10/hr, computed in the Figure 11/11b generation path, not in
+# the diagnostics JSON or the population aggregate parquets provided.</code></pre>
+      <div class="finding-section-label">Explanation</div>
+      <div class="finding-text">The $10/hr wage, the 0–3,000 hour sweep (60h×50wk = 3,000, arithmetic OK), and the 2,080-hour cap (40h×52wk, arithmetic OK) all check out arithmetically. The dollar gains ($7,800; $5,600) and the ~53-hour crossover are single-household figure outputs that are not in the supplied live sources, so they cannot be verified here. Grouped as MEDIUM/unverifiable rather than flagged as wrong.</div>
+      <div class="finding-section-label">Recommendation</div>
+      <div class="finding-text">Confirm these against the current Figure 11b generation (individual household schedule) at publication; they were not part of the authoritative parquet/JSON set supplied for this review.</div>
+    </div>
+  </div>
+
+  <!-- DN-006 LOW -->
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">DN-006</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Appendix says "roughly one percent" of entrants are disabled/retired; live share is ~1.9% (main draft says "about two percent")</div>
+        <div class="finding-meta"><span class="file">2026-07-09_technical-appendix.md</span><span> · §5</span></div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">In the Document</div>
+      <div class="doc-excerpt">…about a third of modeled entrants are unemployed job-seekers and <span class="highlight">roughly one percent</span> are disabled or retired.</div>
+      <div class="finding-section-label">Claimed vs. Actual</div>
+      <div class="value-compare">
+        <div class="value-box value-claimed"><div class="value-label">Appendix says</div>~1%</div>
+        <div class="value-box value-actual"><div class="value-label">Live</div>1.93%</div>
+      </div>
+      <div class="finding-section-label">Source in Code</div>
+      <div class="code-label">matching_simulation.parquet — rigid-central entrant status columns</div>
+      <pre><code>(entrants_disabled_M 0.013 + entrants_retired_M 0.003) / induced_M 0.83 = 1.93%</code></pre>
+      <div class="finding-section-label">Explanation</div>
+      <div class="finding-text">The live disabled+retired entrant share is 1.9%, which the main draft states correctly as "about two percent." The appendix's "roughly one percent" understates it by roughly half and is inconsistent with the main draft. Minor characterization gap.</div>
+      <div class="finding-section-label">Recommendation</div>
+      <div class="finding-text">Change "roughly one percent" to "about two percent" in appendix §5 to match the data and the main draft.</div>
+    </div>
+  </div>
+
+  <!-- DN-007 LOW -->
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">DN-007</div>
+      <div class="finding-title-block">
+        <div class="finding-title">"A raise for a fifth of the hourly workforce" overstates the 15.5% take-up</div>
+        <div class="finding-meta"><span class="file">2026-07-08_wage-subsidy-impact-cost-summary.md</span><span> · §cost per job & bottom line</span></div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">In the Document</div>
+      <div class="doc-excerpt">…the "overhead" here is not deadweight. It is a raise for <span class="highlight">a fifth</span> of the hourly workforce…</div>
+      <div class="finding-section-label">Claimed vs. Actual</div>
+      <div class="value-compare">
+        <div class="value-box value-claimed"><div class="value-label">Document says</div>a fifth (20%)</div>
+        <div class="value-box value-actual"><div class="value-label">Live</div>15.5%</div>
+      </div>
+      <div class="finding-section-label">Source in Code</div>
+      <div class="code-label">summary.parquet:n_workers_mn / take_up_by_group base</div>
+      <pre><code>20.81M eligible / 134.3M wage-observed hourly workers = 15.5%  (~one in 6.5)</code></pre>
+      <div class="finding-section-label">Explanation</div>
+      <div class="finding-text">Take-up is 15.5% of the hourly workforce — closer to "a sixth" or "one in six or seven" than "a fifth." The document itself uses the more accurate "15.5 percent" in the Table 2 note and "one in seven or eight" (of all workers) in the cost section, so "a fifth" is a loose rhetorical rounding that mildly overstates reach.</div>
+      <div class="finding-section-label">Recommendation</div>
+      <div class="finding-text">Replace "a fifth" with "roughly a sixth" or "about 15 percent" for internal consistency with the Table 2 note.</div>
+    </div>
+  </div>
+
+  <!-- DN-008 LOW -->
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">DN-008</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Unemployed-entrant share described as "about a third" (appendix) vs "nearly two-fifths" (main); live is 38%</div>
+        <div class="finding-meta"><span class="file">both drafts</span><span> · Summary §entrants; Appendix §5</span></div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">In the Document</div>
+      <div class="doc-excerpt">Summary: "nearly <span class="highlight">two-fifths</span> are unemployed job-seekers." Appendix: "<span class="highlight">about a third</span> of modeled entrants are unemployed job-seekers."</div>
+      <div class="finding-section-label">Claimed vs. Actual</div>
+      <div class="value-compare">
+        <div class="value-box value-claimed"><div class="value-label">Documents say</div>⅓ vs ⅖</div>
+        <div class="value-box value-actual"><div class="value-label">Live</div>38.0%</div>
+      </div>
+      <div class="finding-section-label">Source in Code</div>
+      <div class="code-label">matching_simulation.parquet — rigid-central</div>
+      <pre><code>entrants_unemployed_M 0.315 / induced_M 0.83 = 38.0%</code></pre>
+      <div class="finding-section-label">Explanation</div>
+      <div class="finding-text">The live share is 38%. The main draft's "nearly two-fifths" is accurate; the appendix's "about a third" understates it slightly and is inconsistent with the main draft. Both are approximations of the same underlying number.</div>
+      <div class="finding-section-label">Recommendation</div>
+      <div class="finding-text">Harmonize the two documents — use "nearly two-fifths" (≈38%) in both.</div>
+    </div>
+  </div>
+
+  <!-- DN-009 INFO -->
+  <div class="finding info">
+    <div class="finding-header">
+      <div class="finding-id">DN-009</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Historical-contrast and per-person illustrative figures cannot be traced to current outputs (clarify provenance)</div>
+        <div class="finding-meta"><span class="file">2026-07-09_technical-appendix.md</span><span> · §4</span></div>
+      </div>
+      <span class="severity-badge badge-info">INFO</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">In the Document</div>
+      <div class="doc-excerpt">…salaried workers … have a median hourly-equivalent wage of <span class="highlight">$26.00</span> … the selection correction looked large (<span class="highlight">ρσ ≈ +0.30</span>) … a 40-year-old man with a college degree (his predicted wage is <span class="highlight">$31</span>) and a 20-year-old without a diploma (predicted <span class="highlight">$15.34</span>)…</div>
+      <div class="finding-section-label">Claimed vs. Actual</div>
+      <div class="value-compare">
+        <div class="value-box value-claimed"><div class="value-label">Document says</div>$26.00 / +0.30 / $31 / $15.34</div>
+        <div class="value-box value-actual"><div class="value-label">Live</div>Not in supplied sources</div>
+      </div>
+      <div class="finding-section-label">Source in Code</div>
+      <div class="code-label">diagnostics JSON confirms only the current-frame contrasts (employed_earner_share 0.5614 → 44% salaried; imr_coef_rho_sigma 0.0755 → +0.08)</div>
+      <pre><code># $26.00 salaried median and ρσ +0.30 describe the REJECTED all-earner frame,
+# not the current pipeline; $31 / $15.34 are per-person illustrative predictions.
+# None are persisted in the supplied diagnostics/parquets.</code></pre>
+      <div class="finding-section-label">Explanation</div>
+      <div class="finding-text">These numbers are rhetorical contrasts against the discarded estimation frame ($26.00, ρσ +0.30) or single-person illustrations ($31, $15.34). The current-frame counterparts they are contrasted against (44% salaried, ρσ ≈ +0.08) both verify against the diagnostics JSON. The contrast figures themselves are not in the supplied outputs, so they are recorded as needing author confirmation rather than flagged as wrong.</div>
+      <div class="finding-section-label">Recommendation</div>
+      <div class="finding-text">At publication, confirm the rejected-frame contrast values from whatever diagnostic recorded the earlier estimation; they do not affect any headline result.</div>
+    </div>
+  </div>
+
+  <h2>Reviewed Files</h2>
+  <table class="files-table">
+    <thead>
+      <tr><th>File</th><th>Type</th><th>Language</th><th style="text-align:center">Lines</th><th style="text-align:center">Numbers / Errors</th><th style="text-align:center">Highest Severity</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>drafts/2026-07-08_wage-subsidy-impact-cost-summary.md</td><td>Document</td><td>Markdown</td><td class="count-cell">308</td><td class="count-cell has-issues">~70</td><td class="count-cell">MEDIUM</td></tr>
+      <tr><td>drafts/2026-07-09_technical-appendix.md</td><td>Document</td><td>Markdown</td><td class="count-cell">142</td><td class="count-cell has-issues">~55</td><td class="count-cell">HIGH</td></tr>
+      <tr><td>data/processed/nonemployed_pool_diagnostics.json</td><td>Source</td><td>JSON</td><td class="count-cell">—</td><td class="count-cell ok">—</td><td class="count-cell">—</td></tr>
+      <tr><td>data/processed/org_target_wage.json</td><td>Source</td><td>JSON</td><td class="count-cell">—</td><td class="count-cell ok">—</td><td class="count-cell">—</td></tr>
+      <tr><td>data/processed/nonemployed_pool.parquet</td><td>Source</td><td>Parquet</td><td class="count-cell">181,960</td><td class="count-cell ok">—</td><td class="count-cell">—</td></tr>
+      <tr><td>data/processed/hourly_workers.parquet</td><td>Source</td><td>Parquet</td><td class="count-cell">15,596</td><td class="count-cell ok">—</td><td class="count-cell">—</td></tr>
+      <tr><td>output/data/intermediate_results/population/summary.parquet</td><td>Source</td><td>Parquet</td><td class="count-cell">1</td><td class="count-cell ok">—</td><td class="count-cell">—</td></tr>
+      <tr><td>output/data/intermediate_results/population/entry_margin_band.parquet</td><td>Source</td><td>Parquet</td><td class="count-cell">7</td><td class="count-cell ok">—</td><td class="count-cell">—</td></tr>
+      <tr><td>output/data/intermediate_results/population/entry_reconciliation.parquet</td><td>Source</td><td>Parquet</td><td class="count-cell">1</td><td class="count-cell ok">—</td><td class="count-cell">—</td></tr>
+      <tr><td>output/data/intermediate_results/population/incumbent_hours_margin.parquet</td><td>Source</td><td>Parquet</td><td class="count-cell">3</td><td class="count-cell ok">—</td><td class="count-cell">—</td></tr>
+      <tr><td>output/data/intermediate_results/population/matching_simulation.parquet</td><td>Source</td><td>Parquet</td><td class="count-cell">6</td><td class="count-cell ok">—</td><td class="count-cell">—</td></tr>
+      <tr><td>output/data/intermediate_results/population/mpl_imputation_band.parquet</td><td>Source</td><td>Parquet</td><td class="count-cell">9</td><td class="count-cell ok">—</td><td class="count-cell">—</td></tr>
+      <tr><td>output/data/intermediate_results/population/behavioral_scenarios.parquet</td><td>Source</td><td>Parquet</td><td class="count-cell">4</td><td class="count-cell ok">—</td><td class="count-cell">—</td></tr>
+      <tr><td>output/data/intermediate_results/population/by_sex.parquet</td><td>Source</td><td>Parquet</td><td class="count-cell">2</td><td class="count-cell ok">—</td><td class="count-cell">—</td></tr>
+      <tr><td>output/data/intermediate_results/population/by_age_bin.parquet</td><td>Source</td><td>Parquet</td><td class="count-cell">5</td><td class="count-cell ok">—</td><td class="count-cell">—</td></tr>
+      <tr><td>output/data/intermediate_results/population/by_education.parquet</td><td>Source</td><td>Parquet</td><td class="count-cell">5</td><td class="count-cell ok">—</td><td class="count-cell">—</td></tr>
+      <tr><td>output/data/intermediate_results/population/by_race_ethnicity.parquet</td><td>Source</td><td>Parquet</td><td class="count-cell">4</td><td class="count-cell ok">—</td><td class="count-cell">—</td></tr>
+      <tr><td>output/data/intermediate_results/population/by_family_type.parquet</td><td>Source</td><td>Parquet</td><td class="count-cell">4</td><td class="count-cell ok">—</td><td class="count-cell">—</td></tr>
+      <tr><td>output/data/intermediate_results/population/by_wage_bracket.parquet</td><td>Source</td><td>Parquet</td><td class="count-cell">4</td><td class="count-cell ok">—</td><td class="count-cell">—</td></tr>
+      <tr><td>output/data/intermediate_results/population/by_state.parquet</td><td>Source</td><td>Parquet</td><td class="count-cell">51</td><td class="count-cell ok">—</td><td class="count-cell">—</td></tr>
+      <tr><td>output/data/intermediate_results/population/take_up_by_group.parquet</td><td>Source</td><td>Parquet</td><td class="count-cell">20</td><td class="count-cell ok">—</td><td class="count-cell">—</td></tr>
+      <tr><td>output/data/intermediate_results/population/program_interactions.parquet</td><td>Source</td><td>Parquet</td><td class="count-cell">17</td><td class="count-cell ok">—</td><td class="count-cell">—</td></tr>
+    </tbody>
+  </table>
+
+</div>
+
+<div class="report-footer">
+  Generated by AI review agent · data-consistency-reviewer · 2026-07-09<br>
+  Scope: document number verification — see code-error-report.html for code bugs, methodology-report.html for design concerns
+</div>
+
+</body>
+</html>

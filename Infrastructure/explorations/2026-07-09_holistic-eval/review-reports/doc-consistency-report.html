@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consistency Report — eig-wagesubsidy-policy-sim</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 15px; line-height: 1.6; color: #1e293b; background: #f8fafc;
+    }
+    .report-header { background: #581c87; color: #faf5ff; padding: 2rem 2.5rem; }
+    .report-header h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.25rem; }
+    .report-header .subtitle { font-size: 0.9rem; color: #d8b4fe; }
+    .report-header .meta { margin-top: 1rem; display: flex; gap: 2rem; flex-wrap: wrap; font-size: 0.85rem; color: #e9d5ff; }
+    .report-header .meta span strong { color: #faf5ff; }
+    .container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+    h2 { font-size: 1.15rem; font-weight: 600; color: #1e293b; margin: 2rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid #e2e8f0; }
+    .summary-box { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; font-size: 0.95rem; color: #334155; line-height: 1.7; }
+    .risk-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+    .risk-label { font-size: 0.9rem; font-weight: 600; color: #475569; }
+    .risk-pill { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.3rem 0.9rem; border-radius: 9999px; }
+    .risk-high { background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; }
+    .risk-medium { background: #fff7ed; color: #ea580c; border: 1px solid #fdba74; }
+    .risk-low { background: #f0fdf4; color: #16a34a; border: 1px solid #86efac; }
+    .consistency-row { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .consistency-stat { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 1.25rem; text-align: center; flex: 1; min-width: 140px; }
+    .consistency-stat .num { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+    .consistency-stat .lbl { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem; color: #64748b; }
+    .consistency-stat.examined .num { color: #581c87; }
+    .consistency-stat.consistent .num { color: #16a34a; }
+    .consistency-stat.flagged .num { color: #dc2626; }
+    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 2rem; }
+    .stat-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; text-align: center; }
+    .stat-card .count { font-size: 2rem; font-weight: 700; line-height: 1; }
+    .stat-card .label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.3rem; }
+    .sev-high .count, .sev-high .label { color: #dc2626; }
+    .sev-medium .count, .sev-medium .label { color: #ea580c; }
+    .sev-low .count, .sev-low .label { color: #2563eb; }
+    .category-heading { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #64748b; margin: 1.5rem 0 0.75rem; padding: 0.4rem 0; border-bottom: 1px dashed #cbd5e1; }
+    .finding { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 1.25rem; overflow: hidden; }
+    .finding-header { display: flex; align-items: flex-start; gap: 1rem; padding: 1rem 1.25rem; border-left: 5px solid transparent; }
+    .finding.high .finding-header { border-left-color: #dc2626; }
+    .finding.medium .finding-header { border-left-color: #ea580c; }
+    .finding.low .finding-header { border-left-color: #2563eb; }
+    .finding-id { font-size: 0.75rem; font-weight: 700; font-family: monospace; color: #64748b; min-width: 4.5rem; padding-top: 0.15rem; }
+    .finding-title-block { flex: 1; }
+    .finding-title { font-weight: 600; font-size: 1rem; color: #1e293b; }
+    .finding-meta { font-size: 0.8rem; color: #64748b; margin-top: 0.2rem; }
+    .finding-meta .file { font-family: monospace; }
+    .severity-badge { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.2rem 0.55rem; border-radius: 4px; }
+    .badge-high { background: #fef2f2; color: #dc2626; }
+    .badge-medium { background: #fff7ed; color: #ea580c; }
+    .badge-low { background: #eff6ff; color: #2563eb; }
+    .finding-body { padding: 0 1.25rem 1.25rem 3.75rem; }
+    .finding-section-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #94a3b8; margin: 0.85rem 0 0.35rem; }
+    .finding-text { font-size: 0.9rem; color: #334155; }
+    .doc-excerpt { background: #faf5ff; border-left: 3px solid #581c87; padding: 0.65rem 1rem; margin: 0.5rem 0; font-size: 0.88rem; color: #334155; border-radius: 0 6px 6px 0; }
+    .doc-excerpt .highlight { background: #fde68a; padding: 0.05rem 0.25rem; border-radius: 2px; font-weight: 600; }
+    pre { background: #0f172a; color: #e2e8f0; border-radius: 6px; padding: 1rem; overflow-x: auto; font-size: 0.82rem; line-height: 1.55; margin: 0.5rem 0; }
+    code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
+    .check-list { list-style: none; padding: 0; margin: 0.5rem 0; font-size: 0.9rem; color: #334155; }
+    .check-list li { padding: 0.25rem 0 0.25rem 1.5rem; position: relative; }
+    .check-list li::before { content: "→"; position: absolute; left: 0; color: #581c87; font-weight: 700; }
+    .files-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+    .files-table th { background: #f1f5f9; text-align: left; padding: 0.65rem 1rem; font-weight: 600; color: #475569; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; }
+    .files-table td { padding: 0.6rem 1rem; border-bottom: 1px solid #f1f5f9; color: #334155; }
+    .files-table tr:last-child td { border-bottom: none; }
+    .files-table td:first-child { font-family: monospace; font-size: 0.82rem; color: #1e293b; }
+    .files-table .count-cell { text-align: center; font-weight: 600; }
+    .files-table .ok { color: #16a34a; }
+    .files-table .has-issues { color: #dc2626; }
+    .inv-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+    .inv-table th { background: #f1f5f9; text-align: left; padding: 0.5rem 0.75rem; font-weight: 600; color: #475569; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #e2e8f0; }
+    .inv-table td { padding: 0.45rem 0.75rem; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: top; }
+    .inv-table tr:last-child td { border-bottom: none; }
+    .st-ok { color: #16a34a; font-weight: 600; }
+    .st-flag { color: #dc2626; font-weight: 600; }
+    .st-amb { color: #ea580c; font-weight: 600; }
+    .report-footer { margin-top: 3rem; padding: 1.5rem; text-align: center; font-size: 0.8rem; color: #94a3b8; border-top: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+
+<div class="report-header">
+  <h1>Consistency Report</h1>
+  <div class="subtitle">Every empirical claim cross-referenced against the code — err on side of flagging</div>
+  <div class="meta">
+    <span><strong>Project:</strong> eig-wagesubsidy-policy-sim</span>
+    <span><strong>Reviewed:</strong> 2026-07-09</span>
+    <span><strong>Documents:</strong> 2026-07-08_wage-subsidy-impact-cost-summary.md, 2026-07-09_technical-appendix.md</span>
+    <span><strong>Code files:</strong> 6 across Python (+ 1 Markdown methodology reference)</span>
+    <span><strong>Reviewer:</strong> AI review agent (conceptual-consistency-reviewer)</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <h2>Executive Summary</h2>
+
+  <div class="risk-row">
+    <span class="risk-label">Overall Consistency Risk:</span>
+    <span class="risk-pill risk-high">HIGH</span>
+  </div>
+
+  <div class="consistency-row">
+    <div class="consistency-stat examined">
+      <div class="num">47</div>
+      <div class="lbl">Claims Examined</div>
+    </div>
+    <div class="consistency-stat consistent">
+      <div class="num">38</div>
+      <div class="lbl">Consistent</div>
+    </div>
+    <div class="consistency-stat flagged">
+      <div class="num">9</div>
+      <div class="lbl">Flagged</div>
+    </div>
+  </div>
+
+  <div class="summary-box">
+    Cross-referenced 47 empirical and methodological claims across the two-page summary and the technical
+    appendix against six Python pipeline files and the entry-from-nonemployment methodology doc. The good
+    news first: the draft absorbed the three headline rebases cleanly on the central results. The offer-dispersion
+    step (mean-preserving lognormal, group-specific residual SDs, &lambda;=0.75) <em>is</em> described — the draft does
+    <strong>not</strong> still describe mean imputation. The net-gain-space entry threshold
+    (m<sub>i</sub> &le; g_net<sub>i</sub>), the status-weighted lottery (5.0 / 1.0 / 0.15 / 0.15), the subsidy's
+    taxable/countable treatment, the &epsilon;<sub>ext</sub> band edges (sm .25/.50/.65, ow .05/.20/.40,
+    men 0/.05/.15), and the 0.83M central entry with the 02b (0.72M) &lt; 02d (0.83M) relationship are all
+    reproduced correctly. However, <strong>one HIGH-severity stale figure survived the dispersion rebase</strong>:
+    the appendix's demand-side plausibility check still cites "~0.5 million entrants," which matches the
+    pre-rebase 0.46M central and contradicts the 0.83M headline the same appendix reports. Three MEDIUM findings
+    concern internal disagreements between the two drafts (entrant composition, sticky-case firm capture) and a
+    figure caption that still frames the model's markups as a "reservation wage" against the reality assessment's
+    guidance. Four LOW findings flag minor provenance and disclosure gaps. Overall risk is HIGH solely on the
+    stale 0.5M figure; resolve it and the drafts are otherwise well-aligned with the current code.
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card sev-high"><div class="count">1</div><div class="label">High</div></div>
+    <div class="stat-card sev-medium"><div class="count">3</div><div class="label">Medium</div></div>
+    <div class="stat-card sev-low"><div class="count">5</div><div class="label">Low</div></div>
+  </div>
+
+  <!-- ═══════════════ CLAIM INVENTORY ═══════════════ -->
+  <h2>Claim Inventory (selected)</h2>
+  <table class="inv-table">
+    <thead>
+      <tr><th>#</th><th>Claim</th><th>Doc location</th><th>Code location</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Target = 80% of $21.00 paid-hourly median = $16.80; subsidy 80% of gap; $7.25 base floor</td><td>Summary lede/&sect;refresher; Appendix &sect;1</td><td>00_config.py cfg ws_target_wage/ws_subsidy_pct/ws_base_wage</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>2</td><td>MPL imputed via Heckman two-step, conditional-Mills (D=0), Duan smearing, paid-hourly frame</td><td>Appendix &sect;4</td><td>01h heckman_impute (xb_cond, smear); obs_wage = paid-hourly only</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>3</td><td>Offer dispersion: mean-preserving lognormal, group-specific residual SDs, &lambda;=0.75, band {0.50,1.00}</td><td>Summary Evidence; Appendix &sect;4</td><td>01h offer-dispersion block; cfg offer_dispersion; 02f lam050/lam100</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>4</td><td>Selection eq adds spouse-employed&times;married &amp; own-child-under-5 from real CPS roster links</td><td>Appendix &sect;4</td><td>01h _design(wage_eq=False); 01i_household_links.py RELATE pairing</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>5</td><td>Entry threshold NI(y·h+subsidy)&minus;NI(0) &ge; (1+m<sub>i</sub>)·[NI(y·h)&minus;NI(0)] (net-gain space)</td><td>Appendix &sect;5</td><td>01h assign_reservation_band; m &le; g_net closed form</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>6</td><td>Status-weighted lottery: unemployed 5&times;, disabled/retired 0.15; totals pinned by calibration</td><td>Appendix &sect;5</td><td>cfg entry_status_weights; 01h s_i normalized to mean 1</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>7</td><td>&epsilon;<sub>ext</sub> band: sm .25/.50/.65, ow .05/.20/.40, men .00/.05/.15</td><td>Appendix &sect;5 table</td><td>cfg["matching"]["eps_ext_band"]</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>8</td><td>Subsidy modeled as taxable income countable against means-tested benefits</td><td>Summary "safety net"; Appendix &sect;1</td><td>01h _NetIncome docstring; methodology doc &sect;4</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>9</td><td>Central entry 0.83M; groups sm 0.13 / ow 0.61 / men 0.09</td><td>Summary Table 4</td><td>02d _entrants_from_pool; methodology doc rev(6)</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>10</td><td>02b (0.72M) vs 02d (0.83M) — benchmark now below structural</td><td>Appendix &sect;2</td><td>02d reconciliation; cfg two namespaces</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>11</td><td>Employment-stock recalibration: 0.83M&rarr;0.71M; single-mothers 0.13&rarr;0.19M</td><td>Summary &sect;"How sure"; Appendix &sect;5</td><td>01h estock edge; 02d "employment-stock semantics" row</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>12</td><td>Wage-penalty band 1.21M / 1.70M; dispersion band 0.62&ndash;1.12M; elasticity band 0.25&ndash;1.47M</td><td>Summary Table 4; Appendix &sect;4/&sect;9</td><td>02f pen10/pen20, lam050/lam100; 02d edges</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>13</td><td>Hours-margin FTE 0.08/0.25/0.36 over &epsilon;<sub>int</sub> {0.05,0.20,0.33}; central comparable to entry 0.32 FTE</td><td>Summary &sect;"How sure"; Appendix &sect;6</td><td>02d incumbent_hours_margin; cfg eps_int_band</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>14</td><td>Clawback medians ~14% sm / ~19% ow / ~15% men; 115k of 830k cliff pay-up</td><td>Summary &sect;"safety net"; Appendix &sect;7</td><td>02d _entrants_from_pool cliff_payup; methodology rev(6) 14.4/18.9/14.9</td><td class="st-ok">Consistent</td></tr>
+      <tr><td>15</td><td>Sticky incumbent wages; firm capture small; all-renegotiate bound reported separately</td><td>Summary "employers"; Appendix &sect;7</td><td>02d incumbent_rigid; renegotiated_wage</td><td class="st-amb">Flagged (CC-003)</td></tr>
+      <tr><td>16</td><td>"~0.5 million entrants" (demand-side plausibility)</td><td>Appendix &sect;8</td><td>02d central induced = 0.83M</td><td class="st-flag">Flagged (CC-001)</td></tr>
+      <tr><td>17</td><td>Entrant composition: unemployed share, disabled/retired share of entrants</td><td>Summary body; Appendix &sect;5</td><td>02d entrants_by_status; methodology ~35% / ~1%</td><td class="st-flag">Flagged (CC-002)</td></tr>
+      <tr><td>18</td><td>Figure 6 "clears a worker's reservation wage"</td><td>Summary Fig 6 caption</td><td>01h reservation_wage_* alias; methodology "not reservation wages"</td><td class="st-flag">Flagged (CC-004)</td></tr>
+      <tr><td>19</td><td>All-renegotiate gross bound = $158B (appendix) / $160.3B (summary table)</td><td>Summary Table 1 / Appendix &sect;7</td><td>02d flex path (value not statically verifiable)</td><td class="st-flag">Flagged (CC-006)</td></tr>
+      <tr><td>20</td><td>Incumbent reservation ratio (Krueger-Mueller); "accept at ~90% of prior wages"</td><td>Appendix &sect;4/&sect;7</td><td>cfg reservation_ratio = 0.80</td><td class="st-flag">Flagged (CC-007)</td></tr>
+      <tr><td>21</td><td>EARNWT for everything measured on workers; WTFINL for non-employed</td><td>Appendix &sect;1</td><td>01h WTFINL pool; Heckman OLS unweighted</td><td class="st-flag">Flagged (CC-008)</td></tr>
+      <tr><td>22</td><td>12 monthly samples May 2025&ndash;May 2026 (excl. Oct 2025 not fielded)</td><td>Summary refresher; Appendix &sect;1</td><td>01h reads last 2 year-partitions; months not fixed in code</td><td class="st-flag">Flagged (CC-005)</td></tr>
+      <tr><td>23</td><td>15.5% of hourly workers receive subsidy; 23.6% of paid-hourly workers below target</td><td>Summary Table 2 note / Fig 8</td><td>02a eligibility (not in scope); 01h pct_below</td><td class="st-flag">Flagged (CC-009)</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ═══════════════ FINDINGS ═══════════════ -->
+  <h2>Findings</h2>
+
+  <div class="category-heading">HIGH — 1 finding</div>
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Results &amp; Interpretation</div>
+
+  <div class="finding high">
+    <div class="finding-header">
+      <div class="finding-id">CC-001</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Appendix's "~0.5 million entrants" is a stale pre-dispersion figure that contradicts the 0.83M headline</div>
+        <div class="finding-meta"><span class="file">2026-07-09_technical-appendix.md &sect;8</span><span> · Results &amp; Interpretation</span></div>
+      </div>
+      <span class="severity-badge badge-high">HIGH</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Document Claims</div>
+      <div class="doc-excerpt">
+        "<strong>No demand side.</strong> Every viable match forms; no displacement of existing workers by
+        entrants&hellip; At <span class="highlight">~0.5 million entrants</span> against 6&ndash;7 million monthly
+        hires this is unlikely to bind, but it is assumed, not shown."
+      </div>
+      <div class="finding-section-label">What the Code Does</div>
+      <pre><code># 02d_matching_simulation.py — central induced entry from the pool
+ge, ne, fce, ind_c, _, det_c = _entrants_from_pool(pool, beta_c, target, edge="central")
+# methodology doc rev(6): "entry central 0.46M -> 0.83M"; Summary Table 4 central = 0.83
+# The pre-dispersion central (methodology doc rev 4) was 0.46M (~0.5M).</code></pre>
+      <div class="finding-section-label">Why This Is Inconsistent</div>
+      <div class="finding-text">The current pipeline produces a central entry estimate of <strong>0.83 million</strong>,
+        reported everywhere else in both drafts (Summary Table 4; Appendix &sect;2, &sect;5, &sect;7). The
+        demand-side plausibility check in Appendix &sect;8 instead uses "~0.5 million," which matches the
+        <em>pre-dispersion-rebase</em> central of 0.46M documented in methodology-doc revision (4). This looks
+        like a number that was not refreshed when the offer-dispersion rebase moved the headline from 0.46M to
+        0.83M. It matters because it understates the entrant supply shock by roughly 40% precisely where the
+        appendix argues the no-demand-side assumption "is unlikely to bind."</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Confirm the current central entry the pipeline emits (0.83M) and update Appendix &sect;8 to "~0.8 million entrants" (or the exact figure).</li>
+        <li>Re-run the "against 6&ndash;7 million monthly hires" ratio with 0.83M to confirm the non-binding argument still holds (it does; 0.83M is ~12% of monthly hires).</li>
+        <li>Grep both drafts for other "0.5 million" / "0.46" / "0.5M" fragments left over from the pre-dispersion run.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="category-heading">MEDIUM — 3 findings</div>
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Results &amp; Interpretation</div>
+
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">CC-002</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Entrant composition (unemployed / disabled-retired shares) disagrees between the two drafts and the methodology doc</div>
+        <div class="finding-meta"><span class="file">summary &sect;"pull people into work"; appendix &sect;5</span><span> · Results &amp; Interpretation</span></div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Document Claims</div>
+      <div class="doc-excerpt">
+        Summary: "nearly <span class="highlight">two-fifths</span> are unemployed job-seekers&hellip; The disabled
+        and retired&hellip; contribute <span class="highlight">about two percent</span> of modeled entrants."<br>
+        Appendix &sect;5: "<span class="highlight">about a third</span> of modeled entrants are unemployed
+        job-seekers and roughly <span class="highlight">one percent</span> are disabled or retired."
+      </div>
+      <div class="finding-section-label">What the Code Does</div>
+      <pre><code># 02d emits entrants_{unemployed,nilf_other,disabled,retired}_M (E1 reporting)
+# methodology doc rev(6): "unemployed now 35% of entrants, disabled+retired ~1%"</code></pre>
+      <div class="finding-section-label">Why This Is Inconsistent</div>
+      <div class="finding-text">The summary says unemployed are "nearly two-fifths" (~38&ndash;40%) of entrants and
+        disabled+retired are "about two percent"; the appendix says "about a third" (~33%) and "one percent"; the
+        methodology doc (reflecting the run) says 35% and ~1%. The three descriptions of the same
+        <code>entrants_*_M</code> diagnostic disagree. The summary's "two-fifths" overstates the unemployed share
+        relative to the run, and its "two percent" doubles the disabled+retired share the appendix and methodology
+        doc report.</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Read the exact <code>entrants_unemployed_M</code> and disabled+retired shares from 02d's central pool output.</li>
+        <li>Harmonize the summary and appendix to the same rounded figure (methodology doc says 35% and ~1%).</li>
+        <li>Confirm "five to six times" (summary) vs "roughly five-to-one" (appendix) for the U&rarr;E vs N&rarr;E job-finding ratio; the status weight itself is exactly 5.0.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Methodology</div>
+
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">CC-003</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Sticky-case firm capture stated as "~2 percent" in the summary but "under one percent" in the appendix</div>
+        <div class="finding-meta"><span class="file">summary "Will employers just capture it?"; appendix &sect;7</span><span> · Methodology</span></div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Document Claims</div>
+      <div class="doc-excerpt">
+        Summary: "firms capture <span class="highlight">no more than about 2 percent</span> of the gross subsidy
+        across the full range of bargaining assumptions."<br>
+        Appendix &sect;7: "firms capture <span class="highlight">under one percent</span> of the subsidy, entirely
+        on new hires."
+      </div>
+      <div class="finding-section-label">What the Code Does</div>
+      <pre><code># 02d simulate(): firm_capture_pct_of_gross computed per beta in {0.30,0.50,0.70}, rigid mode
+# entrant firm capture = max(0, y - w_final)*h  (actual surplus at floor-pinned wage, PI-1)</code></pre>
+      <div class="finding-section-label">Why This Is Inconsistent</div>
+      <div class="finding-text">Both passages describe firm capture under the sticky-incumbent-wage case, but give different
+        magnitudes ("~2 percent" vs "under one percent"). Because firm capture falls only on entrants and scales with
+        (1&minus;&beta;), the value varies across the &beta; band (0.3/0.5/0.7); the summary may be quoting the
+        &beta;=0.3 upper edge while the appendix quotes the central. Either way the two drafts should not report
+        different headline numbers for the same quantity — a reader comparing them will see a contradiction.</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Read <code>firm_capture_pct_of_gross</code> for all three rigid-mode &beta; rows from matching_simulation.parquet.</li>
+        <li>Decide whether the headline is the max over &beta; (summary framing) or the central; state it consistently in both drafts.</li>
+        <li>Reconcile with the "Confidence" claim; the summary's "across the full range of bargaining assumptions" implies the max, so "~2 percent" and "under one percent" cannot both be the across-range statement.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Tables &amp; Figures</div>
+
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">CC-004</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Figure 6 caption still frames the model's mechanism as clearing a "reservation wage"</div>
+        <div class="finding-meta"><span class="file">2026-07-08_wage-subsidy-impact-cost-summary.md Fig 6</span><span> · Tables &amp; Figures</span></div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Document Claims</div>
+      <div class="doc-excerpt">
+        "<strong>Figure 6.</strong> <span class="highlight">How the subsidy clears a worker's reservation wage.</span>"
+        (and the Mike narrative: "whose reservation wage sat just above what any employer would offer him").
+      </div>
+      <div class="finding-section-label">What the Code Does</div>
+      <pre><code># 01h: reservation_wage_{lower,central,upper} = y*(1+m)  is a
+#   "descriptive gross-equivalent alias only ... does not enter any downstream computation"
+# methodology doc: markups are "entry-resistance residuals (nonwage job values, health,
+#   benefit interactions) ... NOT measured reservation wages"; gate is required_net_gain_*</code></pre>
+      <div class="finding-section-label">Why This Is Inconsistent</div>
+      <div class="finding-text">The reality assessment and methodology doc explicitly stop calling the non-employed
+        pool's calibrated markups "reservation wages," and the code gates entry on <code>required_net_gain_*</code>,
+        keeping <code>reservation_wage_*</code> only as a non-load-bearing descriptive alias. The summary's own
+        language note (&sect;"How sure are you?") correctly disavows the term — but Figure 6's caption and the Mike
+        framing still present the mechanism as the subsidy "clearing a reservation wage." A prominent figure title
+        undercuts the disclaimer the same draft makes later. (The appendix &sect;5 handles this correctly; the
+        incumbent-side reservation wage in &sect;7 is a legitimate separate object.)</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Reword the Figure 6 caption to "entry threshold" / "the gap the subsidy must clear" consistent with the &sect;"How sure" language note.</li>
+        <li>Confirm what the Figure 6 script actually plots (the <code>reservation_wage_central</code> alias, or an entry-threshold construct) and label it accordingly.</li>
+        <li>Decide whether the Mike narrative should be flagged as prior-post framing rather than the current model's object.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="category-heading">LOW — 5 findings</div>
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Methodology</div>
+
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">CC-005</div>
+      <div class="finding-title-block">
+        <div class="finding-title">All-renegotiate gross bound reported as $158B in the appendix but $160.3B / "$160 billion" in the summary</div>
+        <div class="finding-meta"><span class="file">summary Table 1 &amp; body; appendix &sect;7</span><span> · Methodology</span></div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Document Claims</div>
+      <div class="doc-excerpt">
+        Summary Table 1: "Incidence upper bound (all wages renegotiate) up to <span class="highlight">160.3</span>";
+        body: "gross cost could rise to <span class="highlight">$160 billion</span>."<br>
+        Appendix &sect;7: "raises gross cost to <span class="highlight">$158 billion</span> with 55 percent firm capture."
+      </div>
+      <div class="finding-section-label">What the Code Does</div>
+      <pre><code># 02d simulate(incumbent_rigid=False): flexible-Nash path produces the all-renegotiate
+# gross_cost_bn; the single numeric value is not statically determinable from source.</code></pre>
+      <div class="finding-section-label">Why This Is Inconsistent</div>
+      <div class="finding-text">The two drafts give different values ($158B vs $160.3B/$160B) for the same disclosed
+        all-wages-renegotiate incidence bound. Both round to "about $160B," so the qualitative point is unaffected,
+        but the exact figures should match across documents.</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Read the flex-mode gross_cost_bn from matching_simulation.parquet and use one value in both drafts.</li>
+        <li>Confirm which &beta; row the "55 percent firm capture" corresponds to and that it pairs with the quoted gross figure.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">CC-006</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Incumbent reservation ratio is 0.80 in code but the drafts cite Krueger-Mueller as "~90% of prior wages"</div>
+        <div class="finding-meta"><span class="file">appendix &sect;4 &amp; &sect;7</span><span> · Methodology</span></div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Document Claims</div>
+      <div class="doc-excerpt">
+        Appendix &sect;4/&sect;7: "unemployed workers accept re-employment at about <span class="highlight">90 percent</span>
+        of prior wages (Krueger and Mueller 2016)"; matching foundations cite Krueger-Mueller for the reservation anchor.
+      </div>
+      <div class="finding-section-label">What the Code Does</div>
+      <pre><code># 00_config.py
+"reservation_ratio": 0.80,   # "Reservation wage as a share of the worker's current
+                             #  (prior) wage — Krueger-Mueller anchor."
+# 02d simulate(): r_i = rho * w0  with rho = 0.80</code></pre>
+      <div class="finding-section-label">Why This Is Inconsistent</div>
+      <div class="finding-text">The structural incumbent reservation wage is set to 0.80&times;prior wage and attributed to
+        Krueger-Mueller, yet the number the drafts cite from Krueger-Mueller is ~0.90. The drafts never state the
+        0.80 value used, so there is no outright contradiction, but a reader could reasonably infer the model uses
+        0.90. Either disclose the 0.80 calibration (and why it departs from the cited 0.90) or reconcile the anchor.</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Confirm <code>reservation_ratio = 0.80</code> is intended and note the departure from the 0.90 KM estimate.</li>
+        <li>Consider a one-line disclosure in the appendix bargaining section stating the incumbent reservation ratio used.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">CC-007</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Appendix says "EARNWT for everything measured on workers," but the Heckman wage regression is unweighted</div>
+        <div class="finding-meta"><span class="file">appendix &sect;1 / &sect;4</span><span> · Methodology</span></div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Document Claims</div>
+      <div class="doc-excerpt">
+        "we use the <span class="highlight">earnings weight (EARNWT) for everything measured on workers</span> and
+        the population weight (WTFINL) for the non-employed."
+      </div>
+      <div class="finding-section-label">What the Code Does</div>
+      <pre><code># 01h heckman_impute(): probit and wage OLS are fit WITHOUT weights
+probit = sm.Probit(D, Xsel.to_numpy()).fit(disp=0, maxiter=200)
+ols    = sm.OLS(y, Xw.to_numpy()).fit()          # no weights=
+# WTFINL is used for the non-employed pool weight; EARNWT only appears in the
+# _cellmedian_fallback path, not the headline Heckman estimation.</code></pre>
+      <div class="finding-section-label">Why This Is Inconsistent</div>
+      <div class="finding-text">The blanket claim that EARNWT is used for "everything measured on workers" is not quite
+        right for the wage model itself: the participation probit and log-wage OLS that generate the imputed MPL are
+        estimated unweighted. Descriptive worker quantities (eligibility counts, medians) plausibly are EARNWT-weighted
+        (built upstream in 01a, outside this review's scope), so the statement is true for those, but the sweeping
+        "everything" overstates it. Worth a small qualification.</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Confirm the Heckman probit/OLS are intended to be unweighted and whether that is a deliberate choice.</li>
+        <li>Qualify the appendix sentence to "descriptive worker statistics" rather than "everything measured on workers," or add weights to the wage model.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Data Sources</div>
+
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">CC-008</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Data window ("12 months May 2025–May 2026, excluding October 2025 not fielded") is not verifiable from the provided code</div>
+        <div class="finding-meta"><span class="file">summary refresher; appendix &sect;1</span><span> · Data Sources</span></div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Document Claims</div>
+      <div class="doc-excerpt">
+        Appendix &sect;1: "the twelve most recent complete monthly samples (<span class="highlight">May 2025 through
+        May 2026, excluding October 2025, which was not fielded</span>)."<br>
+        Summary: "the most recent 12 months of Current Population Survey data (May 2025 through May 2026)" — omits the October exclusion.
+      </div>
+      <div class="finding-section-label">What the Code Does</div>
+      <pre><code># 01h main(): parts = sorted(raw_dir.glob("year=*/part-0.parquet"))[-2:]
+# n_months = org.groupby(["YEAR","MONTH"]).ngroups
+# The month coverage is whatever the last two year-partitions contain; the specific
+# May–May window and the October-2025 exclusion are not encoded in the pipeline.</code></pre>
+      <div class="finding-section-label">Why This Is Inconsistent</div>
+      <div class="finding-text">The code loads the last two year-partitions and counts whatever months are present; it does
+        not pin the May 2025&ndash;May 2026 span or the October-2025 exclusion. The claim may be correct given the raw
+        data on disk, but it cannot be confirmed from the provided source, and the "not fielded" assertion about CPS is
+        unusual. The summary and appendix also differ (the summary omits the October exclusion while still saying "12
+        months," which would otherwise imply a 12-month contiguous span).</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Confirm the actual YEAR&times;MONTH cells in the raw partitions match "May 2025–May 2026 minus October 2025" and n_months = 12.</li>
+        <li>Add the October-2025 exclusion note to the summary, or drop the exact window there and defer to the appendix.</li>
+        <li>Verify the CPS "not fielded in October 2025" statement against an external source before publication.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Results &amp; Interpretation</div>
+
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">CC-009</div>
+      <div class="finding-title-block">
+        <div class="finding-title">"15.5% of hourly workers receive the subsidy" vs "23.6% of paid-hourly workers below target" use unreconciled denominators</div>
+        <div class="finding-meta"><span class="file">summary Table 2 note / Figure 8</span><span> · Results &amp; Interpretation</span></div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Document Claims</div>
+      <div class="doc-excerpt">
+        Table 2 note: "Overall, <span class="highlight">15.5 percent</span> of hourly workers receive the subsidy"
+        (20.81M / 134.3M).<br>
+        Figure 8 / Appendix &sect;4: "<span class="highlight">23.6 percent</span> of paid-hourly workers" earn/draw below the $16.80 target.
+      </div>
+      <div class="finding-section-label">What the Code Does</div>
+      <pre><code># 01h prints pct_below for the pool (41.4%) and references workers 23.6% below target
+# Eligibility base (15.5% = 20.81/134.3) is computed in 02a (not in the reviewed set);
+# the two shares apply different exclusions (dependent children under 19, wage floor).</code></pre>
+      <div class="finding-section-label">Why This Is Inconsistent</div>
+      <div class="finding-text">Two shares of the "hourly / paid-hourly workforce" are quoted (15.5% receiving vs 23.6%
+        below target) that differ by ~8 points with no stated reconciliation. They are plausibly consistent — the
+        23.6% likely counts all paid-hourly workers below target while the 15.5% eligibility base excludes dependent
+        children under 19 and applies the $7.25 floor — but the drafts do not connect them, and a careful reader will
+        wonder why "below target" and "eligible" diverge. This overlaps with number-verification scope; flagged here
+        because the definitional link is a consistency gap.</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Trace both denominators to code and confirm the exclusions that separate "below-target" (23.6%) from "eligible/receiving" (15.5%).</li>
+        <li>Add a half-sentence reconciling the two shares (e.g., "the gap is dependent children under 19 and sub-minimum earners excluded from eligibility").</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ═══════════════ REVIEWED FILES TABLE ═══════════════ -->
+  <h2>Reviewed Files</h2>
+  <table class="files-table">
+    <thead>
+      <tr>
+        <th>File</th><th>Type</th><th>Language</th>
+        <th style="text-align:center">Lines</th>
+        <th style="text-align:center">Claims / Concerns</th>
+        <th style="text-align:center">Highest Severity</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>drafts/2026-07-08_wage-subsidy-impact-cost-summary.md</td><td>Document</td><td>Markdown</td><td class="count-cell">308</td><td class="count-cell has-issues">6</td><td class="count-cell">HIGH</td></tr>
+      <tr><td>drafts/2026-07-09_technical-appendix.md</td><td>Document</td><td>Markdown</td><td class="count-cell">143</td><td class="count-cell has-issues">7</td><td class="count-cell">HIGH</td></tr>
+      <tr><td>code/00_setup/00_config.py</td><td>Code</td><td>Python</td><td class="count-cell">273</td><td class="count-cell has-issues">3</td><td class="count-cell">LOW</td></tr>
+      <tr><td>code/01_data_preparation/01h_nonemployed_pool.py</td><td>Code</td><td>Python</td><td class="count-cell">733</td><td class="count-cell has-issues">5</td><td class="count-cell">MEDIUM</td></tr>
+      <tr><td>code/01_data_preparation/01i_household_links.py</td><td>Code</td><td>Python</td><td class="count-cell">170</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/02_descriptive_analysis/02b_behavioral_scenarios.py</td><td>Code</td><td>Python</td><td class="count-cell">340</td><td class="count-cell has-issues">2</td><td class="count-cell">MEDIUM</td></tr>
+      <tr><td>code/02_descriptive_analysis/02d_matching_simulation.py</td><td>Code</td><td>Python</td><td class="count-cell">466</td><td class="count-cell has-issues">4</td><td class="count-cell">HIGH</td></tr>
+      <tr><td>code/02_descriptive_analysis/02f_mpl_imputation_band.py</td><td>Code</td><td>Python</td><td class="count-cell">134</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>docs/entry_from_nonemployment_methodology.md</td><td>Reference</td><td>Markdown</td><td class="count-cell">96</td><td class="count-cell has-issues">3</td><td class="count-cell">MEDIUM</td></tr>
+    </tbody>
+  </table>
+
+</div>
+
+<div class="report-footer">
+  Generated by AI review agent · conceptual-consistency-reviewer · 2026-07-09<br>
+  Scope: document–code consistency — see code-error-report.html for code bugs, methodology-report.html for design concerns
+</div>
+
+</body>
+</html>

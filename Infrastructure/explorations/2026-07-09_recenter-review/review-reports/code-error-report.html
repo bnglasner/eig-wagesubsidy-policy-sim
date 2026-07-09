@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Code Error Report — eig-wagesubsidy-policy-sim</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 15px; line-height: 1.6; color: #1e293b; background: #f8fafc;
+    }
+    .report-header { background: #1e293b; color: #f1f5f9; padding: 2rem 2.5rem; }
+    .report-header h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.25rem; }
+    .report-header .subtitle { font-size: 0.9rem; color: #94a3b8; }
+    .report-header .meta { margin-top: 1rem; display: flex; gap: 2rem; flex-wrap: wrap; font-size: 0.85rem; color: #cbd5e1; }
+    .report-header .meta span strong { color: #f1f5f9; }
+    .container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+    h2 { font-size: 1.15rem; font-weight: 600; color: #1e293b; margin: 2rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid #e2e8f0; }
+    .summary-box { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; font-size: 0.95rem; color: #334155; line-height: 1.7; }
+    .stat-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.75rem; margin-bottom: 2rem; }
+    .stat-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; text-align: center; }
+    .stat-card .count { font-size: 2rem; font-weight: 700; line-height: 1; }
+    .stat-card .label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.3rem; }
+    .sev-critical .count, .sev-critical .label { color: #dc2626; }
+    .sev-high .count, .sev-high .label { color: #ea580c; }
+    .sev-medium .count, .sev-medium .label { color: #ca8a04; }
+    .sev-low .count, .sev-low .label { color: #2563eb; }
+    .sev-info .count, .sev-info .label { color: #64748b; }
+    .sev-suggestion .count, .sev-suggestion .label { color: #16a34a; }
+    .finding { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 1.25rem; overflow: hidden; }
+    .finding-header { display: flex; align-items: flex-start; gap: 1rem; padding: 1rem 1.25rem; border-left: 5px solid transparent; }
+    .finding.critical .finding-header { border-left-color: #dc2626; }
+    .finding.high .finding-header { border-left-color: #ea580c; }
+    .finding.medium .finding-header { border-left-color: #ca8a04; }
+    .finding.low .finding-header { border-left-color: #2563eb; }
+    .finding.info .finding-header { border-left-color: #94a3b8; }
+    .finding.suggestion .finding-header { border-left-color: #16a34a; }
+    .finding-id { font-size: 0.75rem; font-weight: 700; font-family: monospace; color: #64748b; min-width: 4.5rem; padding-top: 0.15rem; }
+    .finding-title-block { flex: 1; }
+    .finding-title { font-weight: 600; font-size: 1rem; color: #1e293b; }
+    .finding-meta { font-size: 0.8rem; color: #64748b; margin-top: 0.2rem; }
+    .finding-meta .file { font-family: monospace; }
+    .severity-badge { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.2rem 0.55rem; border-radius: 4px; }
+    .badge-critical { background: #fef2f2; color: #dc2626; }
+    .badge-high { background: #fff7ed; color: #ea580c; }
+    .badge-medium { background: #fefce8; color: #ca8a04; }
+    .badge-low { background: #eff6ff; color: #2563eb; }
+    .badge-info { background: #f1f5f9; color: #64748b; }
+    .badge-suggestion { background: #f0fdf4; color: #16a34a; }
+    .finding-body { padding: 0 1.25rem 1.25rem 3.75rem; }
+    .finding-section-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #94a3b8; margin: 0.85rem 0 0.35rem; }
+    .finding-text { font-size: 0.9rem; color: #334155; }
+    pre { background: #0f172a; color: #e2e8f0; border-radius: 6px; padding: 1rem; overflow-x: auto; font-size: 0.82rem; line-height: 1.55; margin: 0.5rem 0; }
+    code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
+    .code-label { font-size: 0.7rem; color: #64748b; font-family: monospace; margin-bottom: 0.15rem; }
+    .data-currency-table, .files-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+    .data-currency-table th, .files-table th { background: #f1f5f9; text-align: left; padding: 0.65rem 1rem; font-weight: 600; color: #475569; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; }
+    .data-currency-table td, .files-table td { padding: 0.6rem 1rem; border-bottom: 1px solid #f1f5f9; color: #334155; }
+    .data-currency-table tr:last-child td, .files-table tr:last-child td { border-bottom: none; }
+    .data-currency-note { font-size: 0.85rem; color: #64748b; margin-bottom: 0.75rem; }
+    .status-current { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 4px; background: #f0fdf4; color: #16a34a; }
+    .status-outdated { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 4px; background: #fffbeb; color: #d97706; }
+    .status-unknown { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 4px; background: #f1f5f9; color: #64748b; }
+    .files-table td:first-child { font-family: monospace; font-size: 0.82rem; color: #1e293b; }
+    .files-table .count-cell { text-align: center; font-weight: 600; }
+    .files-table .ok { color: #16a34a; }
+    .files-table .has-issues { color: #dc2626; }
+    .report-footer { margin-top: 3rem; padding: 1.5rem; text-align: center; font-size: 0.8rem; color: #94a3b8; border-top: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+
+<div class="report-header">
+  <h1>Code Error Report</h1>
+  <div class="subtitle">Definitive code bugs and efficiency/readability suggestions</div>
+  <div class="meta">
+    <span><strong>Project:</strong> eig-wagesubsidy-policy-sim</span>
+    <span><strong>Reviewed:</strong> 2026-07-09</span>
+    <span><strong>Files:</strong> 10 files across Python, R</span>
+    <span><strong>Reviewer:</strong> AI review agent (code-reviewer)</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <h2>Executive Summary</h2>
+  <div class="summary-box">
+    Review of 10 files (8 Python, 2 R) focused on the 2026-07-09 entry-model re-center. <strong>No definitive
+    correctness bugs were found.</strong> The four highest-risk areas of the re-center were each verified against live
+    behavior and pass: (1) the pool-filename suffix logic in the new <code>02g_entry_scenario_grid.py</code> reproduces
+    01h's <code>_POOL_SUFFIX</code> exactly across all 27 grid cells and the evidence-central bundle
+    (<code>__skewstat_evc</code>); (2) the <code>hours_override</code>/<code>weight_override</code> positional contract in
+    <code>_entrants_from_pool</code> is applied to the unfiltered pool before <code>dropna</code>, so overrides stay
+    row-aligned; (3) all stochastic draws are deterministic hash-quantile ranks (no unseeded RNG); and (4) the suffixed-pool
+    cleanup only removes pools it built and asserts the canonical <code>nonemployed_pool.parquet</code> survives. The
+    static-parity test (<code>tests/test_behavioral_static_parity.py</code>) passes. Findings are 1 LOW portability issue
+    (a hard-coded sibling-repo path fallback) and 5 efficiency/readability SUGGESTIONS (redundant parquet reads,
+    hard-coded figure values, a manifest-coverage gap, and dense one-liners). No CRITICAL, HIGH, or MEDIUM issues.
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card sev-critical"><div class="count">0</div><div class="label">Critical</div></div>
+    <div class="stat-card sev-high"><div class="count">0</div><div class="label">High</div></div>
+    <div class="stat-card sev-medium"><div class="count">0</div><div class="label">Medium</div></div>
+    <div class="stat-card sev-low"><div class="count">1</div><div class="label">Low</div></div>
+    <div class="stat-card sev-info"><div class="count">0</div><div class="label">Info</div></div>
+    <div class="stat-card sev-suggestion"><div class="count">5</div><div class="label">Suggestions</div></div>
+  </div>
+
+  <h2>Findings</h2>
+
+  <!-- CE-001 LOW -->
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">CE-001</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Hard-coded sibling-repo path in the raw-ORG directory fallback</div>
+        <div class="finding-meta">
+          <span class="file">code/01_data_preparation/01h_nonemployed_pool.py</span>
+          <span> · Line 162–170 · Python</span>
+        </div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Problematic Code</div>
+      <div class="code-label">code/01_data_preparation/01h_nonemployed_pool.py:162</div>
+      <pre><code>def _find_raw_org_dir() -&gt; Path | None:
+    env = os.environ.get("EIG_ORG_RAW_DIR", "")
+    cands = ([Path(env)] if env else []) + [
+        PATH_PROJECT / "data" / "raw" / "cps_org",
+        PATH_PROJECT.parent / "EIG-Wage-Figure-Explain-Everything" / "data" / "raw" / "cps_org"]
+    for c in cands:
+        if c.is_dir() and list(c.glob("year=*/part-0.parquet")):
+            return c
+    return None</code></pre>
+      <div class="finding-section-label">Why This Is Wrong</div>
+      <div class="finding-text">The second fallback candidate hard-codes a specific sibling-repository directory name
+        (<code>EIG-Wage-Figure-Explain-Everything</code>) relative to the project parent. On any checkout where that
+        sibling repo is absent or named differently, and where <code>EIG_ORG_RAW_DIR</code> is not set, the function
+        silently returns <code>None</code> and the pipeline falls back to a synthetic pool — producing different results
+        with only a printed warning, not an error. This is the classic "works on the author's machine" portability
+        pattern. The identical <code>_find_raw_org_dir()</code> is duplicated in
+        <code>code/01_data_preparation/01i_household_links.py</code> (line 55–64), so both stages share the fragility.</div>
+      <div class="finding-section-label">Recommended Fix</div>
+      <pre><code># Prefer an explicit, documented config/env contract and fail loudly when the
+# real data is expected but missing, rather than silently degrading to synthetic:
+cands = ([Path(env)] if env else []) + [PATH_PROJECT / "data" / "raw" / "cps_org"]
+# Optionally read additional search roots from cfg (e.g. cfg["org_raw_search_dirs"])
+# so the sibling-repo location is configuration, not a literal in two files.</code></pre>
+      <div class="finding-text">Move the sibling-repo location into configuration (or require
+        <code>EIG_ORG_RAW_DIR</code>) and factor the shared helper into one module so 01h and 01i cannot drift. Severity
+        is LOW because the current behavior degrades gracefully with a warning rather than corrupting output.</div>
+    </div>
+  </div>
+
+  <!-- CE-002 SUGGESTION -->
+  <div class="finding suggestion">
+    <div class="finding-header">
+      <div class="finding-id">CE-002</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Cost-per-job figure hard-codes values that other stages now compute</div>
+        <div class="finding-meta">
+          <span class="file">code/05_figures_tables/05c_core_figures.R</span>
+          <span> · Line 374–378 · R</span>
+        </div>
+      </div>
+      <span class="severity-badge badge-suggestion">SUGGESTION</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Problematic Code</div>
+      <div class="code-label">code/05_figures_tables/05c_core_figures.R:374</div>
+      <pre><code>marginal &lt;- 5120
+full_lo  &lt;- 22000    # high joint corner (3.37M)
+full_hi  &lt;- 89000    # conservative floor (0.83M)
+full_mid &lt;- 59000    # evidence-central (1.25M)</code></pre>
+      <div class="finding-section-label">Why This Is Wrong</div>
+      <div class="finding-text">These four figure values are hand-derived from the entry counts and entrant gross cost
+        that the re-center now writes to disk (<code>entry_headline_scenarios.parquet</code> and
+        <code>entrant_hours_sensitivity.parquet</code> from 02g/02d). They are correct today, but because they are
+        literals they will silently drift out of sync the next time the penalty band, &lambda;, or elasticity edge is
+        re-tuned — exactly the kind of re-center this figure is meant to track. This is not a correctness bug (the values
+        currently reconcile: <code>6.4e9/1.25e6 &asymp; 5120</code>, <code>74.2e9/0.83e6 &asymp; 89000</code>), only a
+        maintainability/robustness risk.</div>
+      <div class="finding-section-label">Recommended Fix</div>
+      <pre><code>hs  &lt;- pop("entry_headline_scenarios")
+ehs &lt;- pop("entrant_hours_sensitivity")
+net_total &lt;- pop("summary")$net_cost_bn[1] * 1e9
+get &lt;- function(scn, col) hs[[col]][hs$scenario == scn]
+full_hi  &lt;- net_total / (get("conservative_floor", "induced_M") * 1e6)
+full_mid &lt;- net_total / (get("evidence_central",   "induced_M") * 1e6)
+full_lo  &lt;- net_total / (get("high",               "induced_M") * 1e6)
+marginal &lt;- ehs$marginal_gross_per_job[ehs$hours_mode == "rank"]</code></pre>
+      <div class="finding-text">Deriving the annotations from the parquet outputs keeps Figure 10 automatically
+        consistent with the scenario grid after any future re-center.</div>
+    </div>
+  </div>
+
+  <!-- CE-003 SUGGESTION -->
+  <div class="finding suggestion">
+    <div class="finding-header">
+      <div class="finding-id">CE-003</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Repeated parquet reads inside the 02d simulation loop</div>
+        <div class="finding-meta">
+          <span class="file">code/02_descriptive_analysis/02d_matching_simulation.py</span>
+          <span> · Line 124–128, 179–191 · Python</span>
+        </div>
+      </div>
+      <span class="severity-badge badge-suggestion">SUGGESTION</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Problematic Code</div>
+      <div class="code-label">code/02_descriptive_analysis/02d_matching_simulation.py:124</div>
+      <pre><code>def simulate(w, beta, target, rho, entry_wage, incumbent_rigid):
+    ...
+    pool_path = PATH_DATA_PROCESSED / "nonemployed_pool.parquet"
+    if pool_path.exists():
+        ge, ne, fce, induced_M, ind_by_cell, detail = _entrants_from_pool(
+            pd.read_parquet(pool_path), beta, target)   # re-read on every simulate() call
+
+# simulate() is called 6x (rigid/flex x 3 betas), so the pool parquet is read 6x;
+# _entrant_hours_by_mode() then re-reads hourly_workers.parquet once per mode (3x).</code></pre>
+      <div class="finding-section-label">Why This Is Wrong</div>
+      <div class="finding-text"><code>nonemployed_pool.parquet</code> is re-read from disk on each of the six
+        <code>simulate()</code> invocations, and <code>hourly_workers.parquet</code> is re-read on each of the three
+        <code>_entrant_hours_by_mode()</code> calls in <code>entrant_hours_sensitivity()</code> — even though both files
+        are already loaded once in <code>main()</code>. The pool is beta-invariant for the entrant gate, so these are pure
+        redundant I/O. Results are unaffected (correctness is fine); this only wastes disk reads on files that can be
+        multi-hundred-MB.</div>
+      <div class="finding-section-label">Recommended Fix</div>
+      <pre><code># Read each parquet once in main() and pass the DataFrame down:
+pool_df = pd.read_parquet(pool_path) if pool_path.exists() else None
+# simulate(..., pool_df=pool_df); _entrant_hours_by_mode(pool, inc_df=inc_df)
+# so hourly_workers/nonemployed_pool are loaded a single time per run.</code></pre>
+      <div class="finding-text">Threading the already-loaded frames through removes ~8 redundant reads per run with no
+        change in output.</div>
+    </div>
+  </div>
+
+  <!-- CE-004 SUGGESTION -->
+  <div class="finding suggestion">
+    <div class="finding-header">
+      <div class="finding-id">CE-004</div>
+      <div class="finding-title-block">
+        <div class="finding-title">hourly_workers.parquet read twice in 01h main()</div>
+        <div class="finding-meta">
+          <span class="file">code/01_data_preparation/01h_nonemployed_pool.py</span>
+          <span> · Line 359, 382 · Python</span>
+        </div>
+      </div>
+      <span class="severity-badge badge-suggestion">SUGGESTION</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Problematic Code</div>
+      <div class="code-label">code/01_data_preparation/01h_nonemployed_pool.py:359</div>
+      <pre><code>def _entry_hours(nonemp, mpl):
+    hw_path = PATH_DATA_PROCESSED / "hourly_workers.parquet"
+    ...
+    inc = pd.read_parquet(hw_path)          # read #1
+
+def _eligible_stock_by_cell():
+    hw_path = PATH_DATA_PROCESSED / "hourly_workers.parquet"
+    ...
+    inc = pd.read_parquet(hw_path)          # read #2 (same file, same run)</code></pre>
+      <div class="finding-section-label">Why This Is Wrong</div>
+      <div class="finding-text">Both helpers are called from <code>main()</code> in the same run and each independently
+        reads the full <code>hourly_workers.parquet</code>, and both immediately derive
+        <code>inc_cells = _b.assign_cell(inc)</code>. Since 02g rebuilds 01h up to nine times per grid run, this doubling
+        multiplies across the whole scenario sweep. No effect on correctness — it is redundant I/O only.</div>
+      <div class="finding-section-label">Recommended Fix</div>
+      <pre><code># Load once in main() and pass the frame (and its assign_cell result) into both:
+inc = pd.read_parquet(PATH_DATA_PROCESSED / "hourly_workers.parquet")
+hours      = _entry_hours(nonemp, mpl, inc=inc)
+elig_stock = _eligible_stock_by_cell(inc=inc)</code></pre>
+      <div class="finding-text">A single read shared by both helpers halves 01h's incumbent-file I/O, which compounds
+        under the 02g subprocess sweep.</div>
+    </div>
+  </div>
+
+  <!-- CE-005 SUGGESTION -->
+  <div class="finding suggestion">
+    <div class="finding-header">
+      <div class="finding-id">CE-005</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Manifest omits the evidence-central pool artifact written by 02g</div>
+        <div class="finding-meta">
+          <span class="file">code/05_figures_tables/05z_build_manifest.py</span>
+          <span> · Line 82–90 · Python</span>
+        </div>
+      </div>
+      <span class="severity-badge badge-suggestion">SUGGESTION</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Problematic Code</div>
+      <div class="code-label">code/05_figures_tables/05z_build_manifest.py:86</div>
+      <pre><code>for name in ("nonemployed_pool.parquet", "nonemployed_pool_diagnostics.json",
+             "household_links.parquet"):
+    p = PROCESSED / name
+    if p.exists():
+        rows.append(_describe(p, p.stem))</code></pre>
+      <div class="finding-section-label">Why This Is Wrong</div>
+      <div class="finding-text">The re-center adds a new persistent, figure-consumed artifact,
+        <code>data/processed/nonemployed_pool_evidence_central.parquet</code> (written by 02g and read by 05c's Figure 12
+        clawback). The manifest's <code>data/processed</code> scan only lists three fixed filenames, so this new pool is
+        never described in <code>_manifest.csv</code> — contradicting the module's stated goal that "nothing is silently
+        invisible." It also has no <code>_REGISTRY</code> entry. This is a documentation/coverage gap, not a correctness
+        bug.</div>
+      <div class="finding-section-label">Recommended Fix</div>
+      <pre><code>for name in ("nonemployed_pool.parquet", "nonemployed_pool_evidence_central.parquet",
+             "nonemployed_pool_diagnostics.json", "household_links.parquet"):
+    ...
+# and add to _REGISTRY:
+"nonemployed_pool_evidence_central": ("02g", "analysis-table",
+    "Evidence-central pool (status-differentiated ~10% penalty) — headline entry; fig12/fig07b source."),</code></pre>
+      <div class="finding-text">Listing and registering the artifact keeps the manifest a complete index of consumable
+        intermediates after the re-center.</div>
+    </div>
+  </div>
+
+  <!-- CE-006 SUGGESTION -->
+  <div class="finding suggestion">
+    <div class="finding-header">
+      <div class="finding-id">CE-006</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Semicolon-packed weighted-quantile one-liners hinder readability</div>
+        <div class="finding-meta">
+          <span class="file">code/01_data_preparation/01h_nonemployed_pool.py</span>
+          <span> · Line 337–340, 704–705 · Python</span>
+        </div>
+      </div>
+      <span class="severity-badge badge-suggestion">SUGGESTION</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Problematic Code</div>
+      <div class="code-label">code/01_data_preparation/01h_nonemployed_pool.py:337</div>
+      <pre><code>def wmed(v, w):
+    v = np.asarray(v, float); w = np.asarray(w, float); ok = ~np.isnan(v) &amp; (w &gt; 0)
+    if ok.sum() == 0: return np.nan
+    v, w = v[ok], w[ok]; i = np.argsort(v); cw = np.cumsum(w[i]); return float(v[i][np.searchsorted(cw, cw[-1]*0.5)])
+
+# and, at line 704:
+def wq(x, qq):
+    i = np.argsort(x); cw = np.cumsum(wt[i]); return float(np.asarray(x)[i][np.searchsorted(cw, cw[-1]*qq)])</code></pre>
+      <div class="finding-section-label">Why This Is Wrong</div>
+      <div class="finding-text">These weighted-quantile helpers pack four to six statements onto single lines with
+        semicolons, and the same sorted-cumulative-weight logic is re-implemented in at least three places (here, in 02f
+        line 106–107, and in the R <code>wmed</code> of 05c/05d). The logic is correct, but the density makes it hard to
+        audit — this is the exact "opaque one-liner replaceable with named steps" case in the readability checklist.</div>
+      <div class="finding-section-label">Recommended Fix</div>
+      <pre><code>def weighted_quantile(x, w, q):
+    x = np.asarray(x, float); w = np.asarray(w, float)
+    ok = ~np.isnan(x) &amp; (w &gt; 0)
+    if not ok.any():
+        return np.nan
+    x, w = x[ok], w[ok]
+    order = np.argsort(x)
+    cw = np.cumsum(w[order])
+    return float(x[order][np.searchsorted(cw, cw[-1] * q)])</code></pre>
+      <div class="finding-text">Expanding to one statement per line and centralizing a single
+        <code>weighted_quantile</code> helper (imported by 01h/02f) removes the duplication and makes the aggregation
+        step reviewable.</div>
+    </div>
+  </div>
+
+  <h2>Data Currency</h2>
+  <p class="data-currency-note">Checks whether recognized public datasets are using the latest available release. Informational only — researchers may deliberately use a specific vintage.</p>
+
+  <table class="data-currency-table">
+    <thead>
+      <tr>
+        <th>Dataset</th>
+        <th>Version in Code</th>
+        <th>Latest Available</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Current Population Survey — Outgoing Rotation / basic monthly (IPUMS CPS)</td>
+        <td>Basic-monthly ORG, 2025–2026 (*2 era); IPUMS CPS v13.0-era coding (in-repo extract cps_00305). 01h/01i read the last two <code>year=*/</code> partitions.</td>
+        <td>IPUMS CPS basic monthly through May 2026 (released Jun 2026); Census basic monthly CPS through May 2026, June 2026 due 2026-07-23.</td>
+        <td><span class="status-current">Current</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="data-currency-note">Note: PolicyEngine net-income schedules and the derived <code>hourly_workers.parquet</code> / <code>nonemployed_pool.parquet</code> are project-internal, not public datasets, and are excluded from the currency check. The CPS extract vintage matches the latest available data year; the exact monthly extent depends on the local raw ORG partitions, which are outside this review.</p>
+
+  <h2>Reviewed Files</h2>
+  <table class="files-table">
+    <thead>
+      <tr>
+        <th>File</th>
+        <th>Language</th>
+        <th style="text-align:center">Lines</th>
+        <th style="text-align:center">Errors Found</th>
+        <th style="text-align:center">Highest Severity</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>code/00_setup/00_config.py</td><td>Python</td><td class="count-cell">303</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/01_data_preparation/01h_nonemployed_pool.py</td><td>Python</td><td class="count-cell">733</td><td class="count-cell has-issues">3</td><td class="count-cell">LOW</td></tr>
+      <tr><td>code/01_data_preparation/01i_household_links.py</td><td>Python</td><td class="count-cell">170</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/02_descriptive_analysis/02b_behavioral_scenarios.py</td><td>Python</td><td class="count-cell">340</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/02_descriptive_analysis/02d_matching_simulation.py</td><td>Python</td><td class="count-cell">543</td><td class="count-cell has-issues">1</td><td class="count-cell">SUGGESTION</td></tr>
+      <tr><td>code/02_descriptive_analysis/02f_mpl_imputation_band.py</td><td>Python</td><td class="count-cell">134</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/02_descriptive_analysis/02g_entry_scenario_grid.py</td><td>Python</td><td class="count-cell">185</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/05_figures_tables/05c_core_figures.R</td><td>R</td><td class="count-cell">535</td><td class="count-cell has-issues">1</td><td class="count-cell">SUGGESTION</td></tr>
+      <tr><td>code/05_figures_tables/05d_supporting_figures.R</td><td>R</td><td class="count-cell">700</td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/05_figures_tables/05z_build_manifest.py</td><td>Python</td><td class="count-cell">100</td><td class="count-cell has-issues">1</td><td class="count-cell">SUGGESTION</td></tr>
+    </tbody>
+  </table>
+
+</div>
+
+<div class="report-footer">
+  Generated by AI review agent · code-reviewer · 2026-07-09<br>
+  Scope: definitive code errors + efficiency/readability suggestions — see methodology-report.html for design concerns
+</div>
+
+</body>
+</html>

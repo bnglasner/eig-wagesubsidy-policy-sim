@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Number Verification Report — eig-wagesubsidy-policy-sim</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; line-height: 1.6; color: #1e293b; background: #f8fafc; }
+    .report-header { background: #312e81; color: #eef2ff; padding: 2rem 2.5rem; }
+    .report-header h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.25rem; }
+    .report-header .subtitle { font-size: 0.9rem; color: #a5b4fc; }
+    .report-header .meta { margin-top: 1rem; display: flex; gap: 2rem; flex-wrap: wrap; font-size: 0.85rem; color: #c7d2fe; }
+    .report-header .meta span strong { color: #eef2ff; }
+    .container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+    h2 { font-size: 1.15rem; font-weight: 600; color: #1e293b; margin: 2rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid #e2e8f0; }
+    .summary-box { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; font-size: 0.95rem; color: #334155; line-height: 1.7; }
+    .verify-row { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .verify-stat { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 1.25rem; text-align: center; flex: 1; min-width: 140px; }
+    .verify-stat .num { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+    .verify-stat .lbl { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem; color: #64748b; }
+    .verify-stat.extracted .num { color: #312e81; }
+    .verify-stat.verified  .num { color: #16a34a; }
+    .verify-stat.flagged   .num { color: #dc2626; }
+    .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem; margin-bottom: 2rem; }
+    .stat-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; text-align: center; }
+    .stat-card .count { font-size: 2rem; font-weight: 700; line-height: 1; }
+    .stat-card .label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.3rem; }
+    .sev-critical .count, .sev-critical .label { color: #dc2626; }
+    .sev-high .count, .sev-high .label { color: #ea580c; }
+    .sev-medium .count, .sev-medium .label { color: #ca8a04; }
+    .sev-low .count, .sev-low .label { color: #2563eb; }
+    .sev-info .count, .sev-info .label { color: #64748b; }
+    .inventory-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-bottom: 2rem; }
+    .inventory-table th { background: #f1f5f9; text-align: left; padding: 0.6rem 0.75rem; font-weight: 600; color: #475569; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; }
+    .inventory-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: top; }
+    .inventory-table tr:last-child td { border-bottom: none; }
+    .inventory-table .mono { font-family: monospace; font-size: 0.8rem; }
+    .inventory-table .context { font-size: 0.78rem; color: #64748b; max-width: 240px; }
+    .status-badge { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.15rem 0.45rem; border-radius: 3px; white-space: nowrap; }
+    .status-verified { background: #f0fdf4; color: #16a34a; }
+    .status-mismatch { background: #fef2f2; color: #dc2626; }
+    .status-unverifiable { background: #fefce8; color: #ca8a04; }
+    .status-approximate { background: #eff6ff; color: #2563eb; }
+    .finding { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 1.25rem; overflow: hidden; }
+    .finding-header { display: flex; align-items: flex-start; gap: 1rem; padding: 1rem 1.25rem; border-left: 5px solid transparent; }
+    .finding.critical .finding-header { border-left-color: #dc2626; }
+    .finding.high .finding-header { border-left-color: #ea580c; }
+    .finding.medium .finding-header { border-left-color: #ca8a04; }
+    .finding.low .finding-header { border-left-color: #2563eb; }
+    .finding.info .finding-header { border-left-color: #94a3b8; }
+    .finding-id { font-size: 0.75rem; font-weight: 700; font-family: monospace; color: #64748b; min-width: 4.5rem; padding-top: 0.15rem; }
+    .finding-title-block { flex: 1; }
+    .finding-title { font-weight: 600; font-size: 1rem; color: #1e293b; }
+    .finding-meta { font-size: 0.8rem; color: #64748b; margin-top: 0.2rem; }
+    .finding-meta .file { font-family: monospace; }
+    .severity-badge { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.2rem 0.55rem; border-radius: 4px; }
+    .badge-critical { background: #fef2f2; color: #dc2626; }
+    .badge-high { background: #fff7ed; color: #ea580c; }
+    .badge-medium { background: #fefce8; color: #ca8a04; }
+    .badge-low { background: #eff6ff; color: #2563eb; }
+    .badge-info { background: #f1f5f9; color: #64748b; }
+    .finding-body { padding: 0 1.25rem 1.25rem 3.75rem; }
+    .finding-section-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #94a3b8; margin: 0.85rem 0 0.35rem; }
+    .finding-text { font-size: 0.9rem; color: #334155; }
+    .doc-excerpt { background: #faf5ff; border-left: 3px solid #312e81; padding: 0.65rem 1rem; margin: 0.5rem 0; font-size: 0.88rem; color: #334155; border-radius: 0 6px 6px 0; }
+    .doc-excerpt .highlight { background: #fde68a; padding: 0.05rem 0.25rem; border-radius: 2px; font-weight: 600; }
+    .value-compare { display: flex; gap: 1rem; margin: 0.5rem 0; font-size: 0.88rem; }
+    .value-box { flex: 1; padding: 0.6rem 0.85rem; border-radius: 6px; font-family: monospace; font-weight: 600; }
+    .value-claimed { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+    .value-actual { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+    .value-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-weight: 600; margin-bottom: 0.2rem; }
+    pre { background: #0f172a; color: #e2e8f0; border-radius: 6px; padding: 1rem; overflow-x: auto; font-size: 0.82rem; line-height: 1.55; margin: 0.5rem 0; }
+    code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
+    .code-label { font-size: 0.7rem; color: #64748b; font-family: monospace; margin-bottom: 0.15rem; }
+    .files-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+    .files-table th { background: #f1f5f9; text-align: left; padding: 0.65rem 1rem; font-weight: 600; color: #475569; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; }
+    .files-table td { padding: 0.6rem 1rem; border-bottom: 1px solid #f1f5f9; color: #334155; }
+    .files-table tr:last-child td { border-bottom: none; }
+    .files-table td:first-child { font-family: monospace; font-size: 0.82rem; color: #1e293b; }
+    .files-table .count-cell { text-align: center; font-weight: 600; }
+    .files-table .ok { color: #16a34a; }
+    .files-table .has-issues { color: #dc2626; }
+    .report-footer { margin-top: 3rem; padding: 1.5rem; text-align: center; font-size: 0.8rem; color: #94a3b8; border-top: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+
+<div class="report-header">
+  <h1>Number Verification Report</h1>
+  <div class="subtitle">Every number in the re-centered drafts checked against the live 2026-07-09 pipeline outputs</div>
+  <div class="meta">
+    <span><strong>Project:</strong> eig-wagesubsidy-policy-sim</span>
+    <span><strong>Reviewed:</strong> 2026-07-09</span>
+    <span><strong>Document:</strong> 2026-07-08_wage-subsidy-impact-cost-summary.md, 2026-07-09_technical-appendix.md</span>
+    <span><strong>Code / data files:</strong> 12 parquet + 1 JSON across Python, R</span>
+    <span><strong>Reviewer:</strong> AI review agent (data-consistency-reviewer)</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <h2>Executive Summary</h2>
+
+  <div class="verify-row">
+    <div class="verify-stat extracted"><div class="num">118</div><div class="lbl">Numbers Extracted</div></div>
+    <div class="verify-stat verified"><div class="num">104</div><div class="lbl">Verified Correct</div></div>
+    <div class="verify-stat flagged"><div class="num">14</div><div class="lbl">Flagged</div></div>
+  </div>
+
+  <div class="summary-box">
+    Extracted 118 numerical claims from the two re-centered drafts and traced each to the live 2026-07-09 pipeline parquets and the evidence-central pool. <strong>The re-centering from a 0.83M headline to the 1.25M evidence-central was executed cleanly across essentially the entire body of both documents.</strong> Every headline number reconciles: evidence-central 1.25M (sm 0.20 / ow 0.91 / men 0.14), floor 0.83M, high 3.37M, full grid 0.18–3.37M, entrant gross $6.4B / net $4.5B, marginal $5,120 gross / $3,600 net (independent-hours $9,576), fully-loaded $89K/$59K/$22K, clawback 15.5/24.6/21.1 percent, composition 33/64/3, mean entry hours 910, net cost $72–78B, rigid-central $93.1B/$74.2B, all-renegotiate $160.3B, static $89.75B/$72.12B, and the by-sex / by-state / program-interaction / cost tables are all unchanged and correct.
+    <br><br>
+    <strong>Two surviving pre-recenter numbers escaped the update — both in the technical appendix.</strong> (1) Appendix Section 5 ("Reality checks") still calls the 0.83M floor "<em>our central estimate</em>," the exact stale framing the re-centering replaced (DN-001, HIGH). (2) The appendix internal Evidence block lists "<em>14/19/15 base-pool clawback medians</em>" as one of the re-centered values, but the live base-pool medians are 13/18/15 and the evidence-central pool medians used in the body are 15.5/24.6/21.1 — 14/19/15 matches neither and is stale (DN-002, HIGH). None of the other flagged pre-recenter values (1.47M, 1.70M entry, $44K, $3,976, ~0.5M, $158B, "$19.62–22.17") survive anywhere in the drafts. The remaining flags are one unverifiable comparison statistic (23.6 percent, DN-003, MEDIUM), two mild rounding items (entry FTE, benefit-cliff frequency; LOW), the author-reconstructed Table 2 take-up column (LOW), and a set of illustrative/historical figures not reproducible from current outputs (INFO).
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card sev-critical"><div class="count">0</div><div class="label">Critical</div></div>
+    <div class="stat-card sev-high"><div class="count">2</div><div class="label">High</div></div>
+    <div class="stat-card sev-medium"><div class="count">1</div><div class="label">Medium</div></div>
+    <div class="stat-card sev-low"><div class="count">3</div><div class="label">Low</div></div>
+    <div class="stat-card sev-info"><div class="count">1</div><div class="label">Info</div></div>
+  </div>
+
+  <h2>Number Inventory</h2>
+  <table class="inventory-table">
+    <thead>
+      <tr><th>#</th><th>Claimed Value</th><th>Document Location</th><th>Code / Data Source</th><th>Verified Value</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="mono">1</td><td class="mono"><strong>20.8M / 20.81M</strong></td><td class="context">Main, abstract &amp; Table 2 header; workers reached</td><td class="mono">summary.parquet n_workers_mn</td><td class="mono">20.81</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">2</td><td class="mono"><strong>$72–78B net</strong></td><td class="context">Main abstract / bottom line; net cost band</td><td class="mono">behavioral_scenarios &amp; matching_simulation net_cost_bn</td><td class="mono">72.1–77.9 (rigid 73.7–74.6)</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">3</td><td class="mono"><strong>1.25M</strong></td><td class="context">Main abstract, Table 4; evidence-central entrants</td><td class="mono">entry_headline_scenarios evidence_central induced_M</td><td class="mono">1.25</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">4</td><td class="mono"><strong>0.83M / ~0.8M</strong></td><td class="context">Main abstract, Table 4; conservative floor</td><td class="mono">entry_headline_scenarios conservative_floor</td><td class="mono">0.83</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">5</td><td class="mono"><strong>3.37M</strong></td><td class="context">Main Table 4; high joint corner</td><td class="mono">entry_headline_scenarios high induced_M</td><td class="mono">3.37</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">6</td><td class="mono"><strong>0.18–3.37M</strong></td><td class="context">Main Table 4; full parameter grid range</td><td class="mono">entry_scenario_grid induced_M min/max (27 cells)</td><td class="mono">0.18–3.37</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">7</td><td class="mono"><strong>0.20 / 0.91 / 0.14</strong></td><td class="context">Main Table 4; evidence-central by group (sm/ow/men)</td><td class="mono">entry_headline_scenarios evidence_central</td><td class="mono">0.20 / 0.91 / 0.14</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">8</td><td class="mono"><strong>$6.4B / $4.5B</strong></td><td class="context">Main "cost per job"; entrant gross/net cost</td><td class="mono">entry_headline_scenarios entrant_gross_bn/net_bn</td><td class="mono">6.4 / 4.5</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">9</td><td class="mono"><strong>$5,100 gross / $3,600 net</strong></td><td class="context">Main; marginal cost per new job</td><td class="mono">6.4e3/1.25 ; 4.5e3/1.25</td><td class="mono">$5,120 / $3,600</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">10</td><td class="mono"><strong>~$9,600 gross</strong></td><td class="context">Main / appendix; independent-hours marginal cost (PI-3)</td><td class="mono">entrant_hours_sensitivity independent marginal_gross_per_job</td><td class="mono">9576</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">11</td><td class="mono"><strong>~$4,000</strong></td><td class="context">Main evidence / appendix; rank-mode marginal (floor)</td><td class="mono">entrant_hours_sensitivity rank marginal_gross_per_job</td><td class="mono">4018</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">12</td><td class="mono"><strong>$59,000 / $22,000 / $89,000</strong></td><td class="context">Main; fully-loaded $/job evidence-central/high/floor</td><td class="mono">74.2/1.25 ; 74.2/3.37 ; 74.2/0.83</td><td class="mono">$59.4K / $22.0K / $89.4K</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">13</td><td class="mono"><strong>~$74B</strong></td><td class="context">Main; structural central net cost charged to entrants</td><td class="mono">matching_simulation rigid-central net_cost_bn</td><td class="mono">74.2</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">14</td><td class="mono"><strong>$89.75B / $72.12B</strong></td><td class="context">Main Table 1 / appendix; static cost</td><td class="mono">summary &amp; behavioral_scenarios (static)</td><td class="mono">89.75 / 72.12</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">15</td><td class="mono"><strong>92.3 / 73.6</strong></td><td class="context">Main Table 1; reduced-form lower</td><td class="mono">behavioral_scenarios lower</td><td class="mono">92.33 / 73.57</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">16</td><td class="mono"><strong>96.9 / 76.1</strong></td><td class="context">Main Table 1; reduced-form central</td><td class="mono">behavioral_scenarios central</td><td class="mono">96.86 / 76.12</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">17</td><td class="mono"><strong>103.9 / 77.9</strong></td><td class="context">Main Table 1; reduced-form upper</td><td class="mono">behavioral_scenarios upper</td><td class="mono">103.88 / 77.86</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">18</td><td class="mono"><strong>92.6–93.5 / 73.7–74.6</strong></td><td class="context">Main Table 1; structural sticky incumbent wages</td><td class="mono">matching_simulation rigid-* gross/net</td><td class="mono">92.6/93.1/93.5 ; 73.7/74.2/74.6</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">19</td><td class="mono"><strong>+0.8 to +3.3 / +0.3 to +1.9</strong></td><td class="context">Main Table 1; incumbent hours response row</td><td class="mono">incumbent_hours_margin added_subsidy_gross_bn/added_net_cost_bn</td><td class="mono">gross 0.8–3.3 ; net 0.3–1.9</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">20</td><td class="mono"><strong>up to 160.3</strong></td><td class="context">Main Table 1 / §Will employers capture; all-renegotiate bound</td><td class="mono">matching_simulation flex-rigid gross_cost_bn</td><td class="mono">160.3</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">21</td><td class="mono"><strong>$93–97 gross / $2B hours</strong></td><td class="context">Main "what does it cost"; central band</td><td class="mono">rigid 93.1 / reduced central 96.9 ; hours net ~1.9</td><td class="mono">93–97 ; ~$2B</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">22</td><td class="mono"><strong>$4,314</strong></td><td class="context">Main / appendix; average annual subsidy</td><td class="mono">summary avg_annual_subsidy</td><td class="mono">4314</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">23</td><td class="mono"><strong>$3,400–$3,500</strong></td><td class="context">Main; net income kept per recipient</td><td class="mono">by_sex avg_net_income_gain (3440 / 3504)</td><td class="mono">~3,466</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">24</td><td class="mono"><strong>0.3 – 0.7</strong></td><td class="context">Main / appendix; worker bargaining share β</td><td class="mono">matching_simulation beta</td><td class="mono">0.3 / 0.5 / 0.7</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">25</td><td class="mono"><strong>$21.00 / $16.80</strong></td><td class="context">Main / appendix; median wage &amp; 80% target</td><td class="mono">diagnostics target_wage 16.8 ; config median 21.00</td><td class="mono">16.8 ; 21.00</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">26</td><td class="mono"><strong>134.3M</strong></td><td class="context">Main Table 2 note; wage-observed hourly workforce base</td><td class="mono">20.81 / 0.155 ; take-up reconciliation</td><td class="mono">134.3</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">27</td><td class="mono"><strong>15.5%</strong></td><td class="context">Main Table 2 note / appendix; overall receive rate</td><td class="mono">20.81 / 134.3</td><td class="mono">15.49%</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">28</td><td class="mono"><strong>12.34 / 59.3% ; 8.46 / 40.7%</strong></td><td class="context">Main Table 2; women / men recipients &amp; shares</td><td class="mono">by_sex n_workers_k, pct_of_recipients</td><td class="mono">12341k/59.3 ; 8464.8k/40.7</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">29</td><td class="mono"><strong>$4,199 / $4,481</strong></td><td class="context">Main; women vs men average subsidy</td><td class="mono">by_sex avg_annual_subsidy</td><td class="mono">4199 / 4481</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">30</td><td class="mono"><strong>6.55/4.98/3.56/2.94/2.78</strong></td><td class="context">Main Table 2; age-bin recipients (millions)</td><td class="mono">by_age_bin n_workers_k</td><td class="mono">6553/4983/3556/2939/2775 k</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">31</td><td class="mono"><strong>31.5/23.9/17.1/14.1/13.3</strong></td><td class="context">Main Table 2; age-bin share of recipients (%)</td><td class="mono">by_age_bin pct_of_recipients</td><td class="mono">31.5/23.9/17.1/14.1/13.3</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">32</td><td class="mono"><strong>2.26/8.57/6.56/2.68/0.73</strong></td><td class="context">Main Table 2; education recipients (millions)</td><td class="mono">by_education n_workers_k</td><td class="mono">2259/8567/6564/2682/735 k</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">33</td><td class="mono"><strong>10.9/41.2/31.5/12.9/3.5</strong></td><td class="context">Main Table 2; education share of recipients (%)</td><td class="mono">by_education pct_of_recipients</td><td class="mono">10.9/41.2/31.5/12.9/3.5</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">34</td><td class="mono"><strong>9.41/5.95/3.43/2.02</strong></td><td class="context">Main Table 2; race/ethnicity recipients (millions)</td><td class="mono">by_race_ethnicity n_workers_k</td><td class="mono">9406/5952/3428/2021 k</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">35</td><td class="mono"><strong>45.2/28.6/16.5/9.7</strong></td><td class="context">Main Table 2; race/ethnicity share of recipients (%)</td><td class="mono">by_race_ethnicity pct_of_recipients</td><td class="mono">45.2/28.6/16.5/9.7</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">36</td><td class="mono"><strong>11.37/4.13/2.73/2.58</strong></td><td class="context">Main Table 2; family-type recipients (millions)</td><td class="mono">by_family_type n_workers_k</td><td class="mono">11368/4135/2726/2577 k</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">37</td><td class="mono"><strong>54.6/19.9/13.1/12.4</strong></td><td class="context">Main Table 2; family-type share of recipients (%)</td><td class="mono">by_family_type pct_workers</td><td class="mono">54.6/19.9/13.1/12.4</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">38</td><td class="mono"><strong>19.0/12.2/40.3/37.9/3.4/19.8/9.3 …</strong></td><td class="context">Main Table 2 &amp; §Who gets it; "share of the group's workers" column</td><td class="mono">by_* pct_in_group = null (author-reconstructed; base file absent)</td><td class="mono">— (reconstructs to 134.3M base)</td><td><span class="status-badge status-approximate">Approximate</span></td></tr>
+      <tr><td class="mono">39</td><td class="mono"><strong>1.93/1.70/3.31/13.87</strong></td><td class="context">Main Table 3; workers by wage band (millions)</td><td class="mono">by_wage_bracket n_workers_k</td><td class="mono">1926/1700/3309/13870 k</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">40</td><td class="mono"><strong>11,773/8,573/6,221/2,301</strong></td><td class="context">Main Table 3; average annual subsidy by wage band</td><td class="mono">by_wage_bracket avg_annual_subsidy</td><td class="mono">11773/8573/6221/2301</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">41</td><td class="mono"><strong>$5,521 / 404,000</strong></td><td class="context">Main §Who gets it; Louisiana subsidy &amp; eligible count</td><td class="mono">by_state LA avg_annual_subsidy / n_workers_k</td><td class="mono">5521 / 404.4k</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">42</td><td class="mono"><strong>$5,529</strong></td><td class="context">Main; Mississippi average subsidy</td><td class="mono">by_state MS avg_annual_subsidy</td><td class="mono">5529</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">43</td><td class="mono"><strong>$3,751</strong></td><td class="context">Main; California average subsidy</td><td class="mono">by_state CA avg_annual_subsidy</td><td class="mono">3751</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">44</td><td class="mono"><strong>134,000 / $4,734</strong></td><td class="context">Main; West Virginia eligible count &amp; subsidy</td><td class="mono">by_state WV n_workers_k / avg_annual_subsidy</td><td class="mono">134.3k / 4734</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">45</td><td class="mono"><strong>13.0%</strong></td><td class="context">Main §interactions; SNAP savings share of gross</td><td class="mono">program_interactions snap pct_of_gross_cost</td><td class="mono">-13.0</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">46</td><td class="mono"><strong>14.4%</strong></td><td class="context">Main §interactions; Medicaid/CHIP savings</td><td class="mono">program_interactions medicaid_chip pct_of_gross_cost</td><td class="mono">-14.4</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">47</td><td class="mono"><strong>3.2% / 1.6%</strong></td><td class="context">Main §interactions; TANF / EITC savings</td><td class="mono">program_interactions tanf / eitc pct_of_gross_cost</td><td class="mono">-3.2 / -1.6</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">48</td><td class="mono"><strong>26.4%</strong></td><td class="context">Main §interactions; ACA premium tax credit added cost</td><td class="mono">program_interactions aca_ptc pct_of_gross_cost</td><td class="mono">+26.4</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">49</td><td class="mono"><strong>59M / 59.3M / 59.28M</strong></td><td class="context">Main &amp; appendix §3; non-employed pool total</td><td class="mono">diagnostics population_M ; pool weight sum</td><td class="mono">59.28</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">50</td><td class="mono"><strong>7.0 / 33.8 / 9.7 / 8.7</strong></td><td class="context">Main §pull-into-work / appendix §3 table; pool by status (M)</td><td class="mono">evidence-central pool weight by prior_status</td><td class="mono">7.05/33.78/9.71/8.74</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">51</td><td class="mono"><strong>10–15 million</strong></td><td class="context">Main / appendix; realistic wage-responsive reachable pool</td><td class="mono">author judgment band (narrative)</td><td class="mono">~ (bounded by 7M unemp + reachable NILF)</td><td><span class="status-badge status-approximate">Approximate</span></td></tr>
+      <tr><td class="mono">52</td><td class="mono"><strong>~10% penalty / 20% high</strong></td><td class="context">Main Table 4 note / appendix §4; non-employment wage penalty</td><td class="mono">config evidence_central_status_penalty (U .05/NILF .10/dis+ret .15); high 0.20</td><td class="mono">pool-weighted ~10% ; 20%</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">53</td><td class="mono"><strong>~third / ~3%</strong></td><td class="context">Main / appendix; entrant composition (unemployed / disabled+retired)</td><td class="mono">entry_central_composition (0.412/0.799/0.028/0.010)</td><td class="mono">33.0% / 3.0%</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">54</td><td class="mono"><strong>64% (other-NILF)</strong></td><td class="context">Main §pull-into-work; implied other-NILF entrant share</td><td class="mono">entry_central_composition 0.799/1.249</td><td class="mono">64.0%</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">55</td><td class="mono"><strong>~900 hours</strong></td><td class="context">Main / appendix; mean entry hours (evidence-central)</td><td class="mono">evidence-central pool: avg entry_hours over viable</td><td class="mono">910.2</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">56</td><td class="mono"><strong>~770 hours</strong></td><td class="context">Main evidence §; mean entry hours at the floor</td><td class="mono">entrant_hours_sensitivity rank mean_entry_hours</td><td class="mono">768</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">57</td><td class="mono"><strong>roughly a sixth</strong></td><td class="context">Main; drop if no married-with-employed-spouse entry</td><td class="mono">entry_margin_band spouse-employed zeroed 0.69 vs 0.83</td><td class="mono">16.9% drop</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">58</td><td class="mono"><strong>~80% take-up / down a fifth</strong></td><td class="context">Main / appendix; take-up sensitivity</td><td class="mono">entry_margin_band take-up 0.80 → 0.66 (0.66/0.83=0.80)</td><td class="mono">0.66 (0.795×)</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">59</td><td class="mono"><strong>41.4%</strong></td><td class="context">Main §pull / appendix §4; pool below $16.80 target (no penalty)</td><td class="mono">diagnostics pct_mpl_below_target ; grid pen0/λ0.75</td><td class="mono">41.4</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">60</td><td class="mono"><strong>23.6%</strong></td><td class="context">Main §pull / appendix §4; paid-hourly workers below target</td><td class="mono">not in provided sources (worker base file absent)</td><td class="mono">Not found</td><td><span class="status-badge status-unverifiable">Unverifiable</span></td></tr>
+      <tr><td class="mono">61</td><td class="mono"><strong>10M / 14% men</strong></td><td class="context">Main §men; prime-age male non-employment (prior-post framing)</td><td class="mono">carried from prior Agglomerations post (external)</td><td class="mono">— (external)</td><td><span class="status-badge status-unverifiable">Unverifiable</span></td></tr>
+      <tr><td class="mono">62</td><td class="mono"><strong>140,000 / 90,000 / 680,000</strong></td><td class="context">Main §men; male entry evidence-central / floor / high</td><td class="mono">entry_headline_scenarios induced_men_M (0.14/0.09/0.68)</td><td class="mono">0.14 / 0.09 / 0.68</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">63</td><td class="mono"><strong>~1.5% / ~2% / &lt;1%</strong></td><td class="context">Main / appendix §7; firm capture (central / max / high-β)</td><td class="mono">matching_simulation rigid firm_capture_pct_of_gross</td><td class="mono">1.5 / 2.0 / 0.8</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">64</td><td class="mono"><strong>$160.3B / 55%</strong></td><td class="context">Main / appendix §7; all-renegotiate gross &amp; firm capture</td><td class="mono">matching_simulation flex-rigid gross / firm_capture_pct</td><td class="mono">160.3 / 54.8</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">65</td><td class="mono"><strong>15% / 25% / 21%</strong></td><td class="context">Main §safety net / appendix §7; median clawback (sm/ow/men)</td><td class="mono">evidence-central pool: wmed g_net (g_net&gt;0) by cell ×100</td><td class="mono">15.5 / 24.6 / 21.1</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">66</td><td class="mono"><strong>one in eight</strong></td><td class="context">Main / appendix §7; entrants clearing threshold via cliff pay-up</td><td class="mono">matching_simulation rigid-central cliff_payup 0.115 / 0.83</td><td class="mono">13.9% (≈ one in 7.2)</td><td><span class="status-badge status-approximate">Approximate</span></td></tr>
+      <tr><td class="mono">67</td><td class="mono"><strong>roughly a third (of advantage)</strong></td><td class="context">Main §safety net; single-mother clawback vs other entrants</td><td class="mono">derived from 15.5 vs ~22 median gains</td><td class="mono">~ consistent</td><td><span class="status-badge status-approximate">Approximate</span></td></tr>
+      <tr><td class="mono">68</td><td class="mono"><strong>0.25M FTE / 0.36M FTE</strong></td><td class="context">Main §sure / appendix §6; incumbent hours central &amp; upper</td><td class="mono">incumbent_hours_margin added_fte_M (central/upper)</td><td class="mono">0.25 / 0.36</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">69</td><td class="mono"><strong>0.08M FTE</strong></td><td class="context">Appendix §6 / §9; incumbent hours lower edge</td><td class="mono">incumbent_hours_margin added_fte_M lower</td><td class="mono">0.08</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">70</td><td class="mono"><strong>~0.6M entry FTE</strong></td><td class="context">Main §sure / appendix §6; entry-margin full-time equivalents</td><td class="mono">1.249 × 910.2 / 2080</td><td class="mono">0.547</td><td><span class="status-badge status-approximate">Approximate</span></td></tr>
+      <tr><td class="mono">71</td><td class="mono"><strong>0.05 / 0.20 / 0.33</strong></td><td class="context">Main §sure / appendix §6; hours elasticity band</td><td class="mono">incumbent_hours_margin eps_int</td><td class="mono">0.05 / 0.20 / 0.33</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">72</td><td class="mono"><strong>$0.8–$3.3B</strong></td><td class="context">Appendix §6; added gross cost of incumbent hours</td><td class="mono">incumbent_hours_margin added_subsidy_gross_bn</td><td class="mono">0.8 / 2.4 / 3.3</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">73</td><td class="mono"><strong>~10M below cap</strong></td><td class="context">Appendix §6; eligible workers under 40 hrs/week</td><td class="mono">incumbent_hours_margin workers_below_cap_M</td><td class="mono">10.3</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">74</td><td class="mono"><strong>$15.44 / 54%</strong></td><td class="context">Appendix §6; marginal hour value at $10 wage</td><td class="mono">10 + 0.8×(16.80−10) ; 5.44/10</td><td class="mono">15.44 / 54.4%</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">75</td><td class="mono"><strong>0.72M</strong></td><td class="context">Appendix §2; reduced-form benchmark entry</td><td class="mono">entry_reconciliation b02 ; behavioral central induced</td><td class="mono">0.72</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">76</td><td class="mono"><strong>ρσ ≈ +0.08</strong></td><td class="context">Main / appendix §4; selection correction (paid-hourly frame)</td><td class="mono">diagnostics heckman imr_coef_rho_sigma</td><td class="mono">0.0755</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">77</td><td class="mono"><strong>$18.28–$20.65</strong></td><td class="context">Appendix §4; median potential wage across imputation variants</td><td class="mono">mpl_imputation_band pool_median_mpl (conditional/plain)</td><td class="mono">18.28 / 20.65</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">78</td><td class="mono"><strong>0.29–0.55</strong></td><td class="context">Appendix §4 / main evidence; group residual SD range</td><td class="mono">diagnostics offer_dispersion sd_group_min_max</td><td class="mono">0.29 / 0.553</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">79</td><td class="mono"><strong>λ = 0.75 / 0.50 / 1.00</strong></td><td class="context">Appendix §4; offer-dispersion scaling (headline &amp; band)</td><td class="mono">diagnostics offer_dispersion lambda ; mpl band lam050/lam100</td><td class="mono">0.75 / 0.50 / 1.00</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">80</td><td class="mono"><strong>52–64%</strong></td><td class="context">Appendix §4; pool below target under penalty scenarios</td><td class="mono">mpl_imputation_band pen10/pen20 pct_mpl_below_target</td><td class="mono">52.1 / 63.6</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">81</td><td class="mono"><strong>44% salaried / $26.00</strong></td><td class="context">Appendix §4; salaried share of earners &amp; their median wage</td><td class="mono">diagnostics employed_earner_share 0.5614 (→44% salaried); $26.00 not in provided sources</td><td class="mono">44% ✓ / $26.00 not found</td><td><span class="status-badge status-unverifiable">Unverifiable</span></td></tr>
+      <tr><td class="mono">82</td><td class="mono"><strong>0.25/0.50/0.65 ; 0.05/0.20/0.40 ; 0.00/0.05/0.15</strong></td><td class="context">Appendix §5; participation-elasticity band by group</td><td class="mono">diagnostics calibration edges eps (sm/ow/men)</td><td class="mono">matches all nine</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">83</td><td class="mono"><strong>2.2M / 10.1M / 8.5M</strong></td><td class="context">Appendix §5; eligible employed stock by group</td><td class="mono">diagnostics eligible_employed_stock_M</td><td class="mono">2.22 / 10.12 / 8.46</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">84</td><td class="mono"><strong>1.41 / 0.72 / 0.94</strong></td><td class="context">Appendix §5; employed-stock÷reachable-pool ratios</td><td class="mono">diagnostics base_semantics E_over_R</td><td class="mono">1.413 / 0.723 / 0.942</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">85</td><td class="mono"><strong>0.83 → 0.71 ; 0.13 → 0.19</strong></td><td class="context">Appendix §5; employment-stock recalibration total &amp; sm</td><td class="mono">entry_margin_band employment-stock semantics induced_M / sm</td><td class="mono">0.71 / 0.19</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">86</td><td class="mono"><strong>0.83 → 0.69 ; → 0.66</strong></td><td class="context">Appendix §5; household-coordination &amp; take-up sensitivities</td><td class="mono">entry_margin_band spouse-zeroed / take-up 0.80</td><td class="mono">0.69 / 0.66</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">87</td><td class="mono"><strong>0.9M / 3.4%</strong></td><td class="context">Main / appendix §5; EITC-scaled precedent vs reachable pool</td><td class="mono">0.83 / (0.414×59.28) ; author scaling of Grogger/Fang-Keane</td><td class="mono">3.4% ✓</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">88</td><td class="mono"><strong>independent-hours ≈ double</strong></td><td class="context">Main / appendix §6; PI-3 entrant-hours sensitivity</td><td class="mono">entrant_hours_sensitivity 1630/768 ; 9576/4018</td><td class="mono">2.12× hours / 2.38× cost</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">89</td><td class="mono"><strong>$31 / $15.34 ; one-in-ten / three-in-five</strong></td><td class="context">Appendix §4; illustrative college-man &amp; young-dropout offers</td><td class="mono">individual illustrative values (not persisted)</td><td class="mono">Not found</td><td><span class="status-badge status-unverifiable">Unverifiable</span></td></tr>
+      <tr><td class="mono">90</td><td class="mono"><strong>ρσ ≈ +0.30 / factor of seven</strong></td><td class="context">Appendix §4; rejected all-earners frame (historical)</td><td class="mono">pre-remodel diagnostics (superseded; not in checkout)</td><td class="mono">Not found</td><td><span class="status-badge status-unverifiable">Unverifiable</span></td></tr>
+      <tr><td class="mono">91</td><td class="mono"><strong>$7,800@20h / $5,600@40h / 2,080 cap / ~53 h/wk / 3,000</strong></td><td class="context">Main §safety net Fig 11b; net-income-by-hours illustration</td><td class="mono">fig11b figure-data (single PA parent; not in provided parquets)</td><td class="mono">Not found (illustrative)</td><td><span class="status-badge status-unverifiable">Unverifiable</span></td></tr>
+      <tr><td class="mono">92</td><td class="mono"><strong>quarter-million FTE</strong></td><td class="context">Main abstract / bottom line; incumbent hours headline</td><td class="mono">incumbent_hours_margin central added_fte_M</td><td class="mono">0.25</td><td><span class="status-badge status-verified">Verified</span></td></tr>
+      <tr><td class="mono">93</td><td class="mono"><strong>~2,900 words</strong></td><td class="context">Main evidence block; body prose word count</td><td class="mono">document metadata (not a simulation output)</td><td class="mono">— (self-reported)</td><td><span class="status-badge status-approximate">Approximate</span></td></tr>
+      <tr><td class="mono">94</td><td class="mono"><strong>0.83M "central estimate"</strong></td><td class="context">Appendix §5 "Reality checks" — labels the floor as central</td><td class="mono">entry_headline_scenarios: 0.83 = conservative_floor (central = 1.25)</td><td class="mono">0.83 is the FLOOR</td><td><span class="status-badge status-mismatch">Mismatch</span></td></tr>
+      <tr><td class="mono">95</td><td class="mono"><strong>14 / 19 / 15</strong></td><td class="context">Appendix Evidence block; "base-pool clawback medians"</td><td class="mono">diagnostics median_g_net base-pool = 13.0/18.3/14.6 ; evc pool = 15.5/24.6/21.1</td><td class="mono">13/18/15 (base) · 15.5/24.6/21.1 (evc)</td><td><span class="status-badge status-mismatch">Mismatch</span></td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:0.8rem;color:#64748b;margin:-1rem 0 2rem;">Rows aggregate repeated appearances of the same claim across the abstract, body, tables, figure captions, and the internal Evidence blocks of both drafts. Structural references (figure/section/footnote numbers, citation years) and general/external facts are excluded per the extraction rules. Total distinct numerical claims traced: 118.</p>
+
+  <h2>Findings</h2>
+
+  <!-- DN-001 HIGH -->
+  <div class="finding high">
+    <div class="finding-header">
+      <div class="finding-id">DN-001</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Surviving pre-recenter label: 0.83M floor still called "our central estimate"</div>
+        <div class="finding-meta"><span class="file">2026-07-09_technical-appendix.md</span><span> · §5 "Reality checks" (line 83)</span></div>
+      </div>
+      <span class="severity-badge badge-high">HIGH</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">In the Document</div>
+      <div class="doc-excerpt">"Scaled to our reachable pool, that is roughly 0.9 million entrants. <span class="highlight">Our central estimate (0.83 million; 3.4 percent of the reachable pool) essentially matches that benchmark</span>, and the full range brackets Paycheck Plus Atlanta's null on one end and approaches SSP's exceptional response on the other."</div>
+
+      <div class="finding-section-label">Claimed vs. Actual</div>
+      <div class="value-compare">
+        <div class="value-box value-claimed"><div class="value-label">Document says</div>central estimate = 0.83M</div>
+        <div class="value-box value-actual"><div class="value-label">Pipeline says</div>0.83M = conservative_floor; central (evidence_central) = 1.25M</div>
+      </div>
+
+      <div class="finding-section-label">Source in Code</div>
+      <div class="code-label">output/data/intermediate_results/population/entry_headline_scenarios.parquet</div>
+      <pre><code>scenario            induced_M   note
+conservative_floor  0.83        "current headline path, now labeled the floor"
+evidence_central    1.25        "corrects penalty=0 with a status-differentiated ~10% penalty"
+high                3.37        "joint upper corner"</code></pre>
+
+      <div class="finding-section-label">Explanation</div>
+      <div class="finding-text">This is a surviving pre-recenter number of type (a): a value that failed to update when the drafts were re-centered on 2026-07-09 from a 0.83M headline to the 1.25M evidence-central. The value 0.83M is itself correct (it is the conservative floor), but the label "our central estimate" is stale. The main draft's parallel passage was updated correctly — it reads "about 0.9 million entrants—which is roughly where our conservative <em>floor</em> sits. Our evidence-central of 1.25 million sits above that precedent" (main line 162). Elsewhere in the same appendix the 0.83M is correctly called the "conservative floor" (§2 line 30; §4 line 57). Only this "Reality checks" paragraph retains the old framing, so it now directly contradicts both the main draft and the rest of the appendix, and it tells the reader the central estimate merely matches the 1990s EITC precedent when the re-centered narrative is that the central sits <em>above</em> it.</div>
+
+      <div class="finding-section-label">Recommendation</div>
+      <div class="finding-text">Replace "Our central estimate (0.83 million; 3.4 percent of the reachable pool) essentially matches that benchmark" with floor language, e.g., "Our conservative floor (0.83 million; 3.4 percent of the reachable pool) sits right at that benchmark, while the evidence-central (1.25 million) sits above it" — mirroring main-draft line 162.</div>
+    </div>
+  </div>
+
+  <!-- DN-002 HIGH -->
+  <div class="finding high">
+    <div class="finding-header">
+      <div class="finding-id">DN-002</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Surviving pre-recenter clawback medians "14/19/15" contradict live outputs and the body's 15/25/21</div>
+        <div class="finding-meta"><span class="file">2026-07-09_technical-appendix.md</span><span> · Evidence block, Assumptions (line 144)</span></div>
+      </div>
+      <span class="severity-badge badge-high">HIGH</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">In the Document</div>
+      <div class="doc-excerpt">"…41.4%/23.6% base-pool below-target; ρσ +0.08; λ=0.75 × group SDs 0.29–0.55; <span class="highlight">14/19/15 base-pool clawback medians</span>; hours band 0.08/0.25/0.36M … <em>are the 2026-07-09 re-centered values</em>…"</div>
+
+      <div class="finding-section-label">Claimed vs. Actual</div>
+      <div class="value-compare">
+        <div class="value-box value-claimed"><div class="value-label">Document says</div>14 / 19 / 15 (sm/ow/men)</div>
+        <div class="value-box value-actual"><div class="value-label">Pipeline says</div>base-pool 13.0/18.3/14.6 · evidence-central pool 15.5/24.6/21.1</div>
+      </div>
+
+      <div class="finding-section-label">Source in Code</div>
+      <div class="code-label">data/processed/nonemployed_pool_diagnostics.json (base-pool median_g_net) &amp; nonemployed_pool_evidence_central.parquet (fig12)</div>
+      <pre><code># base-pool median net gain (diagnostics calibration.median_g_net):
+single_mothers 0.1298  other_women 0.1830  men 0.1457   ->  13.0 / 18.3 / 14.6
+
+# evidence-central pool clawback (05c_core_figures.R fig6_clawback_net_gain,
+#   weighted median of g_net where g_net>0, by cell x100):
+single_mothers 15.5   other_women 24.6   men 21.1</code></pre>
+
+      <div class="finding-section-label">Explanation</div>
+      <div class="finding-text">"14/19/15" matches neither current quantity. The re-centered clawback medians used throughout the body of both drafts are the evidence-central pool values 15.5/24.6/21.1 ("about 15/25/21"; main line 212, appendix §7 line 99). The live base-pool medians (from the diagnostics JSON) are 13.0/18.3/14.6 → 13/18/15. "14/19/15" is the stale pre-recenter base-pool number and is off by roughly 1 percentage point on each group even relative to the current base pool. Because the Evidence block explicitly asserts these figures "are the 2026-07-09 re-centered values," the label is doubly wrong: the number did not update, and it is presented as if it had. This is the exact pre-recenter value the review was asked to catch.</div>
+
+      <div class="finding-section-label">Recommendation</div>
+      <div class="finding-text">If the intent is to record the headline (evidence-central pool) clawback medians, change "14/19/15 base-pool clawback medians" to "15.5/24.6/21.1 evidence-central-pool clawback medians." If the base pool is genuinely wanted, use the current 13.0/18.3/14.6. Either way, reconcile with the body so the internal note and §7 agree. This block is marked "strip before publication," but it should still be corrected so it does not seed a stale number downstream.</div>
+    </div>
+  </div>
+
+  <!-- DN-003 MEDIUM -->
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">DN-003</div>
+      <div class="finding-title-block">
+        <div class="finding-title">"23.6 percent of paid-hourly workers below target" cannot be traced to the provided sources</div>
+        <div class="finding-meta"><span class="file">both drafts</span><span> · main §pull-into-work (line 168); appendix §4 (line 55)</span></div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">In the Document</div>
+      <div class="doc-excerpt">"…<span class="highlight">41.4 percent fall below the $16.80 target, compared with 23.6 percent of paid-hourly workers</span>—non-workers face worse wage prospects than workers…"</div>
+
+      <div class="finding-section-label">Claimed vs. Actual</div>
+      <div class="value-compare">
+        <div class="value-box value-claimed"><div class="value-label">Document says</div>23.6% of paid-hourly workers below target</div>
+        <div class="value-box value-actual"><div class="value-label">Provided sources</div>Not found (worker-side base file absent from checkout)</div>
+      </div>
+
+      <div class="finding-section-label">Source in Code</div>
+      <div class="code-label">search of the 12 authoritative parquets + diagnostics JSON</div>
+      <pre><code># 41.4% (pool below target)  -> diagnostics.summary.pct_mpl_below_target = 41.4  [VERIFIED]
+# 23.6% (worker below target) -> not present in any provided parquet or in the
+#   diagnostics JSON. The eligibility base (20.81M / 134.3M) yields a 15.5% RECEIVE
+#   rate on the full wage-observed hourly workforce; 23.6% implies a different
+#   (smaller) denominator (~88M paid-hourly only) that is not reconstructable here.</code></pre>
+
+      <div class="finding-section-label">Explanation</div>
+      <div class="finding-text">The 41.4 percent pool figure verifies exactly. Its worker-side comparator, 23.6 percent, is not computable from the provided authoritative sources: it requires the paid-hourly worker wage distribution, whose base file the drafts' own Evidence block notes is "absent from this checkout" (main line 298). The number is internally consistent across the two drafts, so it is plausibly a genuine fig08 output rather than a stale value — but it cannot be confirmed here, and its denominator differs from the 15.5 percent receive-rate base without the text stating so. Flagged MEDIUM as unverifiable per the tracing rules, not as a mismatch.</div>
+
+      <div class="finding-section-label">Recommendation</div>
+      <div class="finding-text">Confirm 23.6 percent against the fig08 generating data and state its denominator ("of paid-hourly workers") so a reader does not read it against the 15.5 percent receive rate on the 134.3M base. Persisting the fig08 worker-below-target share to an intermediate parquet would make it auditable.</div>
+    </div>
+  </div>
+
+  <!-- DN-004 LOW -->
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">DN-004</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Entry-margin FTE stated as "about 0.6 million" rounds up from 0.547 million</div>
+        <div class="finding-meta"><span class="file">both drafts</span><span> · main §sure (line 240); appendix §6 (line 89), §9, Evidence (line 144)</span></div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">In the Document</div>
+      <div class="doc-excerpt">"…the incumbent hours margin (0.25 million FTE) sits alongside the entry margin (<span class="highlight">about 0.6 million FTE</span> at the evidence-central)…"</div>
+
+      <div class="finding-section-label">Claimed vs. Actual</div>
+      <div class="value-compare">
+        <div class="value-box value-claimed"><div class="value-label">Document says</div>~0.6M entry FTE</div>
+        <div class="value-box value-actual"><div class="value-label">Computed</div>0.547M (1.249M × 910.2 h / 2,080)</div>
+      </div>
+
+      <div class="finding-section-label">Source in Code</div>
+      <div class="code-label">nonemployed_pool_evidence_central.parquet (induced 1.249M, mean entry_hours 910.2)</div>
+      <pre><code>entry_FTE = 1.249e6 * 910.2 / 2080 = 0.547e6</code></pre>
+
+      <div class="finding-section-label">Explanation</div>
+      <div class="finding-text">The evidence-central entry margin is 0.547M FTE, which rounds to 0.5M at one significant figure; "about 0.6 million" rounds it the other way (a ~10 percent overstatement). This is a benign approximation, not a stale value — note the review brief lists "~0.5M" as a pre-recenter number to avoid, and the true value sits right between 0.5 and 0.6. Flagged LOW only so the authors can choose the rounding deliberately; the comparison it supports (entry FTE &gt; incumbent-hours FTE of 0.25M) is unaffected.</div>
+
+      <div class="finding-section-label">Recommendation</div>
+      <div class="finding-text">Consider "about 0.55 million FTE" (exact value 0.547M), or keep "0.6 million" but flag it as a rounded upper reading. Ensure the choice is applied consistently in the main draft, appendix §6/§9, and the Evidence block.</div>
+    </div>
+  </div>
+
+  <!-- DN-005 LOW -->
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">DN-005</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Benefit-cliff frequency "one in eight" is nearer one in seven (13.9%)</div>
+        <div class="finding-meta"><span class="file">both drafts</span><span> · main §safety net (line 214); appendix §7 (line 99)</span></div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">In the Document</div>
+      <div class="doc-excerpt">"…<span class="highlight">roughly one in eight of the modeled entrants</span> clear their entry threshold only because employers pay above the bargained wage across a benefit cliff."</div>
+
+      <div class="finding-section-label">Claimed vs. Actual</div>
+      <div class="value-compare">
+        <div class="value-box value-claimed"><div class="value-label">Document says</div>one in eight (12.5%)</div>
+        <div class="value-box value-actual"><div class="value-label">Pipeline says</div>0.115M / 0.83M = 13.9% (≈ one in 7.2)</div>
+      </div>
+
+      <div class="finding-section-label">Source in Code</div>
+      <div class="code-label">matching_simulation.parquet (rigid-central)</div>
+      <pre><code>cliff_payup_entrants_M = 0.115   induced_M = 0.83   ->  0.115/0.83 = 0.139</code></pre>
+
+      <div class="finding-section-label">Explanation</div>
+      <div class="finding-text">The cliff pay-up share on the structural (rigid-central) run is 13.9 percent of entrants — closer to one in seven than one in eight. The matching simulation reports this on the 0.83M floor pool (the only pool for which cliff_payup is persisted), so the exact evidence-central share is not directly available; if it is similar, "one in eight" mildly understates it. A minor rounding call, LOW.</div>
+
+      <div class="finding-section-label">Recommendation</div>
+      <div class="finding-text">Either say "roughly one in seven" (13.9%) or soften to "more than one in eight." If the claim is meant to describe the 1.25M evidence-central pool, compute and persist its cliff-payup share so the fraction is traceable to the headline rather than the floor.</div>
+    </div>
+  </div>
+
+  <!-- DN-006 LOW -->
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">DN-006</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Table 2 "share of the group's workers" column is author-reconstructed, not emitted by the pipeline</div>
+        <div class="finding-meta"><span class="file">2026-07-08_wage-subsidy-impact-cost-summary.md</span><span> · Table 2, third column &amp; §Who gets the money</span></div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">In the Document</div>
+      <div class="doc-excerpt">"…<span class="highlight">40.3 percent of workers ages 16 to 24 qualify</span>…as do 37.9 percent of workers without a high school diploma, against just 3.4 percent of those with a graduate degree."</div>
+
+      <div class="finding-section-label">Claimed vs. Actual</div>
+      <div class="value-compare">
+        <div class="value-box value-claimed"><div class="value-label">Document says</div>19.0/12.2/40.3/37.9/3.4/19.8/9.3 … (take-up %)</div>
+        <div class="value-box value-actual"><div class="value-label">Pipeline says</div>by_*.parquet pct_in_group = null (not computed)</div>
+      </div>
+
+      <div class="finding-section-label">Source in Code</div>
+      <div class="code-label">by_sex / by_age_bin / by_education / by_race_ethnicity.parquet</div>
+      <pre><code>pct_in_group column = None in every by_* table (base file
+  data/external/org_workers_*.parquet absent from checkout).
+Cross-check: women 12.34/0.190 + men 8.46/0.122 = 134.3M  [internally consistent]
+Overall receive 20.81/134.3 = 15.5%  [VERIFIED]</code></pre>
+
+      <div class="finding-section-label">Explanation</div>
+      <div class="finding-text">The recipient counts and share-of-recipients columns of Table 2 all verify exactly against the by_* parquets. The third column (share of each group's own workers) is null in the pipeline output; the drafts reconstruct it from the adapted ORG panel, a step the Evidence block discloses (main line 298). The pieces that can be cross-checked are internally consistent — the women/men take-ups reconcile to the 134.3M base, and the overall 15.5 percent verifies — so the values are plausible, but they are not reproducible from the provided authoritative sources in this checkout. Flagged LOW (ambiguous/absent source, plausible and disclosed value).</div>
+
+      <div class="finding-section-label">Recommendation</div>
+      <div class="finding-text">Restore data/external/org_workers_*.parquet (or persist pct_in_group directly in the by_* tables) so the take-up column is auditable end-to-end rather than reconstructed. The current disclosure in the Evidence block is good practice in the interim.</div>
+    </div>
+  </div>
+
+  <!-- DN-007 INFO -->
+  <div class="finding info">
+    <div class="finding-header">
+      <div class="finding-id">DN-007</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Illustrative and historical figures not reproducible from current outputs</div>
+        <div class="finding-meta"><span class="file">2026-07-09_technical-appendix.md</span><span> · §4 (lines 51–53); main Fig 11b (line 220)</span></div>
+      </div>
+      <span class="severity-badge badge-info">INFO</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">In the Document</div>
+      <div class="doc-excerpt">"…a 40-year-old man with a college degree…<span class="highlight">his predicted wage is $31</span>…a 20-year-old without a diploma…<span class="highlight">predicted $15.34</span>…the college man faces roughly a one-in-ten chance…the young dropout roughly three-in-five." · "salaried workers…have a median hourly-equivalent wage of <span class="highlight">$26.00</span>." · "On that contaminated frame…<span class="highlight">ρσ ≈ +0.30</span>…moved the entry estimate by a factor of seven."</div>
+
+      <div class="finding-section-label">Claimed vs. Actual</div>
+      <div class="value-compare">
+        <div class="value-box value-claimed"><div class="value-label">Document says</div>$26.00 · $31 · $15.34 · ρσ +0.30 · Fig 11b: $7,800 / $5,600 / 2,080 / ~53h / 3,000</div>
+        <div class="value-box value-actual"><div class="value-label">Provided sources</div>Not persisted (illustrative individuals, rejected model, figure-only data)</div>
+      </div>
+
+      <div class="finding-section-label">Source in Code</div>
+      <div class="code-label">not present in the 12 authoritative parquets or diagnostics JSON</div>
+      <pre><code>$26.00 salaried median, $31 / $15.34 single-person predicted wages,
+one-in-ten / three-in-five reachability, ρσ +0.30 (superseded all-earners
+frame), and the Fig 11b net-income-by-hours values are illustrative or
+historical and are not carried in the provided intermediates.</code></pre>
+
+      <div class="finding-section-label">Explanation</div>
+      <div class="finding-text">These are not re-centered headline numbers and none are among the flagged pre-recenter values. They are (i) illustrative single-person examples, (ii) descriptions of a rejected earlier ("all-earners") wage frame, and (iii) figure-only quantities in Fig 11b. They cannot be confirmed or denied from the authoritative sources supplied for this review. Listed for author confirmation only; no correctness concern is asserted. The verifiable neighbors — ρσ +0.08 (0.0755), 44 percent salaried (employed_earner_share 0.5614), median potential wage $18.28–$20.65 — all check out.</div>
+
+      <div class="finding-section-label">Recommendation</div>
+      <div class="finding-text">No action required for correctness. If these illustrative values are load-bearing for a reader, consider persisting them (e.g., a small fig11b data export and a saved record of the pre-remodel ρσ) so they remain auditable alongside the headline intermediates.</div>
+    </div>
+  </div>
+
+  <h2>Reviewed Files</h2>
+  <table class="files-table">
+    <thead>
+      <tr><th>File</th><th>Type</th><th>Language</th><th style="text-align:center">Lines</th><th style="text-align:center">Numbers / Notes</th><th style="text-align:center">Highest Severity</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>drafts/2026-07-08_wage-subsidy-impact-cost-summary.md</td><td>Document</td><td>Markdown</td><td class="count-cell">305</td><td class="count-cell has-issues">~86 numbers</td><td class="count-cell">MEDIUM</td></tr>
+      <tr><td>drafts/2026-07-09_technical-appendix.md</td><td>Document</td><td>Markdown</td><td class="count-cell">144</td><td class="count-cell has-issues">~72 numbers (2 HIGH)</td><td class="count-cell">HIGH</td></tr>
+      <tr><td>output/…/population/entry_headline_scenarios.parquet</td><td>Data</td><td>Parquet</td><td class="count-cell">3</td><td class="count-cell ok">headline entry / entrant cost</td><td class="count-cell">—</td></tr>
+      <tr><td>output/…/population/entry_scenario_grid.parquet</td><td>Data</td><td>Parquet</td><td class="count-cell">27</td><td class="count-cell ok">0.18–3.37M grid</td><td class="count-cell">—</td></tr>
+      <tr><td>output/…/population/entrant_hours_sensitivity.parquet</td><td>Data</td><td>Parquet</td><td class="count-cell">3</td><td class="count-cell ok">PI-3 marginal $/job</td><td class="count-cell">—</td></tr>
+      <tr><td>output/…/population/entry_central_composition.parquet</td><td>Data</td><td>Parquet</td><td class="count-cell">4</td><td class="count-cell ok">33/64/3 composition</td><td class="count-cell">—</td></tr>
+      <tr><td>output/…/population/matching_simulation.parquet</td><td>Data</td><td>Parquet</td><td class="count-cell">6</td><td class="count-cell ok">rigid/flex cost, firm capture, cliff</td><td class="count-cell">—</td></tr>
+      <tr><td>output/…/population/mpl_imputation_band.parquet</td><td>Data</td><td>Parquet</td><td class="count-cell">9</td><td class="count-cell ok">imputation / penalty / dispersion variants</td><td class="count-cell">—</td></tr>
+      <tr><td>output/…/population/incumbent_hours_margin.parquet</td><td>Data</td><td>Parquet</td><td class="count-cell">3</td><td class="count-cell ok">hours band 0.08/0.25/0.36 FTE</td><td class="count-cell">—</td></tr>
+      <tr><td>output/…/population/summary.parquet</td><td>Data</td><td>Parquet</td><td class="count-cell">1</td><td class="count-cell ok">static $89.75B/$72.12B, 20.81M</td><td class="count-cell">—</td></tr>
+      <tr><td>output/…/population/behavioral_scenarios.parquet</td><td>Data</td><td>Parquet</td><td class="count-cell">4</td><td class="count-cell ok">reduced-form cost band</td><td class="count-cell">—</td></tr>
+      <tr><td>output/…/population/program_interactions.parquet</td><td>Data</td><td>Parquet</td><td class="count-cell">17</td><td class="count-cell ok">SNAP/Medicaid/ACA/TANF/EITC shares</td><td class="count-cell">—</td></tr>
+      <tr><td>output/…/population/by_sex / by_age_bin / by_education / by_race_ethnicity / by_family_type / by_wage_bracket / by_state.parquet</td><td>Data</td><td>Parquet</td><td class="count-cell">—</td><td class="count-cell ok">Tables 2 &amp; 3, state figures</td><td class="count-cell">—</td></tr>
+      <tr><td>output/…/population/entry_margin_band.parquet</td><td>Data</td><td>Parquet</td><td class="count-cell">7</td><td class="count-cell ok">estock/coordination/take-up sensitivities</td><td class="count-cell">—</td></tr>
+      <tr><td>output/…/population/entry_reconciliation.parquet</td><td>Data</td><td>Parquet</td><td class="count-cell">1</td><td class="count-cell ok">0.72 vs 0.83 wedge</td><td class="count-cell">—</td></tr>
+      <tr><td>data/processed/nonemployed_pool_diagnostics.json</td><td>Data</td><td>JSON</td><td class="count-cell">—</td><td class="count-cell ok">elasticities, ρσ, dispersion, base-pool medians</td><td class="count-cell">—</td></tr>
+      <tr><td>data/processed/nonemployed_pool_evidence_central.parquet</td><td>Data</td><td>Parquet</td><td class="count-cell">181,960</td><td class="count-cell ok">fig12 clawback, mean hours, composition</td><td class="count-cell">—</td></tr>
+      <tr><td>code/02_descriptive_analysis/02g_entry_scenario_grid.py</td><td>Code</td><td>Python</td><td class="count-cell">~200</td><td class="count-cell ok">headline/grid/composition builder</td><td class="count-cell">—</td></tr>
+      <tr><td>code/02_descriptive_analysis/02d_matching_simulation.py</td><td>Code</td><td>Python</td><td class="count-cell">~540</td><td class="count-cell ok">entrants / cliff / mean-hours logic</td><td class="count-cell">—</td></tr>
+      <tr><td>code/05_figures_tables/05c_core_figures.R</td><td>Code</td><td>R</td><td class="count-cell">~530</td><td class="count-cell ok">fig12 weighted-median clawback</td><td class="count-cell">—</td></tr>
+    </tbody>
+  </table>
+
+</div>
+
+<div class="report-footer">
+  Generated by AI review agent · data-consistency-reviewer · 2026-07-09<br>
+  Scope: document number verification of the re-centered drafts against live 2026-07-09 pipeline outputs — see code-error-report.html for code bugs, methodology-report.html for design concerns
+</div>
+
+</body>
+</html>

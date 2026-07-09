@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Methodology Report — eig-wagesubsidy-policy-sim (entry re-center)</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; line-height: 1.6; color: #1e293b; background: #f8fafc; }
+    .report-header { background: #134e4a; color: #f0fdfa; padding: 2rem 2.5rem; }
+    .report-header h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.25rem; }
+    .report-header .subtitle { font-size: 0.9rem; color: #99f6e4; }
+    .report-header .meta { margin-top: 1rem; display: flex; gap: 2rem; flex-wrap: wrap; font-size: 0.85rem; color: #ccfbf1; }
+    .report-header .meta span strong { color: #f0fdfa; }
+    .container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+    h2 { font-size: 1.15rem; font-weight: 600; color: #1e293b; margin: 2rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid #e2e8f0; }
+    .summary-box { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; font-size: 0.95rem; color: #334155; line-height: 1.7; }
+    .risk-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+    .risk-label { font-size: 0.9rem; font-weight: 600; color: #475569; }
+    .risk-pill { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.3rem 0.9rem; border-radius: 9999px; }
+    .risk-high { background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; }
+    .design-box { background: #fff; border: 1px solid #e2e8f0; border-left: 4px solid #134e4a; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 2rem; }
+    .design-box h3 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #134e4a; margin-bottom: 0.85rem; }
+    .design-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem 2rem; font-size: 0.88rem; }
+    .design-item { display: flex; gap: 0.5rem; }
+    .design-key { font-weight: 600; color: #475569; min-width: 10rem; }
+    .design-val { color: #1e293b; }
+    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 2rem; }
+    .stat-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; text-align: center; }
+    .stat-card .count { font-size: 2rem; font-weight: 700; line-height: 1; }
+    .stat-card .label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.3rem; }
+    .sev-high .count, .sev-high .label { color: #dc2626; }
+    .sev-medium .count, .sev-medium .label { color: #ea580c; }
+    .sev-low .count, .sev-low .label { color: #2563eb; }
+    .category-heading { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #64748b; margin: 1.5rem 0 0.75rem; padding: 0.4rem 0; border-bottom: 1px dashed #cbd5e1; }
+    .finding { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 1.25rem; overflow: hidden; }
+    .finding-header { display: flex; align-items: flex-start; gap: 1rem; padding: 1rem 1.25rem; border-left: 5px solid transparent; }
+    .finding.high .finding-header { border-left-color: #dc2626; }
+    .finding.medium .finding-header { border-left-color: #ea580c; }
+    .finding.low .finding-header { border-left-color: #2563eb; }
+    .finding-id { font-size: 0.75rem; font-weight: 700; font-family: monospace; color: #64748b; min-width: 4.5rem; padding-top: 0.15rem; }
+    .finding-title-block { flex: 1; }
+    .finding-title { font-weight: 600; font-size: 1rem; color: #1e293b; }
+    .finding-meta { font-size: 0.8rem; color: #64748b; margin-top: 0.2rem; }
+    .finding-meta .file { font-family: monospace; }
+    .severity-badge { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.2rem 0.55rem; border-radius: 4px; }
+    .badge-high { background: #fef2f2; color: #dc2626; }
+    .badge-medium { background: #fff7ed; color: #ea580c; }
+    .badge-low { background: #eff6ff; color: #2563eb; }
+    .finding-body { padding: 0 1.25rem 1.25rem 3.75rem; }
+    .finding-section-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #94a3b8; margin: 0.85rem 0 0.35rem; }
+    .finding-text { font-size: 0.9rem; color: #334155; }
+    pre { background: #0f172a; color: #e2e8f0; border-radius: 6px; padding: 1rem; overflow-x: auto; font-size: 0.82rem; line-height: 1.55; margin: 0.5rem 0; }
+    code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
+    .check-list { list-style: none; padding: 0; margin: 0.5rem 0; font-size: 0.9rem; color: #334155; }
+    .check-list li { padding: 0.25rem 0 0.25rem 1.5rem; position: relative; }
+    .check-list li::before { content: "→"; position: absolute; left: 0; color: #134e4a; font-weight: 700; }
+    .files-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+    .files-table th { background: #f1f5f9; text-align: left; padding: 0.65rem 1rem; font-weight: 600; color: #475569; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; }
+    .files-table td { padding: 0.6rem 1rem; border-bottom: 1px solid #f1f5f9; color: #334155; }
+    .files-table tr:last-child td { border-bottom: none; }
+    .files-table td:first-child { font-family: monospace; font-size: 0.82rem; color: #1e293b; }
+    .files-table .count-cell { text-align: center; font-weight: 600; }
+    .files-table .ok { color: #16a34a; }
+    .files-table .has-issues { color: #dc2626; }
+    .report-footer { margin-top: 3rem; padding: 1.5rem; text-align: center; font-size: 0.8rem; color: #94a3b8; border-top: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+
+<div class="report-header">
+  <h1>Methodology Report</h1>
+  <div class="subtitle">Econometric design concerns — entry-model re-center (2026-07-09) — err on side of flagging</div>
+  <div class="meta">
+    <span><strong>Project:</strong> eig-wagesubsidy-policy-sim</span>
+    <span><strong>Reviewed:</strong> 2026-07-09</span>
+    <span><strong>Files:</strong> 7 files across Python, Markdown</span>
+    <span><strong>Reviewer:</strong> AI review agent (methodology-reviewer)</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <h2>Executive Summary</h2>
+
+  <div class="risk-row">
+    <span class="risk-label">Overall Methodological Risk:</span>
+    <span class="risk-pill risk-high">HIGH</span>
+  </div>
+
+  <div class="summary-box">
+    This review targets the 2026-07-09 headline re-center of the structural entry-from-non-employment model, which moves the central induced-entry figure from a 0.83M "conservative floor" to an "evidence-central" 1.25M by applying a status-differentiated non-employment wage penalty (mean &asymp;10-11 percent) at offer-dispersion &lambda;=0.75, and adds a 27-cell joint scenario grid (0.18&ndash;3.37M) plus a PI-3 entrant-hours sensitivity. The design changes are careful and heavily disclosed, and the scenario grid is a genuine improvement over one-axis-at-a-time reporting. Eleven concerns are raised. The single HIGH item is that the Heckman potential-wage equation that underpins the entire pool is estimated <em>unweighted</em> on an IPUMS CPS outgoing-rotation earner frame that should carry survey weights. The MEDIUM cluster centers on one non-obvious property of the re-center: the offer penalty <strong>raises</strong> modeled entry (it widens the subsidy gap), so the "more realistic" central assumption mechanically produces a 50 percent larger headline than the floor; the &lambda;=0.75 central rests on a measurement-error argument that sits in tension with the truncated accepted-wage residual it scales; the 27-cell grid is joint over only three of roughly eight disclosed uncertainty axes; and composition/clawback are shown on the penalized pool while the band and hours tables are still built on the floor pool. All headline numbers reproduce from the live parquet outputs.
+  </div>
+
+  <h2>Research Design Assessment</h2>
+  <div class="design-box">
+    <h3>Inferred Research Design</h3>
+    <div class="design-grid">
+      <div class="design-item"><span class="design-key">Identification Strategy:</span><span class="design-val">Structural calibrated microsimulation (Heckman selection-corrected MPL imputation &rarr; elasticity-calibrated entry lottery &rarr; Nash-bargaining match/wage). Not a causal-inference design; no DiD/RD/IV.</span></div>
+      <div class="design-item"><span class="design-key">Treatment Variable:</span><span class="design-val">Counterfactual 80-80 wage-fill subsidy (target $16.80/hr; 80% gap fill)</span></div>
+      <div class="design-item"><span class="design-key">Outcome Variable(s):</span><span class="design-val">Induced entry (M persons), gross/net fiscal cost ($B), entry FTE, clawback share, composition by prior status</span></div>
+      <div class="design-item"><span class="design-key">Unit of Analysis:</span><span class="design-val">Person (CPS ORG non-employed, age 16&ndash;64); WTFINL/n_months stock weights</span></div>
+      <div class="design-item"><span class="design-key">Standard Errors:</span><span class="design-val">None. All ranges are parameter/scenario bands; no sampling or two-step estimation uncertainty is propagated (disclosed, ST-9)</span></div>
+      <div class="design-item"><span class="design-key">Fixed Effects:</span><span class="design-val">Not applicable</span></div>
+      <div class="design-item"><span class="design-key">Sample Period:</span><span class="design-val">Last two ORG year-partitions (2025&ndash;2026, IPUMS *2 era) — <code>[-2:]</code>, uncommented</span></div>
+      <div class="design-item"><span class="design-key">Key Packages:</span><span class="design-val">numpy, pandas, statsmodels (Probit/OLS), scipy.stats; PolicyEngine schedules</span></div>
+    </div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card sev-high"><div class="count">1</div><div class="label">High</div></div>
+    <div class="stat-card sev-medium"><div class="count">7</div><div class="label">Medium</div></div>
+    <div class="stat-card sev-low"><div class="count">3</div><div class="label">Low</div></div>
+  </div>
+
+  <h2>Findings</h2>
+
+  <!-- ============ HIGH ============ -->
+  <div class="category-heading">HIGH — 1 finding</div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Dataset Variable Usage</div>
+
+  <div class="finding high">
+    <div class="finding-header">
+      <div class="finding-id">MR-001</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Heckman probit and wage OLS are estimated unweighted on an IPUMS CPS ORG earner frame</div>
+        <div class="finding-meta"><span class="file">code/01_data_preparation/01h_nonemployed_pool.py</span><span> &middot; Dataset Variable Usage</span></div>
+      </div>
+      <span class="severity-badge badge-high">HIGH</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code</div>
+      <pre><code>probit = sm.Probit(D, Xsel.to_numpy()).fit(disp=0, maxiter=200)   # no weights
+...
+ols = sm.OLS(y, Xw.to_numpy()).fit()                              # no weights
+...
+# by contrast, the cell-median fallback DOES weight:
+cell = {... wmed(g["obs_wage"], g["EARNWT"]) ...}</code></pre>
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">The entire structural result rests on the imputed potential wage (MPL): its distribution sets who is "reachable" (below the $16.80 target) and therefore how many people the subsidy can pull in. That MPL is produced by a two-step Heckman whose probit and wage OLS are both estimated <em>without survey weights</em>, then predicted onto the full non-employed pool. The wage equation is fit on paid-hourly earners (HOURWAGE/EARNWEEK) — an outgoing-rotation earner study. The dataset registry marks CPS ORG earnings analysis as requiring the earner weight <code>EARNWT</code> (PWORWGT), and flags using the wrong weight for an earnings product as HIGH. Unweighted estimation is a stronger form of the same problem: if selection into the paid-hourly frame or the wage level correlates with sampling weights (it does — IPUMS oversampling, differential ORG response), the fitted wage structure and hence the imputed pool median and pct-below-target are biased for the population the headline describes. Note the internal inconsistency: the cell-median fallback path is EARNWT-weighted while the primary Heckman path is not. Solon, Haider &amp; Wooldridge (2015) give some cover for unweighted estimation of a conditional mean under correct specification, but here the object of interest is a <em>population</em> imputed-wage distribution, which is exactly the case where weighting matters — and no comment justifies the unweighted choice.</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Confirm whether the wage OLS should be weighted by <code>EARNWT</code> (the ORG earner weight) and the probit by the appropriate frame weight; re-run and report the shift in pool median MPL and pct-below-target.</li>
+        <li>If unweighted estimation is deliberate, add a comment citing the specific justification (e.g., Solon-Haider-Wooldridge) and show weighted-vs-unweighted imputation is close.</li>
+        <li>Reconcile the EARNWT-weighted fallback against the unweighted primary path so the two do not silently use different population definitions.</li>
+        <li>Verify the pool population count uses the correct basic-monthly weight (WTFINL) — separate from the earner-frame weight used to estimate wage structure.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ MEDIUM ============ -->
+  <div class="category-heading">MEDIUM — 7 findings</div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Causal Inference</div>
+
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">MR-002</div>
+      <div class="finding-title-block">
+        <div class="finding-title">The offer penalty <em>increases</em> modeled entry — the re-center raises the headline by assuming worse offers</div>
+        <div class="finding-meta"><span class="file">code/01_data_preparation/01h_nonemployed_pool.py, code/02_descriptive_analysis/02g_entry_scenario_grid.py</span><span> &middot; Causal Inference</span></div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code / Live Output</div>
+      <pre><code>mpl = np.maximum(FED_MIN, mpl * (1.0 - pen_i))   # penalty lowers imputed MPL
+# downstream: s_hr = 0.80 * max(0, target - mpl);  g_net rises;  more "reachable"
+# grid (penalty=0 -> 0.10 -> 0.20, lambda 0.75, eps central):
+#   pct_mpl_below_target: 41.4% -> 52.1% -> 63.6%
+#   induced_M:            0.83  -> 1.21  -> 1.70
+# headline: conservative_floor 0.83M ;  evidence_central 1.25M</code></pre>
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">A downward non-employment wage penalty lowers each person's imputed MPL. In a wage-<em>fill</em> subsidy this widens the gap to the $16.80 target, so the per-hour subsidy rises, the net stimulus <code>g_net</code> rises, more people fall below target (reachable), and the calibrated target share itself rises. Every channel pushes entry <em>up</em>, and the viability gate (surplus <code>y &minus; r &ge; 0</code>) never offsets it because the subsidy guarantees positive surplus — there is no labor-demand or hiring-probability penalty for the assumed-lower-productivity worker. The result is the counterintuitive fact that the "evidence-central" case (1.25M), which is meant to be <em>more realistic</em> about the non-employed having weaker offers, is 50 percent <em>larger</em> than the "conservative floor" (0.83M) that assumes no penalty. This is internally coherent given the policy design, but it is a genuine presentation and interpretation hazard: reviewers and readers naturally expect a "wage penalty" to make entry harder, not easier. There is also a latent double-movement — the penalty simultaneously lowers the required net gain (via a lower <code>NI(y&middot;h)</code> base) and raises the stimulus — so the entry response to the penalty is amplified through two coupled channels.</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>State explicitly in the draft that the penalty raises entry through the gap-widening/reachability channel, so a "lower-offer" central case yields a <em>higher</em> headline than the floor.</li>
+        <li>Confirm the intended economics: should a lower assumed offer wage carry any offsetting reduction in hiring probability or match formation, rather than translating one-for-one into a larger subsidy and more entry?</li>
+        <li>Decompose the penalty's entry effect into the reachability (extensive-pool) component versus the per-person <code>g_net</code> component to show the amplification is understood and intended.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">MR-003</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Status-differentiated 5/10/15 percent penalty is evidence-informed judgment, not an estimate; the KM anchor cited for the unemployed implies ~10 percent, not 5</div>
+        <div class="finding-meta"><span class="file">code/00_setup/00_config.py, docs/entry_from_nonemployment_methodology.md</span><span> &middot; Causal Inference</span></div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code</div>
+      <pre><code>"evidence_central_status_penalty": {
+    "unemployed": 0.05, "nilf_other": 0.10, "disabled": 0.15, "retired": 0.15},
+# docs: "short-spell unemployed light per Krueger-Mueller ~0.90x;
+#        long-detached groups heavier per compounded Schmieder-vWB 0.8%/mo"</code></pre>
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">The ordering (unemployed &lt; NILF &lt; disabled/retired) is defensible and literature-consistent, and disclosing the anchors is good practice. But two things make "evidence-central" a slightly overstated label for what is fundamentally a judgment call. First, Schmieder&ndash;von Wachter&ndash;Bender (2016) measure a <em>duration-dependent</em> causal offer decay (~0.8 percent/month); collapsing that to a single static 5/10/15 percent haircut requires an implicit assumed spell length per status group that the code openly leaves unmodeled ("duration heterogeneity unmodeled"). A 15 percent penalty implies ~19 months of decay for the disabled/retired, groups whose imputed MPL is extrapolated from a paid-hourly wage equation they may be far from to begin with. Second, Krueger&ndash;Mueller (2016) find the <em>unemployed</em> accept at ~0.90&times; prior wages — a 10 percent haircut — yet that anchor is invoked to justify the unemployed's <em>5</em> percent penalty. If anything KM supports ~10 percent for the unemployed, so the assigned magnitude is lighter than the cited evidence. Because entry is monotone in the penalty (MR-002), these magnitude choices move the headline directly.</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Reconcile the unemployed's 5 percent with the Krueger-Mueller ~0.90&times; (10 percent) anchor cited to support it, or re-cite an accepted-wage estimate that actually implies ~5 percent for short spells.</li>
+        <li>Show the implied spell length behind each 5/10/15 penalty under the Schmieder 0.8 percent/month rate, and confirm it is plausible for that status group.</li>
+        <li>Consider relabeling as "evidence-informed central prior" rather than "evidence-central" to avoid implying the magnitude is estimated.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Sample &amp; Data</div>
+
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">MR-004</div>
+      <div class="finding-title-block">
+        <div class="finding-title">&lambda;=0.75 central rests on netting measurement error out of an already-truncated accepted-wage residual — dispersion likely understated</div>
+        <div class="finding-meta"><span class="file">code/00_setup/00_config.py, code/01_data_preparation/01h_nonemployed_pool.py</span><span> &middot; Sample &amp; Data</span></div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code</div>
+      <pre><code>"offer_dispersion": {"lambda_central": 0.75, "band": [0.50, 1.00]},
+# spread ~ exp(lambda * sigma_g * z - (lambda*sigma_g)^2/2),  sigma_g = OLS resid SD
+#   by educ x age (0.29-0.55). lambda "nets out approximate measurement error."
+# live: lambda 0.50 -> 0.75 -> 1.00  =>  induced 0.62M -> 0.83M -> 1.12M (penalty 0)</code></pre>
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">The offer spread is scaled by &lambda;=0.75 to remove CPS measurement error (~0.10&ndash;0.15 log points) from the wage-equation residual SD. But that residual SD is estimated on <em>accepted</em> (paid-hourly employed) wages, which are a selection-truncated view of the offer distribution: offers below reservation are never observed, so the accepted-wage residual SD already <em>understates</em> true offer dispersion. The pipeline then applies a second downward adjustment (&lambda;&lt;1). The two corrections compound in the same direction, while the offsetting upward correction for truncation is never made. Because dispersion raises entry (more offer mass crosses the target from both tails), an understated central dispersion biases the central entry figure down — which the re-center then partly compensates for via the penalty (MR-002), entangling the two levers. The user's concern that &lambda;=0.75 under-states dispersion is well founded. The code does anchor the low-education effective SD (0.29&times;0.75&asymp;0.22) to Hall&ndash;Mueller's ~0.24 within-person offer SD, which is reasonable, but that benchmark is an <em>offer</em> SD and should be compared to the offer spread directly rather than reached via a truncated accepted-wage residual.</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Justify &lambda; against an offer-wage dispersion benchmark (e.g., Hall-Mueller within-person offer SD) rather than an accepted-wage residual that is itself truncated.</li>
+        <li>Consider whether the truncation of accepted wages warrants a &lambda; nearer 1.0 (or above) as central, and report entry at &lambda;=1.0 as at least a co-central case.</li>
+        <li>State that the penalty and &lambda; levers partly compensate for each other, so their central values should be justified jointly, not independently.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">MR-005</div>
+      <div class="finding-title-block">
+        <div class="finding-title">27-cell grid is joint over only three of ~eight disclosed uncertainty axes; its 0.18&ndash;3.37M range is a scenario min&ndash;max, not an interval</div>
+        <div class="finding-meta"><span class="file">code/00_setup/00_config.py, code/02_descriptive_analysis/02g_entry_scenario_grid.py</span><span> &middot; Sample &amp; Data</span></div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code</div>
+      <pre><code>"entry_scenario_grid": {"penalty": [0.0,0.10,0.20],
+    "lambda": [0.50,0.75,1.00], "eps_edge": ["lower","central","upper"]}
+# held FIXED across all 27 cells: beta=central, take-up=1.0, hours=rank,
+#   imputation=conditional, household-coordination=off</code></pre>
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">Building the full Cartesian product over penalty &times; &lambda; &times; eps is a real improvement — it exposes the super-additive joint envelope the earlier one-axis-at-a-time band hid, and the mechanics (9 pool builds, 3 eps edges read for free) are sound. Two caveats keep it from being a complete uncertainty representation. First, the grid is joint over only three levers; at least five other disclosed axes are held at a single value in every cell — bargaining share &beta; (central), take-up (1.0), entrant-hours mapping (rank), imputation variant (conditional), and household coordination (off). Several of these move entry materially (take-up 0.80 alone scales it 20 percent; imputation spans 0.53&ndash;0.83M). So the grid maximum 3.37M is <em>not</em> a true upper bound, and the minimum 0.18M is not a true lower bound. Second, penalty and &lambda; both act through the same reachability/left-tail-of-offers channel, so the joint upper corner (20 percent &times; &lambda;=1.0) may partly double-count a single underlying phenomenon ("offers are lower and more dispersed than the mean imputation"). Presenting "0.18&ndash;3.37M" risks being read as a probabilistic interval; it is a min&ndash;max over a discretized judgment grid with no cell probabilities.</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Label the range explicitly as a scenario min&ndash;max over three levers with all other axes fixed, not a confidence or probability interval.</li>
+        <li>State which additional axes are held fixed and in which direction they would widen the envelope (take-up down, imputation, &beta;, hours).</li>
+        <li>Note the mechanistic correlation between penalty and &lambda; so the joint corner is not read as fully independent compounding.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">MR-006</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Mixed-basis presentation: composition/clawback from the penalized 1.25M pool, but the band and hours tables from the 0.83M floor pool</div>
+        <div class="finding-meta"><span class="file">code/02_descriptive_analysis/02g_entry_scenario_grid.py, code/02_descriptive_analysis/02d_matching_simulation.py</span><span> &middot; Sample &amp; Data</span></div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code / Live Output</div>
+      <pre><code>02g: evc_pool = _get_pool(0.0, evc_lam, status_penalty=sp_str, ...)   # penalized 1.25M
+     entry_central_composition.parquet  <- from evc_pool  (unemployed 0.412M of 1.25M ~33%)
+02d: pool = read_parquet("nonemployed_pool.parquet")                  # canonical FLOOR 0.83M
+     entry_margin_band.parquet, entrant_hours_sensitivity.parquet <- from FLOOR pool</code></pre>
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">The re-center makes the evidence-central (penalized) pool the headline, and 02g correctly writes the composition (and, per the doc, clawback medians 15/23/21 percent) from that 1.25M pool. But 02d still computes <code>entry_margin_band.parquet</code>, the extensive-margin band, the household-coordination/take-up sensitivities, and the PI-3 entrant-hours table from the <em>canonical floor</em> pool (0.83M). A reader assembling the published figures would combine composition/clawback described at 1.25M with an entry band and hours/FTE table described at 0.83M — two different populations with different reachability, different status mix, and different depth in the phase-out ranges. Because the penalty shifts entrants toward lower-MPL, deeper-phase-out people, the clawback and hours distributions genuinely differ between the two pools, so this is not a cosmetic mismatch.</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Decide one canonical pool for all headline downstream artifacts and rebuild the band, hours, and sensitivity tables on it — or clearly label each table with which pool (floor vs evidence-central) it reflects.</li>
+        <li>Confirm the published clawback medians (15/23/21 percent) and the entry band are computed on the same pool the 1.25M headline uses.</li>
+        <li>Verify any figure that pairs entry counts with composition or clawback is not silently mixing the 0.83M and 1.25M bases.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">MR-007</div>
+      <div class="finding-title-block">
+        <div class="finding-title">PI-3 headline uses the "rank" hours mapping — the extreme low-hours case (~768 hrs/yr) — minimizing entry FTE and marginal cost per entrant</div>
+        <div class="finding-meta"><span class="file">code/02_descriptive_analysis/02d_matching_simulation.py, code/00_setup/00_config.py</span><span> &middot; Sample &amp; Data</span></div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Live Output (entrant_hours_sensitivity.parquet)</div>
+      <pre><code>hours_mode   mean_entry_hours  entry_fte_M  marginal_gross_per_job  marginal_net_per_job
+rank                 768            0.32              4018                   2527
+independent         1630            0.68              9576                   5630
+median              1864            0.77             11375                   7127
+# verified: corr(MPL, entry_hours) = 0.884 in the canonical pool</code></pre>
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">The three-way rank/independent/median sensitivity is a good, honest bound — this is the adequate part of PI-3, and it correctly flags that fiscal totals barely move while the marginal-cost/FTE story does. The concern is that the <em>headline</em> mapping is "rank," which couples MPL percentile to hours percentile at the verified corr &asymp; 0.88, so the lowest-MPL entrants are assigned the fewest hours. This yields a mean of just 768 annual hours (&asymp;15 hrs/week) — an implausibly part-time full-year entrant — and drives entry FTE (0.32M) and marginal cost per entrant (~$4,018 gross) to the minimum of the three. The independent draw roughly doubles both. The rank-rank coupling is a mechanical percentile match, not a tested behavioral relationship: there is no evidence that a low-MPL <em>entrant</em> (a new hire, not an incumbent) would work the fewest hours, and using it for the headline systematically understates the FTE and per-entrant-cost figures that the doc itself flags as HIGH-sensitivity. (This table is also built on the floor pool — see MR-006.)</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Reconsider whether "independent" (or a reported FTE/marginal-cost range) is the more defensible headline than the extreme low-hours "rank" mapping.</li>
+        <li>Sanity-check the 768-hours mean against any external evidence on hours worked by labor-market entrants; a ~15 hr/week full-year mean is a red flag.</li>
+        <li>Report entry FTE and marginal cost per entrant as a range across the three mappings wherever the point figure is used.</li>
+        <li>Rebuild the PI-3 table on the evidence-central pool so it matches the 1.25M headline (overlaps MR-006).</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">MR-008</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Undocumented sample restrictions: only the last two ORG year-partitions are pooled, and age 16&ndash;64 is imposed without a comment</div>
+        <div class="finding-meta"><span class="file">code/01_data_preparation/01h_nonemployed_pool.py</span><span> &middot; Sample &amp; Data</span></div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code</div>
+      <pre><code>parts = sorted(raw_dir.glob("year=*/part-0.parquet"))[-2:]     # why 2? no comment
+...
+org = org[(org["AGE"] >= 16) & (org["AGE"] <= 64)].copy()       # no comment
+...
+"weight": (nonemp["WTFINL"] / n_months).to_numpy(),            # stock = person-months / n_months</code></pre>
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">Two sample choices are applied with no inline rationale, which is the most common source of replication drift (MR-SA1). First, <code>[-2:]</code> silently pools only the two most recent ORG year-partitions; the count of pooled months feeds directly into the WTFINL/n_months stock conversion, so the choice of window affects both the population level and the E/R base-semantics comparison. A different data vintage would change the window without any signal. Second, age 16&ndash;64 is imposed without comment; the 16&ndash;24 tail pulls in students and other marginal-attachment youth whose imputed MPL and entry propensity are exactly the composition problem the status weights were introduced to fix. Neither restriction is wrong, but both should carry a one-line justification so the pooled window and age universe are deliberate and reproducible.</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Add a comment explaining why exactly two ORG year-partitions are pooled and confirm n_months is the intended denominator for the stock weight.</li>
+        <li>Document the age 16&ndash;64 universe and confirm the 16&ndash;24 inclusion is intended given the status-weight composition fix.</li>
+        <li>Verify the results are stable to pooling one vs. two (vs. more) year-partitions.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ LOW ============ -->
+  <div class="category-heading">LOW — 3 findings</div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Regression Specification</div>
+
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">MR-009</div>
+      <div class="finding-title-block">
+        <div class="finding-title">No sampling or two-step estimation uncertainty is propagated behind the single-number headline</div>
+        <div class="finding-meta"><span class="file">code/01_data_preparation/01h_nonemployed_pool.py, docs/entry_from_nonemployment_methodology.md</span><span> &middot; Regression Specification</span></div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code</div>
+      <pre><code># IMR coef (rho*sigma) printed but its SE never propagated; imputation is
+# "identified off the IMR functional form" with no exclusion restriction.
+# ST-9 (doc): "The band represents eps_ext scenario uncertainty only —
+#   not sampling error, not the exponential-markup functional form ..."</code></pre>
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">Every reported range is a parameter/scenario band; none carries CPS sampling error or the estimation uncertainty of the weakly-identified Heckman two-step (whose IMR coefficient drives the conditional imputation but whose standard error never enters the pool). CPS replicate weights are also unused. This is explicitly disclosed (ST-9), so it is LOW rather than a hidden defect — but the re-center now promotes a single "evidence-central 1.25M" as the headline, described as the center of a two-sided range. That framing makes it more likely a reader treats 0.18&ndash;3.37M as a full uncertainty interval when it excludes all statistical uncertainty. Worth restating the ST-9 disclosure prominently wherever the single number appears.</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Repeat the ST-9 scope disclosure adjacent to the headline number in the draft, not only in the methodology appendix.</li>
+        <li>If feasible, bound the imputation's contribution by reporting the conditional/mills0/plain spread (already in mpl_imputation_band.parquet) alongside the headline.</li>
+        <li>Consider a note that CPS replicate-weight variance is not included in any reported range.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Descriptive Analysis</div>
+
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">MR-010</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Imputed non-employed MPL distribution is not externally validated against any wage benchmark</div>
+        <div class="finding-meta"><span class="file">code/01_data_preparation/01h_nonemployed_pool.py</span><span> &middot; Descriptive Analysis</span></div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Live Output</div>
+      <pre><code>pool median MPL (conditional) = $18.28 ;  41.4% below the $16.80 target
+# diagnostics compare conditional vs mills0 vs plain, but not to any external anchor</code></pre>
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">The imputed potential-wage distribution for the non-employed is a novel, unobserved construct that fully determines reachability and hence the headline. The diagnostics compare the three internal imputation variants (good), but there is no comparison to an external benchmark — e.g., prior wages of the recently unemployed, observed re-employment wages, or CPS displaced-worker earnings — that would validate that a pool median of $18.28 and 41 percent below $16.80 are plausible for this population (MR-DA10). Given the whole result pivots on the left tail of this distribution, even a rough external check would materially strengthen the analysis.</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Benchmark the imputed pool MPL distribution against an external reference (re-employment wages, prior wages of the unemployed, displaced-worker surveys).</li>
+        <li>Report where the imputed non-employed median sits relative to the observed paid-hourly employed median and confirm the gap is economically sensible.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Sample &amp; Data</div>
+
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">MR-011</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Two different status-penalty vectors coexist (headline vs. 02f left-skew variant) — confirm the intended one drives the figures</div>
+        <div class="finding-meta"><span class="file">code/00_setup/00_config.py, code/02_descriptive_analysis/02f_mpl_imputation_band.py</span><span> &middot; Sample &amp; Data</span></div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code</div>
+      <pre><code># headline (config entry_recenter):  U 0.05 / NILF 0.10 / dis 0.15 / ret 0.15
+# 02f "skewstat" variant (hardcoded): U 0.05 / NILF 0.15 / dis 0.20 / ret 0.20
+# 02f "skewstat_hi":                  U 0.10 / NILF 0.25 / dis 0.30 / ret 0.30</code></pre>
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">The evidence-central headline penalty vector lives in <code>cfg["entry_recenter"]</code>, while 02f hard-codes a different, heavier status-mixture ("skewstat") for its left-skew sensitivity. The two are close but not identical, and the 02f value is not sourced from config. This is not an error, but it invites confusion about which vector is the published central and makes the sensitivity variant slightly harder to audit. Confirm 02g's headline pool uses the config vector (it does, via <code>evidence_central_status_penalty</code>) and consider driving 02f's variant from config too.</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Confirm every published figure/table uses the config <code>evidence_central_status_penalty</code> vector, not the 02f hard-coded skewstat vector.</li>
+        <li>Move the 02f skew-variant penalties into config so all status-penalty vectors have one source of truth.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Reviewed Files</h2>
+  <table class="files-table">
+    <thead>
+      <tr><th>File</th><th>Language</th><th style="text-align:center">Lines</th><th style="text-align:center">Concerns Found</th><th style="text-align:center">Highest Severity</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>code/00_setup/00_config.py</td><td>Python</td><td class="count-cell">304</td><td class="count-cell has-issues">5</td><td class="count-cell">MEDIUM</td></tr>
+      <tr><td>code/01_data_preparation/01h_nonemployed_pool.py</td><td>Python</td><td class="count-cell">734</td><td class="count-cell has-issues">7</td><td class="count-cell">HIGH</td></tr>
+      <tr><td>code/02_descriptive_analysis/02b_behavioral_scenarios.py</td><td>Python</td><td class="count-cell">341</td><td class="count-cell ok">0</td><td class="count-cell">&mdash;</td></tr>
+      <tr><td>code/02_descriptive_analysis/02d_matching_simulation.py</td><td>Python</td><td class="count-cell">544</td><td class="count-cell has-issues">3</td><td class="count-cell">MEDIUM</td></tr>
+      <tr><td>code/02_descriptive_analysis/02f_mpl_imputation_band.py</td><td>Python</td><td class="count-cell">135</td><td class="count-cell has-issues">1</td><td class="count-cell">LOW</td></tr>
+      <tr><td>code/02_descriptive_analysis/02g_entry_scenario_grid.py</td><td>Python</td><td class="count-cell">186</td><td class="count-cell has-issues">3</td><td class="count-cell">MEDIUM</td></tr>
+      <tr><td>docs/entry_from_nonemployment_methodology.md</td><td>Markdown</td><td class="count-cell">121</td><td class="count-cell has-issues">3</td><td class="count-cell">MEDIUM</td></tr>
+    </tbody>
+  </table>
+
+</div>
+
+<div class="report-footer">
+  Generated by AI review agent &middot; methodology-reviewer &middot; 2026-07-09<br>
+  Scope: methodology &amp; design concerns — see code-error-report.html for definitive code bugs
+</div>
+
+</body>
+</html>

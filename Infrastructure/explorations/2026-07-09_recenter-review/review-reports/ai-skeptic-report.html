@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Skeptic Report — 80-80 Wage Subsidy (re-center audit)</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; line-height: 1.6; color: #1e293b; background: #f8fafc; }
+    .report-header { background: #7f1d1d; color: #fef2f2; padding: 2rem 2.5rem; }
+    .report-header h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.25rem; }
+    .report-header .subtitle { font-size: 0.9rem; color: #fca5a5; }
+    .report-header .meta { margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 2rem; font-size: 0.85rem; color: #fecaca; }
+    .report-header .meta span strong { color: #fef2f2; }
+    .container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+    h2 { font-size: 1.15rem; font-weight: 600; color: #1e293b; margin: 2rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid #e2e8f0; }
+    .summary-box { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; font-size: 0.95rem; color: #334155; line-height: 1.7; }
+    .trust-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+    .trust-label { font-size: 0.9rem; font-weight: 600; color: #475569; }
+    .trust-pill { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.3rem 0.9rem; border-radius: 9999px; }
+    .trust-suspect  { background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; }
+    .trust-caution  { background: #fff7ed; color: #ea580c; border: 1px solid #fdba74; }
+    .trust-verified { background: #f0fdf4; color: #16a34a; border: 1px solid #86efac; }
+    .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem; margin-bottom: 2rem; }
+    .stat-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; text-align: center; }
+    .stat-card .count { font-size: 2rem; font-weight: 700; line-height: 1; }
+    .stat-card .label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.3rem; }
+    .sev-critical .count, .sev-critical .label { color: #dc2626; }
+    .sev-high .count, .sev-high .label { color: #ea580c; }
+    .sev-medium .count, .sev-medium .label { color: #ca8a04; }
+    .sev-low .count, .sev-low .label { color: #2563eb; }
+    .sev-info .count, .sev-info .label { color: #64748b; }
+    .category-heading { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #64748b; margin: 1.5rem 0 0.75rem; padding: 0.4rem 0; border-bottom: 1px dashed #cbd5e1; }
+    .finding { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 1.25rem; overflow: hidden; }
+    .finding-header { display: flex; align-items: flex-start; gap: 1rem; padding: 1rem 1.25rem; border-left: 5px solid transparent; }
+    .finding.critical .finding-header { border-left-color: #dc2626; }
+    .finding.high .finding-header { border-left-color: #ea580c; }
+    .finding.medium .finding-header { border-left-color: #ca8a04; }
+    .finding.low .finding-header { border-left-color: #2563eb; }
+    .finding.info .finding-header { border-left-color: #94a3b8; }
+    .finding-id { font-size: 0.75rem; font-weight: 700; font-family: monospace; color: #64748b; min-width: 4.5rem; padding-top: 0.15rem; }
+    .finding-title-block { flex: 1; }
+    .finding-title { font-weight: 600; font-size: 1rem; color: #1e293b; }
+    .finding-meta { font-size: 0.8rem; color: #64748b; margin-top: 0.2rem; }
+    .finding-meta .file { font-family: monospace; }
+    .severity-badge { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.2rem 0.55rem; border-radius: 4px; }
+    .badge-critical { background: #fef2f2; color: #dc2626; }
+    .badge-high { background: #fff7ed; color: #ea580c; }
+    .badge-medium { background: #fefce8; color: #ca8a04; }
+    .badge-low { background: #eff6ff; color: #2563eb; }
+    .badge-info { background: #f1f5f9; color: #64748b; }
+    .finding-body { padding: 0 1.25rem 1.25rem 3.75rem; }
+    .finding-section-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #94a3b8; margin: 0.85rem 0 0.35rem; }
+    .finding-text { font-size: 0.9rem; color: #334155; }
+    pre { background: #0f172a; color: #e2e8f0; border-radius: 6px; padding: 1rem; overflow-x: auto; font-size: 0.82rem; line-height: 1.55; margin: 0.5rem 0; }
+    code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
+    .code-label { font-size: 0.7rem; color: #64748b; font-family: monospace; margin-bottom: 0.15rem; }
+    .check-list { list-style: none; padding: 0; margin: 0.5rem 0; font-size: 0.9rem; color: #334155; }
+    .check-list li { padding: 0.25rem 0 0.25rem 1.5rem; position: relative; }
+    .check-list li::before { content: "→"; position: absolute; left: 0; color: #7f1d1d; font-weight: 700; }
+    .inventory-table, .test-table, .files-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-bottom: 1.5rem; }
+    .inventory-table th, .test-table th, .files-table th { background: #f1f5f9; text-align: left; padding: 0.65rem 0.75rem; font-weight: 600; color: #475569; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; }
+    .inventory-table td, .test-table td, .files-table td { padding: 0.55rem 0.75rem; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: top; }
+    .inventory-table tr:last-child td, .test-table tr:last-child td, .files-table tr:last-child td { border-bottom: none; }
+    .inventory-table td:first-child { font-family: monospace; font-size: 0.8rem; text-align: center; }
+    .impact-high { color: #dc2626; font-weight: 600; }
+    .impact-medium { color: #ca8a04; font-weight: 600; }
+    .impact-low { color: #2563eb; font-weight: 600; }
+    .disclosed-yes { color: #16a34a; }
+    .disclosed-no { color: #dc2626; font-weight: 600; }
+    .disclosed-partial { color: #ca8a04; }
+    .test-pass { color: #16a34a; font-weight: 600; }
+    .test-fail-crash { color: #dc2626; font-weight: 600; }
+    .test-fail-silent { color: #7f1d1d; font-weight: 700; background: #fef2f2; }
+    .test-fail-na { color: #ea580c; font-weight: 600; }
+    .files-table td:first-child { font-family: monospace; font-size: 0.82rem; color: #1e293b; }
+    .files-table .count-cell { text-align: center; font-weight: 600; }
+    .files-table .ok { color: #16a34a; }
+    .files-table .has-issues { color: #dc2626; }
+    .ai-known { color: #7f1d1d; font-weight: 600; }
+    .ai-suspected { color: #ca8a04; }
+    .ai-unknown { color: #64748b; }
+    .report-footer { margin-top: 3rem; padding: 1.5rem; text-align: center; font-size: 0.8rem; color: #94a3b8; border-top: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+
+<div class="report-header">
+  <h1>AI Skeptic Report</h1>
+  <div class="subtitle">Fabrication detection · assumption audit · edge-case stress tests · confidence calibration</div>
+  <div class="meta">
+    <span><strong>Project:</strong> eig-wagesubsidy-policy-sim — 80-80 re-center audit</span>
+    <span><strong>Reviewed:</strong> 2026-07-09</span>
+    <span><strong>Files:</strong> 11 (9 source + 2 drafts) across Python, R, Markdown</span>
+    <span><strong>AI-Authored:</strong> 9 files (known)</span>
+    <span><strong>Reviewer:</strong> AI review agent (ai-skeptic)</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <h2>Executive Summary</h2>
+
+  <div class="trust-row">
+    <span class="trust-label">Overall Trust Assessment:</span>
+    <span class="trust-pill trust-caution">CAUTION</span>
+  </div>
+
+  <div class="summary-box">
+    Adversarial audit of the re-centered 80-80 drafts (0.83M floor → 1.25M evidence-central) and the entry-model code found <strong>no fabrications</strong>. Every load-bearing citation named in the brief was verified as a genuine paper with the correct authors and outlet (Schmieder-von Wachter-Bender 2016; Krueger-Mueller 2016; Card-Hyslop 2005 / SSP; MDRC Paycheck Plus NYC and Atlanta; Grogger 2003; Fang-Keane 2004; Maestas-Mullen-Strand 2013; Chetty 2012; Fehr-Goette 2007; Hall-Mueller 2018), and the most number-specific claim (Maestas-Mullen-Strand: ~28-point employment effect for the ~23% of marginal applicants) matches the paper exactly. Every headline quantity — 1.25M / 0.83M / 3.37M entrants, the 0.18–3.37M grid range, the group splits (0.20 / 0.91 / 0.14M), $6.4B/$4.5B entrant cost, $72–78B net band, 55% firm-capture bound, $59K per-job — reproduced from the live parquet outputs to the digit. The saturating <code>response_multiplier</code> engine and the Nash renegotiation math match their documented forms. The concerns are therefore not accuracy but <strong>calibration and provenance-of-basis</strong>: (1) the 1.25M headline is a 50% uplift over the model's own floor produced by a single un-pinned judgment penalty, while the claimed offsetting "two-sided" biases are asserted but never sized; (2) two drafts describe sensitivities and a marginal cost-per-job as "applied to the evidence-central" when the code computes them on the conservative-floor pool; (3) one citation's specific figure ("accept re-employment at ~90% of prior wages") is not the finding of the paper it is attached to. Total findings: 3 MEDIUM, 4 LOW, 1 INFO. Trust level <strong>CAUTION</strong> — the machinery is sound and unusually well-disclosed, but a human should confirm the framing choices before publication.
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card sev-critical"><div class="count">0</div><div class="label">Critical</div></div>
+    <div class="stat-card sev-high"><div class="count">0</div><div class="label">High</div></div>
+    <div class="stat-card sev-medium"><div class="count">3</div><div class="label">Medium</div></div>
+    <div class="stat-card sev-low"><div class="count">4</div><div class="label">Low</div></div>
+    <div class="stat-card sev-info"><div class="count">1</div><div class="label">Info</div></div>
+  </div>
+
+  <h2>Assumption Inventory</h2>
+  <p style="font-size:0.9rem; color:#64748b; margin-bottom:0.75rem;">
+    Implicit analytical choices behind the re-center. This project is unusually transparent — most choices are disclosed in config comments, the appendix, or figure captions. The flagged item is the specific magnitude and headline-status of the non-employment wage penalty.
+  </p>
+
+  <table class="inventory-table">
+    <thead>
+      <tr><th>#</th><th>Code Location</th><th>Assumption</th><th>Alternatives</th><th>Impact</th><th>Disclosed?</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>00_config.py:268 (evidence_central_status_penalty)</td>
+        <td>Non-employment wage penalty of 5% (unemployed) / 10% (NILF) / 15% (disabled, retired), pool-weighted ≈11%, is the headline; a zero penalty is demoted to a "floor."</td>
+        <td>Zero penalty (the prior 0.83M headline); a uniform 10%; the {0,10,20%} grid axis</td>
+        <td><span class="impact-high">High</span></td>
+        <td><span class="disclosed-partial">Partial</span></td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>00_config.py:257 (offer_dispersion lambda_central=0.75)</td>
+        <td>Offer-dispersion scale λ=0.75 "nets out" ~0.10–0.15 log pts of CPS measurement error from the residual SD.</td>
+        <td>λ=0.50 / 1.00 (reported as a band in fig14)</td>
+        <td><span class="impact-high">High</span></td>
+        <td><span class="disclosed-yes">Yes</span></td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>00_config.py:232 (entry_status_weights 5.0 / 1.0 / 0.15)</td>
+        <td>Entry lottery weighted by prior status (unemployed ×5, disabled/retired ×0.15); changes <em>who</em> enters, not the count.</td>
+        <td>Uniform lottery (prior version); other flow-ratio anchors</td>
+        <td><span class="impact-medium">Medium</span></td>
+        <td><span class="disclosed-yes">Yes</span></td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>02d:271 / 01h:76 (CAP_HOURS = 40×52 = 2080; ws_hours_per_year = 2000)</td>
+        <td>Two "full-time" constants coexist: subsidy cap uses 2,080 hrs; FTE denominators use 2,000 hrs.</td>
+        <td>A single full-time convention</td>
+        <td><span class="impact-low">Low</span></td>
+        <td><span class="disclosed-partial">Partial</span></td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>00_config.py:189 (entry_wage_percentile=15) &amp; reservation_ratio=0.80</td>
+        <td>Synthetic-fallback entrants placed at p15 of the wage dist; reservation = 0.80×prior wage (Krueger-Mueller).</td>
+        <td>Other percentiles / ratios; only binds on the synthetic (no-pool) path</td>
+        <td><span class="impact-low">Low</span></td>
+        <td><span class="disclosed-yes">Yes</span></td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td>02d:479 (take-up 0.80 scalar)</td>
+        <td>Modeled entry assumes 100% take-up; an 0.80 scalar reported as a sensitivity, not the headline.</td>
+        <td>Behavioral take-up model (not built)</td>
+        <td><span class="impact-medium">Medium</span></td>
+        <td><span class="disclosed-yes">Yes</span></td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td>01h:75 / 02b:117 (ceiling_ext=1.5, ceiling_int=1.4)</td>
+        <td>Saturating-response asymptotes cap participation/hours multipliers; "disclosed judgment bounds."</td>
+        <td>Other ceilings; unbounded linear eps·g</td>
+        <td><span class="impact-medium">Medium</span></td>
+        <td><span class="disclosed-yes">Yes</span></td>
+      </tr>
+      <tr>
+        <td>8</td>
+        <td>01h:36 / appendix §1 (subsidy taxable &amp; benefit-countable)</td>
+        <td>Subsidy modeled as ordinary income that counts against means-tested eligibility (drives the clawback finding).</td>
+        <td>EITC-style exclusion from means tests</td>
+        <td><span class="impact-high">High</span></td>
+        <td><span class="disclosed-yes">Yes</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Edge-Case Test Results</h2>
+  <p style="font-size:0.9rem; color:#64748b; margin-bottom:0.75rem;">
+    Fragile operations in the entry/renegotiation path, checked against adversarial inputs. Most are guarded upstream; one stated invariant is violated below the wage floor but does not bind on real data (inputs are floored at $7.25).
+  </p>
+
+  <table class="test-table">
+    <thead>
+      <tr><th>Test ID</th><th>Target Operation</th><th>Edge Case</th><th>File</th><th>Result</th><th>Detail</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>T-1</td>
+        <td>renegotiated_wage(): min(w1,w0) then max(w1,FED)</td>
+        <td>employer wage w0 &lt; $7.25</td>
+        <td>02d:70</td>
+        <td><span class="test-fail-silent">FAIL-SILENT (latent)</span></td>
+        <td>Floor overrides the "cannot rise above w0" cap: w0=$5 → w1=$7.25 &gt; w0. Benign — MPL is floored at $7.25 in 01h before entry, so it does not bind; see AS-006.</td>
+      </tr>
+      <tr>
+        <td>T-2</td>
+        <td>g_net = (NI_pkg − NI_base)/max(NI_base−NI_0, floor); clip(0,3)</td>
+        <td>near-zero / negative net-gain denominator</td>
+        <td>01h:452</td>
+        <td><span class="test-pass">PASS</span></td>
+        <td>Denominator floored at $1,000 (387 rows), ratio capped at 3.0 (61 rows); both counted in diagnostics.</td>
+      </tr>
+      <tr>
+        <td>T-3</td>
+        <td>weighted median (searchsorted on cumulative weight)</td>
+        <td>single-observation / all-mass-at-one-point group</td>
+        <td>01h:705, 05c:471</td>
+        <td><span class="test-pass">PASS</span></td>
+        <td>Returns the single value; no index overflow.</td>
+      </tr>
+      <tr>
+        <td>T-4</td>
+        <td>per-cell quantile mapping for entrant hours</td>
+        <td>empty cell (no incumbents or no pool members)</td>
+        <td>01h:371, 02d:195</td>
+        <td><span class="test-pass">PASS</span></td>
+        <td>Guarded by <code>if len(pidx)==0 or len(ih)==0: continue</code>; falls back to the flat 2,000-hour default.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Findings</h2>
+
+  <div class="category-heading">MEDIUM — 3 finding(s)</div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Fabrication Detection</div>
+
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">AS-001</div>
+      <div class="finding-title-block">
+        <div class="finding-title">"Accept re-employment at ~90% of prior wages" is not the finding of Krueger &amp; Mueller (2016)</div>
+        <div class="finding-meta"><span class="file">drafts/2026-07-08_wage-subsidy-impact-cost-summary.md (footnote 8)</span> · Fabrication Detection</div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">What Was Claimed</div>
+      <div class="finding-text">Footnote 8: "Krueger, Alan B., and Andreas Mueller … <em>AEJ: Economic Policy</em> 8, no. 1 (2016): 142–179 (unemployed workers accept re-employment at roughly 90 percent of prior wages)."</div>
+
+      <div class="finding-section-label">What Was Found</div>
+      <div class="finding-text">The paper exists exactly as cited (verified: AEJ:EP 8(1):142–79, Feb 2016). But its actual result concerns <em>reservation</em> wages, not <em>accepted</em> wages: reservation wages decline ≈0.05–0.14% per week of unemployment and are anchored near the prior wage. The specific "accept re-employment at ~90% of prior wages" is an accepted-wage ratio that the paper does not report as its finding. Notably, the project's own config comment states it correctly ("Krueger-Mueller 2016 (reservation ~ prior wage)"), so this is a drafting slip in the prose, not a code error. The appendix Section 3 table also phrases it correctly ("reservation wages near prior wages").</div>
+
+      <div class="finding-section-label">How It Was Verified</div>
+      <div class="finding-text">WebSearch on the exact title returned the AEA/NBER/IZA records and the abstract; cross-referenced against 00_config.py:180 and appendix §3.</div>
+
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Reword footnote 8 to "reservation wages near prior wages" (matching the config and appendix), or attach the ~90% accepted-wage figure to a source that actually reports it.</li>
+        <li>Confirm the SSP/Paycheck-Plus band edges do not lean on the misstated "90% accepted" reading.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Comment-Code Fidelity</div>
+
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">AS-002</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Sensitivities and the marginal cost-per-job are described as "evidence-central" but computed on the conservative-floor pool</div>
+        <div class="finding-meta"><span class="file">02d_matching_simulation.py:437–511 / drafts (both)</span> · Comment-Code Fidelity</div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">What Was Claimed</div>
+      <div class="finding-text">Main draft: "Three stress tests worth disclosing, <em>applied to the evidence-central</em>. If no married person with an employed spouse ever enters … the estimate falls by roughly a sixth. If take-up matches mature programs … every entry and cost figure scales down by a fifth." And in the cost-per-job section: the headline marginal cost is "$5,100 gross and $3,600 net per new worker" (evidence-central, $6.4B/1.25M), then "assigning hours independently … would roughly double … to around $9,600 gross."</div>
+
+      <div class="finding-section-label">What Was Found</div>
+      <div class="finding-text">02d computes <code>entry_margin_band</code>, <code>entrant_hours_sensitivity</code>, and <code>entry_reconciliation</code> on the <em>canonical</em> pool — penalty 0, λ 0.75, i.e. the 0.83M <strong>conservative floor</strong> — not on the evidence-central pool. The live outputs confirm: spouse-zeroed = 0.83→0.69M, take-up 0.80 = 0.83→0.66M, and the entrant-hours table runs at induced_M=0.83 (rank $4,018 → independent $9,576 gross per job). The percentage effects (−1/6, −1/5) are ~scale-invariant so transporting them to 1.25M is approximately valid, but: (a) the prose asserts the wrong basis, and (b) the "$5,100 → ~$9,600, roughly double" juxtaposition mixes an evidence-central numerator ($5,120) with a floor-pool sensitivity ratio; doubling $5,100 is ~$10,200, and the "$9,600" is actually double the floor's $4,000, not the headline's $5,100. The appendix pairs the numbers correctly ("~$9,600 gross vs ~$4,000"); the main draft does not.</div>
+
+      <div class="finding-section-label">How It Was Verified</div>
+      <div class="finding-text">Traced <code>_entrants_from_pool</code> / <code>entrant_hours_sensitivity</code> callers in 02d (pool = nonemployed_pool.parquet, the floor). Loaded entry_headline_scenarios.parquet, entrant_hours_sensitivity.parquet, and entry_margin_band.parquet with the project venv.</div>
+
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Either recompute the household-coordination / take-up / entrant-hours sensitivities on the evidence-central pool, or change the prose to say the ratios are transported from the floor pool.</li>
+        <li>Fix the "roughly double to $9,600" sentence so the base and the doubled value share one basis (both floor, or both evidence-central).</li>
+        <li>Cross-reference doc-number-report for the exact per-job arithmetic.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Confidence Calibration</div>
+
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">AS-003</div>
+      <div class="finding-title-block">
+        <div class="finding-title">The 50% headline uplift (0.83M → 1.25M) rests on one un-pinned judgment lever; the claimed offsetting "two-sided" biases are never sized</div>
+        <div class="finding-meta"><span class="file">02g_entry_scenario_grid.py / 00_config.py:266 / drafts (both)</span> · Confidence Calibration</div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">What Was Claimed</div>
+      <div class="finding-text">The lede headlines "roughly 1.25 million non-workers drawn into jobs (a deliberately conservative floor sits near 0.8 million)." The justification: "we headline the evidence-central because a zero wage penalty is the one setting the evidence rules out … The true center is genuinely two-sided" (offsetting upward biases: instant matching, no childcare/commuting costs, no UI in the baseline).</div>
+
+      <div class="finding-section-label">What Was Found</div>
+      <div class="finding-text">The entire 0.83M→1.25M move is produced by one lever — the status-differentiated non-employment wage penalty (config <code>evidence_central_status_penalty</code>). The <em>existence</em> of a penalty is evidence-backed (Schmieder-von Wachter-Bender decay; Krueger-Mueller anchoring — both verified real), but its <em>specific magnitude</em> (5/10/15%, pool-weighted ≈11%) is disclosed judgment, and it happens to be the setting that lifts the headline 50% above the model's own floor. The countervailing "two-sided" biases (childcare/commuting frictions, instant matching) that would pull the number <em>down</em> are asserted but never quantified — no attempt is made to size whether they offset the penalty uplift, the still-conservative λ=0.75, or each other. So "evidence-central" carries more authority than the evidence supports for the specific value 1.25M versus, say, 1.0M or 1.4M. This is a framing/calibration concern, not an arithmetic error: the number is a faithful, reproducible model output; the question is whether headlining it (rather than the floor, or a two-sided interval) is warranted. Mitigating: the floor, the high corner, the full 0.18–3.37M grid, and a "Medium" confidence label are all shown prominently.</div>
+
+      <div class="finding-section-label">How It Was Verified</div>
+      <div class="finding-text">Read 02g's three-bundle construction and the config re-center block; confirmed against entry_headline_scenarios.parquet (floor 0.83 / evidence-central 1.25 / high 3.37) and the diagnostics JSON (penalty applied via EIG_MPL_STATUS_PENALTY). Verified the penalty citations exist by WebSearch.</div>
+
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Add at least a rough magnitude for the downward "two-sided" biases (childcare/commuting, matching frictions) so the reader can judge whether they plausibly offset the +50% penalty uplift.</li>
+        <li>Consider presenting the headline as an interval (e.g. floor-to-central) rather than a single 1.25M point, given the driver is a judgment penalty.</li>
+        <li>State explicitly that the 50% gap between the floor and the headline is one lever, not an accumulation of evidence.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="category-heading">LOW — 4 finding(s)</div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Fabrication Detection</div>
+
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">AS-004</div>
+      <div class="finding-title-block">
+        <div class="finding-title">SSP's full-time-conditioned employment effect is labeled an "any-employment" gain in the main draft</div>
+        <div class="finding-meta"><span class="file">drafts/2026-07-08_...summary.md (SSP anchor)</span> · Fabrication Detection</div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">What Was Claimed</div>
+      <div class="finding-text">"The Canadian Self-Sufficiency Project … raised <em>any-employment</em> by 10.4 percentage points in its second year—that anchors the upper edge for single mothers."</div>
+
+      <div class="finding-section-label">What Was Found</div>
+      <div class="finding-text">SSP paid its supplement only for <em>full-time</em> (30+ hr/wk) work, and the headline SSP impacts are full-time-employment impacts. The config comment shows the authors know this ("+10.4pp on 30.1% base … headroom for SSP's 30-hr full-time conditioning") and build headroom into the 0.65 upper edge accordingly. The prose sentence, however, calls the same figure an "any-employment" effect, which mischaracterizes the SSP outcome measure. Card-Hyslop (2005) and Michalopoulos et al. (2002) are both genuine (verified); this is a labeling imprecision, not a fabrication.</div>
+
+      <div class="finding-section-label">How It Was Verified</div>
+      <div class="finding-text">WebSearch confirmed the SSP papers and the full-time-work conditioning of the supplement; compared against config comment 00_config.py:209 and footnote 3.</div>
+
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Change "any-employment" to "full-time employment" in the SSP sentence, or state the conversion explicitly as the config does.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Comment-Code Fidelity</div>
+
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">AS-005</div>
+      <div class="finding-title-block">
+        <div class="finding-title">02d module docstring describes the synthetic fallback as the entrant model, not the pool-based headline path</div>
+        <div class="finding-meta"><span class="file">02d_matching_simulation.py:21–26</span> · Comment-Code Fidelity</div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">What Was Claimed</div>
+      <div class="finding-text">The module docstring's "Calibration" section: "Entrants: the cell-specific extensive response (same magnitude as 02b) placed at a LOW marginal product (entry_wage_percentile of the eligible wage distribution)."</div>
+
+      <div class="finding-section-label">What Was Found</div>
+      <div class="finding-text">That description matches <code>_entrants_synthetic</code>, which only runs when the ORG pool is absent. The actual headline path is <code>_entrants_from_pool</code>: a NET-criterion gate on <code>required_net_gain_{edge}</code> calibrated in 01h, drawing real non-employed persons — a different mechanism from the p15-placement described up top. The docstring is stale relative to the primary code path (the fuller <code>_entrants_from_pool</code> docstring is correct).</div>
+
+      <div class="finding-section-label">How It Was Verified</div>
+      <div class="finding-text">Read both entrant functions and <code>simulate()</code>; confirmed the pool path is primary (pool_path.exists() branch) and the synthetic path is the fallback.</div>
+
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Update the module-level "Calibration" bullet to describe the pool/net-criterion path as primary and the p15 placement as the fallback.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Edge-Case Stress Tests</div>
+
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">AS-006</div>
+      <div class="finding-title-block">
+        <div class="finding-title">renegotiated_wage() invariant "the subsidy cannot push the cash wage up" is violated below the $7.25 floor (latent)</div>
+        <div class="finding-meta"><span class="file">02d_matching_simulation.py:70–77</span> · Edge-Case Stress Tests</div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">What Was Claimed</div>
+      <div class="finding-text">Line 75 comment: "the subsidy cannot push the cash wage up" — implemented as <code>w1 = min(w1, w0)</code> then <code>w1 = max(w1, FED_MIN)</code>.</div>
+
+      <div class="finding-section-label">What Was Found</div>
+      <div class="finding-text">Because the <code>max(·, FED_MIN)</code> floor is applied <em>after</em> the <code>min(·, w0)</code> cap, an input wage below $7.25 is lifted to $7.25 &gt; w0, silently violating the stated cap. Test: w0=$5.00, β=0.5 → w1=$7.25 (take-home $14.89 &gt; w0). This does not bind on real data — imputed MPL is floored at $7.25 in 01h (<code>np.maximum(FED_MIN, …)</code>) before any entrant renegotiation, and incumbent employer wages are at/above the floor — so the observed outputs are correct. It is a latent invariant break worth a one-line guard or comment.</div>
+
+      <div class="finding-section-label">How It Was Verified</div>
+      <div class="finding-text">Self-contained numeric test of <code>renegotiated_wage</code> across β∈{0.3,0.5,0.7} and w0∈{5, 7.25, 10, 16.80, 25} in the project venv; traced the upstream MPL floor in 01h heckman_impute / penalty steps.</div>
+
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>If sub-floor wages could ever reach this function, cap after flooring (<code>w1 = min(max(w1, FED_MIN), w0)</code> only when w0 ≥ FED_MIN) or assert w0 ≥ FED_MIN.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Confidence Calibration</div>
+
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">AS-007</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Precision theater: 1.25M and the group splits (0.20 / 0.91 / 0.14M) carry 2–3 significant figures over a 19× range</div>
+        <div class="finding-meta"><span class="file">drafts (both) · Table 4 / lede / bottom line</span> · Confidence Calibration</div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">What Was Claimed</div>
+      <div class="finding-text">"1.25 million"; single mothers 0.20M, other women 0.91M, men 0.14M; men "roughly 140,000 … about 90,000 at the conservative floor … rising toward 680,000."</div>
+
+      <div class="finding-section-label">What Was Found</div>
+      <div class="finding-text">These are faithful model outputs (they reproduce from entry_headline_scenarios.parquet exactly), but the model's own envelope spans 0.18–3.37M — a ~19× range — so the third significant figure of the point estimate, and the 10,000-person granularity of the men/single-mother splits, are not evidence-bearing. This is mitigated (heavily) by the drafts consistently pairing the point with the floor–high band, but the group-level precision (e.g. men "140,000" vs "90,000") invites over-reading of differences that sit well inside model noise.</div>
+
+      <div class="finding-section-label">How It Was Verified</div>
+      <div class="finding-text">Loaded entry_headline_scenarios.parquet and entry_scenario_grid.parquet (range 0.18–3.37 across 27 cells) with the venv; compared to the reported figures.</div>
+
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Consider rounding group entry to the nearest 0.1M (or presenting ranges) so the reported precision matches the model's resolution.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="category-heading">INFO — 1 finding(s)</div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Fabrication Detection</div>
+
+  <div class="finding info">
+    <div class="finding-header">
+      <div class="finding-id">AS-008</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Exculpatory: citations are genuine and every headline number reproduced from live outputs</div>
+        <div class="finding-meta"><span class="file">drafts (both) + entry parquets</span> · Fabrication Detection</div>
+      </div>
+      <span class="severity-badge badge-info">INFO</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">What Was Claimed</div>
+      <div class="finding-text">The re-center's evidence base — Schmieder-von Wachter-Bender 2016, Krueger-Mueller 2016, Card-Hyslop 2005/SSP, Michalopoulos et al. 2002, MDRC Paycheck Plus NYC (Miller et al. 2018) and Atlanta (Yang et al. 2022), Grogger 2003, Fang-Keane 2004, Maestas-Mullen-Strand 2013, Chetty 2012, Fehr-Goette 2007, Hall-Mueller 2018 — plus the full set of headline quantities.</div>
+
+      <div class="finding-section-label">What Was Found</div>
+      <div class="finding-text">No fabricated citations. Every paper checked resolves to the correct authors, journal/publisher, and year; the most number-specific anchor (Maestas-Mullen-Strand: ≈28-pt employment effect for the ≈23% of marginal applicants) matches the abstract verbatim. On the numeric side, the following all reproduced to the digit from the project's parquet outputs: static/reduced-form/structural gross &amp; net costs (89.8/72.1; 92.3–103.9 / 73.6–77.9; rigid 92.6–93.5 / 73.7–74.6); the 160.3B / 54.8% renegotiation bound; firm capture 1.5%/0.8%/2.0%; entrants 0.83 / 1.25 / 3.37M and group splits; $6.4B/$4.5B entrant cost; $59K/$22K/$89K per-job; base-semantics E/R ratios (1.41/0.72/0.94) and the 0.83→0.71M / single-mother 0.13→0.19M shift; ρσ=+0.08; 41.4% below target; the reduced-form 0.72M vs floor 0.83M reconciliation. The <code>response_multiplier</code> Michaelis-Menten form and the Nash renegotiation solution match their documented equations.</div>
+
+      <div class="finding-section-label">How It Was Verified</div>
+      <div class="finding-text">WebSearch on each citation; direct load of entry_headline_scenarios / entry_scenario_grid / entrant_hours_sensitivity / entry_margin_band / matching_simulation / behavioral_scenarios / summary parquets and nonemployed_pool_diagnostics.json via <code>.venv/bin/python</code>; line-by-line read of the response and renegotiation math.</div>
+    </div>
+  </div>
+
+  <h2>Reviewed Files</h2>
+  <table class="files-table">
+    <thead>
+      <tr><th>File</th><th>Language</th><th style="text-align:center">Lines</th><th style="text-align:center">AI Authorship</th><th style="text-align:center">Findings</th><th style="text-align:center">Highest Severity</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>code/00_setup/00_config.py</td><td>Python</td><td class="count-cell">304</td><td class="count-cell"><span class="ai-known">Known</span></td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/01_data_preparation/01h_nonemployed_pool.py</td><td>Python</td><td class="count-cell">733</td><td class="count-cell"><span class="ai-known">Known</span></td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/01_data_preparation/01i_household_links.py</td><td>Python</td><td class="count-cell">171</td><td class="count-cell"><span class="ai-known">Known</span></td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/02_descriptive_analysis/02b_behavioral_scenarios.py</td><td>Python</td><td class="count-cell">341</td><td class="count-cell"><span class="ai-known">Known</span></td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/02_descriptive_analysis/02d_matching_simulation.py</td><td>Python</td><td class="count-cell">544</td><td class="count-cell"><span class="ai-known">Known</span></td><td class="count-cell has-issues">3</td><td class="count-cell">MEDIUM</td></tr>
+      <tr><td>code/02_descriptive_analysis/02f_mpl_imputation_band.py</td><td>Python</td><td class="count-cell">135</td><td class="count-cell"><span class="ai-known">Known</span></td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/02_descriptive_analysis/02g_entry_scenario_grid.py</td><td>Python</td><td class="count-cell">186</td><td class="count-cell"><span class="ai-known">Known</span></td><td class="count-cell has-issues">1</td><td class="count-cell">MEDIUM</td></tr>
+      <tr><td>code/05_figures_tables/05c_core_figures.R</td><td>R</td><td class="count-cell">536</td><td class="count-cell"><span class="ai-known">Known</span></td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>code/05_figures_tables/05d_supporting_figures.R</td><td>R</td><td class="count-cell">701</td><td class="count-cell"><span class="ai-known">Known</span></td><td class="count-cell ok">0</td><td class="count-cell">—</td></tr>
+      <tr><td>drafts/2026-07-08_wage-subsidy-impact-cost-summary.md</td><td>Markdown</td><td class="count-cell">306</td><td class="count-cell"><span class="ai-known">Known</span></td><td class="count-cell has-issues">4</td><td class="count-cell">MEDIUM</td></tr>
+      <tr><td>drafts/2026-07-09_technical-appendix.md</td><td>Markdown</td><td class="count-cell">145</td><td class="count-cell"><span class="ai-known">Known</span></td><td class="count-cell has-issues">2</td><td class="count-cell">MEDIUM</td></tr>
+    </tbody>
+  </table>
+
+</div>
+
+<div class="report-footer">
+  Generated by AI review agent · ai-skeptic · 2026-07-09<br>
+  Scope: AI-specific failure modes — fabrication, assumptions, edge cases, confidence calibration<br>
+  See also: code-error-report.html · methodology-report.html · doc-consistency-report.html · doc-number-report.html
+</div>
+
+</body>
+</html>
