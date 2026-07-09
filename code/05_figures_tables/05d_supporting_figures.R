@@ -166,7 +166,7 @@ fig8_cost_band <- function() {
   ms <- pop("matching_simulation")
   s <- pop("summary")
 
-  static_net <- s$net_cost_bn[1]                      # 72.12
+  static_net <- s$net_cost_bn[1]                      # 45.11
   bs <- pop("behavioral_scenarios") %>%
     filter(scenario != "static")
   rf_lo <- min(bs$net_cost_bn); rf_hi <- max(bs$net_cost_bn)   # reduced-form band

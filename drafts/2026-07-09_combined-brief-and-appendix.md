@@ -83,7 +83,7 @@ The eligible population looks like the low-wage workforce, because it is the low
 
 The third column reframes the story. The share-of-recipients column tells you where the money pools; the share-of-workers column tells you how deeply the subsidy reaches into each group. Read together, three patterns stand out. First, the subsidy skews female both ways: women are 60.5 percent of recipients, and 26.2 percent of women paid-hourly workers qualify versus 17.2 percent of men (men nonetheless collect a slightly larger average subsidy, $3,602 per year versus $3,464). Second, it reaches deepest among the youngest and the least credentialed: 43.0 percent of workers ages 16 to 24 qualify—the highest take-up of any group—as do 37.4 percent of workers without a high school diploma, against just 6.8 percent of those with a graduate degree. The subsidy concentrates on exactly the workers the last four decades of wage growth left behind. Third, single parents stand out on reach: 23.5 percent of single-parent paid-hourly workers qualify, well above the 13.5 percent take-up among married parents, whose households more often clear the wage target on a second earner. Figure 3 shows the take-up rates side by side.
 
-**Figure 3. Share of each group's hourly workers who qualify.**
+**Figure 3. Share of each group's paid-hourly workers who qualify.**
 
 ![Share of each group's hourly workers who qualify](../output/figures/main/fig03_takeup_by_group.png)
 

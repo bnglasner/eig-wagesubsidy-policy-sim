@@ -212,7 +212,7 @@ fig3_cost_waterfall <- function() {
   near_zero_keys <- c("wic", "school_meals", "ssi", "housing", "ccdf", "liheap")
   other_val <- sum(pi$total_delta_mn[pi$key %in% near_zero_keys]) / 1000
 
-  # Reconciliation: authoritative net (72.12B, = sum of by-state net) minus the
+  # Reconciliation: authoritative net (45.11B, = sum of by-state net) minus the
   # sum implied by program_interactions. Documented, not faked.
   pi_sum <- gross + sum(comp$value) + other_val
   recon <- net_target - pi_sum
@@ -310,8 +310,12 @@ fig3_cost_waterfall <- function() {
 # FIGURE 4 - Take-up rate by group (small multiples)
 # ===========================================================================
 fig4_takeup_by_group <- function() {
-  overall <- 15.5
   tug <- pop("take_up_by_group")
+  # Data-driven overall take-up and paid-hourly denominator (the Sex partition
+  # spans the whole population); avoids the stale hard-code the resync flagged.
+  .sex <- tug[tug$dimension == "Sex", ]
+  overall <- sum(.sex$recipients_k) / sum(.sex$base_k) * 100
+  base_M <- sum(.sex$base_k) / 1000
 
   highlight <- c("16-24", "Less than HS", "Graduate degree")
   d <- tug %>%
@@ -338,11 +342,11 @@ fig4_takeup_by_group <- function() {
                        expand = expansion(mult = c(0, 0.18))) +
     facet_wrap(~ dimension, scales = "free_y", ncol = 2) +
     labs(
-      title = "Figure 3. Share of each group's hourly workers who qualify.",
+      title = "Figure 3. Share of each group's paid-hourly workers who qualify.",
       x = "Take-up rate", y = NULL,
       caption = eig_caption(
-        note = paste0("Dashed line: overall take-up (15.5%). Denominator is the ",
-                      "wage-observed hourly workforce (134.3M).")
+        note = paste0(sprintf("Dashed line: overall take-up (%.1f%%). Denominator is the ", overall),
+                      sprintf("paid-hourly workforce (%.1fM).", base_M))
       )
     ) +
     eig_theme_ggplot(tokens = tokens, base_size = 10) +
