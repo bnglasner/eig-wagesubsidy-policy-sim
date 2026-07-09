@@ -614,7 +614,7 @@ fig14_mpl_uncertainty <- function() {
                        expand = expansion(mult = c(0.02, 0.05))) +
     labs(
       title = "Figure 14. Induced entry across the\nparameter grid.",
-      subtitle = "Evidence-central 1.25M; conservative floor 0.83M; high corner 3.37M.",
+      subtitle = "Evidence-central 1.49M; conservative floor 1.02M; high corner 3.81M.",
       x = "Induced entrants (millions)", y = "Non-employment wage penalty",
       caption = eig_caption(
         note = paste0("All 27 combinations of wage penalty, offer dispersion, and participation\n",

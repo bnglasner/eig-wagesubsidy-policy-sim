@@ -302,8 +302,14 @@ def main() -> None:
     else:
         is_dependent = pd.Series(False, index=org.index)
 
+    # Paid-hourly restriction: the 80-80 subsidy applies only to workers paid by
+    # the hour (PAIDHOUR==2). Salaried workers — who carry an imputed weekly→hourly
+    # wage — are excluded, so the recipient frame matches the target/median frame and
+    # the 01h wage-imputation frame, both of which are already paid-hourly.
+    # (Consistency review CC-001, 2026-07-09.)
     mask = (
         org["epi_sample_eligible"].astype(bool) &
+        org["paid_hourly"].astype(bool) &
         (org["age"] >= 16) & (org["age"] <= 64) &
         (org["employer_wage"] < TARGET_WAGE) &
         (org["earnwt"] > 0) &
@@ -312,6 +318,7 @@ def main() -> None:
     eligible = org[mask].copy()
     n_dependents = is_dependent[
         org["epi_sample_eligible"].astype(bool) &
+        org["paid_hourly"].astype(bool) &
         (org["age"] >= 16) & (org["age"] <= 64) &
         (org["employer_wage"] < TARGET_WAGE) &
         (org["earnwt"] > 0)

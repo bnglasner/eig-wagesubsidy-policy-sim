@@ -60,8 +60,13 @@ def _load_target() -> float:
 def main() -> None:
     target = _load_target()
     org = _m01a._load_and_adapt_org_panel()
+    # Paid-hourly frame: both the numerator (recipients) and the denominator
+    # (the group's workers) are restricted to paid-hourly workers, matching the
+    # subsidy's paid-hourly eligibility (01a) and the target/imputation frame.
+    # (Consistency review CC-001, 2026-07-09.)
     base = org[
         org["epi_sample_eligible"].astype(bool) &
+        org["paid_hourly"].astype(bool) &
         org["hourly_wage_epi_valid"].astype(bool) &
         org["age"].between(16, 64) & (org["earnwt"] > 0)
     ].copy()
