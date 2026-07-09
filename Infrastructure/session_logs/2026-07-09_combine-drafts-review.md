@@ -67,5 +67,16 @@ Re-ran number + consistency reviewers on the corrected draft (overwrote the two 
 
 **Remaining open (author, not blocking):** superseded all-earner-frame illustrative figures ($26.00 median, ρσ+0.30, $31/$15.34 predicted wages, Fig 11b household net-income readouts) are labeled historical/illustrative and not reproducible from the current pipeline (expected); EIG style errors from /review-style (dual citation systems, [TO VERIFY] citations); the two source drafts still hold pre-correction numbers (combined file is authoritative); run_all.py main() bug (chip spawned).
 
+## Merge → align → main → additional full-review (user, 2026-07-09)
+- **Merged** the fix-task branch (`claude/magical-varahamihira-7a0d6f`, uncommitted worktree) into master by applying its 2-file diff: `run_all.py` (call `main()` after `exec_module`, guarded) + `05a_main_outputs.py` (`pct_workers`→`pct_of_recipients`). Brought over its session log. My tree hadn't touched either file → clean apply.
+- **Aligned**: ran the fixed `python code/run_all.py` once → 14 SUCCESS / 0 FAILED; every Python stage runs with real elapsed times (02g 63.5s, 02f 45.6s…); IPUMS cache-hit (no resubmit); canonical outputs = delivered paid-hourly numbers (15.88M/$55.88B/$45.11B). Confirms one command now reproduces the doc.
+- **Committed to master** (data/output parquets are TRACKED, so canonical paid-hourly intermediates committed too; figures are gitignored, preserved in the docx):
+  - `ae5c6e1` run_all.py stage-execution fix (+05a)
+  - `6706345` paid-hourly eligibility + combined/resynced deliverable + canonical intermediates
+  - `acd0f55` resync fig10 + fig13 hard-codes to paid-hourly regime (+1.25M comments, appendix footer clawback)
+- **Additional /full-review** (5 agents, committed master): code 0 CRIT/1 HIGH; methodology HIGH risk 2 HIGH/7 MED (design-inherent + new MR-003 salaried-sector trade-off from paid-hourly); ai-skeptic **CAUTION** (0 CRIT/0 HIGH, up from SUSPECT); numbers 0 CRIT/0 HIGH (118/111 verified); consistency 2 HIGH (fig10/fig13 hard-codes). Prior CRITICAL/HIGH all confirmed RESOLVED (run_all, 05a, fig14, CC-001 paid-hourly).
+- **Post-review fixes** (my deliverable-correctness misses): fig10 + fig13 hard-codes (the 2 consistency HIGH), appendix footer clawback (DN MEDIUM), 05d 1.25M comments (AS MEDIUM). Regenerated figures, rebuilt+validated docx, visually confirmed fig10/fig13. Ran a confirmatory number+consistency pass.
+- **Remaining (chipped/expected, not blocking):** `02a _agg_by_group` label/positional index bug — pre-existing, output-neutral (masked on current data), HIGH → chip `task_ecbce045`. `_manifest.csv` mislabels floor as "0.83M" (05z, INFO). Superseded all-earner-frame illustrative appendix figures labeled historical (expected). `.claude/worktrees/…` left in place (content now in master; remove with `git worktree remove` when that session closes).
+
 ## Scope note
 - Code-facing reviews scoped to `code/` (47 files; the analysis pipeline), excluding `Infrastructure/` tooling and `app/`. Several `.do`/`03`/`04` files are template baseline stubs (tier-1 project).
