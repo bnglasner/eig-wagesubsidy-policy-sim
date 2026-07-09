@@ -8,24 +8,26 @@ disable-model-invocation: true
 
 # EIG Style Datawrapper Compliance
 
+Use this skill when Datawrapper publishing is in scope.
+
 ## Source Priority
 
-1. `INFRA/style/docs/datawrapper-integration.md`
-2. `INFRA/style/docs/datawrapper-downstream-adoption-checklist.md`
-3. `INFRA/style/docs/eig-legacy-palette-policy.md`
-4. `INFRA/style/scripts/compliance/check_datawrapper_manifest.py`
-5. `INFRA/style/scripts/compliance/check_legacy_metadata.py`
-6. `INFRA/style/docs/legacy-metadata.template.json`
+1. `Infrastructure/style/docs/datawrapper-integration.md`
+2. `Infrastructure/style/docs/datawrapper-downstream-adoption-checklist.md`
+3. `Infrastructure/style/docs/eig-legacy-palette-policy.md`
+4. `Infrastructure/style/scripts/compliance/check_datawrapper_manifest.py`
+5. `Infrastructure/style/scripts/compliance/check_legacy_metadata.py`
+6. `Infrastructure/style/docs/legacy-metadata.template.json`
 
 ## Workflow
 
-1. Ensure colors are token-derived from `INFRA/style/tokens/eig-style-tokens.v1.json`.
+1. Ensure colors are token-derived from `Infrastructure/style/tokens/eig-style-tokens.v1.json`.
 2. Validate publish manifest:
-   - `python3 INFRA/style/scripts/compliance/check_datawrapper_manifest.py <manifest_path>`
+   - `python3 Infrastructure/style/scripts/compliance/check_datawrapper_manifest.py <manifest_path>`
 3. If `palette_mode=legacy`, validate metadata:
-   - `python3 INFRA/style/scripts/compliance/check_legacy_metadata.py <metadata_json_path>`
+   - `python3 Infrastructure/style/scripts/compliance/check_legacy_metadata.py <metadata_json_path>`
 4. For downstream CI setup, use:
-   - `INFRA/style/docs/ci/datawrapper-compliance.workflow.template.yml`
+   - `Infrastructure/style/docs/ci/datawrapper-compliance.workflow.template.yml`
 
 ## Required Manifest Fields
 

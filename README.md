@@ -85,39 +85,38 @@ Combined in 02a_descriptive_stats.py
 
 ```
 eig-wagesubsidy-policy-sim/
-├── WORKSPACE/
-│   ├── app/                          # Streamlit interactive application
-│   │   ├── app.py                    # Entry point
-│   │   ├── tabs/
-│   │   │   ├── calculator.py         # Individual wage calculator tab
-│   │   │   ├── population.py         # Population-level impacts tab
-│   │   │   └── methods.py            # Methodology documentation tab
-│   │   └── utils/
-│   │       ├── household_sim.py      # Schedule interpolation and simulation logic
-│   │       ├── subsidy.py            # Subsidy math helpers
-│   │       ├── states.py             # State code utilities
-│   │       └── eig_style.py          # Brand colors and Plotly layout defaults
-│   ├── code/
-│   │   ├── 00_setup/                 # Config and environment setup
-│   │   │   └── 00_config.py          # Paths, parameters, defaults
-│   │   ├── 01_data_preparation/
-│   │   │   ├── 00_export_org_data.py # Export CPS ORG subset from companion repo
-│   │   │   ├── 01a_data_ingest.py    # Build eligible worker analysis file
-│   │   │   └── 01b_precompute_individual.py  # Pre-compute 204 household schedules
-│   │   ├── 02_descriptive_analysis/
-│   │   │   └── 02a_descriptive_stats.py  # Population aggregates and distributional output
-│   │   └── 04_robustness_heterogeneity/
-│   │       └── 04b_org_validation_framework.py  # Validation and sensitivity checks
-│   ├── data/
-│   │   ├── external/                 # org_workers_{year}.parquet (from ORG export)
-│   │   └── processed/                # hourly_workers.parquet (eligible workers)
-│   ├── output/
-│   │   └── data/intermediate_results/
-│   │       ├── population/           # summary, by_state, by_wage_bracket, etc.
-│   │       └── individual_schedules/ # 204 pre-computed household income schedules
-│   └── docs/
-│       └── pipeline_methodology_public.md  # Full public methodology reference
-└── INFRA/                            # Internal docs, style guides, agent config
+├── app/                              # Streamlit interactive application
+│   ├── app.py                        # Entry point (streamlit run app/app.py)
+│   ├── tabs/
+│   │   ├── calculator.py             # Individual wage calculator tab
+│   │   ├── population.py             # Population-level impacts tab
+│   │   └── methods.py                # Methodology documentation tab
+│   └── utils/
+│       ├── household_sim.py          # Schedule interpolation and simulation logic
+│       ├── subsidy.py                # Subsidy math helpers
+│       ├── states.py                 # State code utilities
+│       └── eig_style.py              # Brand colors and Plotly layout defaults
+├── code/                             # Analysis pipeline (Python primary)
+│   ├── 00_setup/00_config.py         # Paths, parameters, defaults
+│   ├── 01_data_preparation/          # ORG ingest, ASEC pull/match, schedules
+│   ├── 02_descriptive_analysis/      # Population aggregates and distributional output
+│   ├── 03_matched_analysis/          # Matched-ASEC re-aggregation
+│   ├── 04_robustness_heterogeneity/  # Validation and sensitivity checks
+│   └── run_all.py                    # Pipeline orchestrator (TRUE/FALSE flags)
+├── data/
+│   ├── external/                     # org_workers_{year}.parquet, asec_*.parquet
+│   ├── processed/                    # hourly_workers.parquet (eligible workers)
+│   └── raw/
+├── output/
+│   ├── data/intermediate_results/    # population aggregates + 204 household schedules
+│   ├── figures/  tables/  validation/
+│   └── ...
+├── docs/                             # Public methodology documentation
+├── drafts/                           # Working prose and interim write-ups
+├── PROJECT.md                        # Project context (the agent reads this first)
+├── Makefile                          # brain-sync / maintenance-check control panel
+├── Infrastructure/                   # Shared AI brain: guardrails, agents, rules, style
+└── .claude/  .codex/  .agents/       # Generated adapter mirrors (do not hand-edit)
 ```
 
 ---
@@ -133,22 +132,22 @@ eig-wagesubsidy-policy-sim/
 
 ```powershell
 # 1. Export recent CPS ORG panel subset
-.\.venv\Scripts\python.exe WORKSPACE\code\01_data_preparation\00_export_org_data.py
+.\.venv\Scripts\python.exe code\01_data_preparation\00_export_org_data.py
 
 # 2. Build eligible worker analysis file (wage identification, hours, family type)
-.\.venv\Scripts\python.exe WORKSPACE\code\01_data_preparation\01a_data_ingest.py
+.\.venv\Scripts\python.exe code\01_data_preparation\01a_data_ingest.py
 
 # 3. Pre-compute 204 household income schedules (one-time, slow; ~30-60 min)
-.\.venv\Scripts\python.exe WORKSPACE\code\01_data_preparation\01b_precompute_individual.py
+.\.venv\Scripts\python.exe code\01_data_preparation\01b_precompute_individual.py
 
 # 4. Build population aggregates with schedule interpolation
-.\.venv\Scripts\python.exe WORKSPACE\code\02_descriptive_analysis\02a_descriptive_stats.py
+.\.venv\Scripts\python.exe code\02_descriptive_analysis\02a_descriptive_stats.py
 
 # 5. Optional: run validation framework
-.\.venv\Scripts\python.exe WORKSPACE\code\04_robustness_heterogeneity\04b_org_validation_framework.py
+.\.venv\Scripts\python.exe code\04_robustness_heterogeneity\04b_org_validation_framework.py
 
 # 6. Launch interactive app
-.\.venv\Scripts\streamlit.exe run WORKSPACE\app\app.py --server.port 8501
+.\.venv\Scripts\streamlit.exe run app\app.py --server.port 8501
 ```
 
 Step 3 only needs to be re-run if PolicyEngine-US is updated or household type/state coverage changes. Steps 1–2 and 4 should be re-run when new ORG data becomes available.
@@ -196,7 +195,7 @@ Full documentation of the data sources, eligibility rules, wage measurement, ann
 
 **Net cost accounting:** `Net cost = Σ_i weight_i × ΔNet_income_i` where ΔNet income is the change in comprehensive household net income (wages + subsidy + all transfers − taxes) interpolated at baseline and subsidized annual earnings.
 
-Full methodology: [`WORKSPACE/docs/pipeline_methodology_public.md`](WORKSPACE/docs/pipeline_methodology_public.md)
+Full methodology: [`docs/pipeline_methodology_public.md`](docs/pipeline_methodology_public.md)
 
 ---
 

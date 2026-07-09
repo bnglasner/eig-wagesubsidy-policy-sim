@@ -10,7 +10,7 @@ enableXsrfProtection = true
 gatherUsageStats = false
 
 [theme]
-# EIG brand colors — keep in sync with INFRA/style/tokens/eig-style-tokens.v1.json
+# EIG brand colors — keep in sync with Infrastructure/style/tokens/eig-style-tokens.v1.json
 
 # Forest Green (eig_green_700) — primary EIG brand color
 primaryColor = "#19644D"

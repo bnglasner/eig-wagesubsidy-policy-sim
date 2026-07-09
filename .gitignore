@@ -3,12 +3,6 @@
 !.claude/**
 !.codex/
 !.codex/**
-!INFRA/.claude/
-!INFRA/.claude/**
-!INFRA/.codex/
-!INFRA/.codex/**
-INFRA/MEMORY.md
-INFRA/style/DATAWRAPPER_PIPELINE_AGENT_HANDOFF.md
 .claude/settings.local.json
 
 # OS / editor
@@ -48,49 +42,49 @@ policyengine_us_cache/
 .quarto/
 
 # Data boundaries
-/WORKSPACE/data/raw/*
-!/WORKSPACE/data/raw/README.md
-/WORKSPACE/data/processed/*
-!/WORKSPACE/data/processed/README.md
+/data/raw/*
+!/data/raw/README.md
+/data/processed/*
+!/data/processed/README.md
 
 # Output boundaries
-/WORKSPACE/output/data/intermediate_results/*
-!/WORKSPACE/output/data/intermediate_results/README.md
-/WORKSPACE/output/figures/main/*
-!/WORKSPACE/output/figures/main/.gitkeep
-/WORKSPACE/output/figures/appendix/*
-!/WORKSPACE/output/figures/appendix/.gitkeep
-/WORKSPACE/output/tables/main/*
-!/WORKSPACE/output/tables/main/.gitkeep
-/WORKSPACE/output/tables/appendix/*
-!/WORKSPACE/output/tables/appendix/.gitkeep
+/output/data/intermediate_results/*
+!/output/data/intermediate_results/README.md
+/output/figures/main/*
+!/output/figures/main/.gitkeep
+/output/figures/appendix/*
+!/output/figures/appendix/.gitkeep
+/output/tables/main/*
+!/output/tables/main/.gitkeep
+/output/tables/appendix/*
+!/output/tables/appendix/.gitkeep
 
 # Sensitive artifact fallback patterns (defense in depth)
-/WORKSPACE/data/**/*.feather
-/WORKSPACE/data/**/*.fst
-/WORKSPACE/data/**/*.parquet
-/WORKSPACE/data/**/*.rds
-/WORKSPACE/data/**/*.sqlite
-/WORKSPACE/data/**/*.duckdb
-/WORKSPACE/data/**/*.log
-/WORKSPACE/output/data/**/*.feather
-/WORKSPACE/output/data/**/*.fst
-/WORKSPACE/output/data/**/*.parquet
-/WORKSPACE/output/data/**/*.rds
-/WORKSPACE/output/data/**/*.sqlite
-/WORKSPACE/output/data/**/*.duckdb
-/WORKSPACE/output/data/**/*.log
+/data/**/*.feather
+/data/**/*.fst
+/data/**/*.parquet
+/data/**/*.rds
+/data/**/*.sqlite
+/data/**/*.duckdb
+/data/**/*.log
+/output/data/**/*.feather
+/output/data/**/*.fst
+/output/data/**/*.parquet
+/output/data/**/*.rds
+/output/data/**/*.sqlite
+/output/data/**/*.duckdb
+/output/data/**/*.log
 
 # App data artifacts: tracked for Streamlit Cloud deployment
 # These pre-computed parquet files (~7.5 MB total) are included in the repo so
 # the app works on Streamlit Cloud without a separate data-download step.
 # Negations appear AFTER the catch-all *.parquet rules above to take effect.
-!/WORKSPACE/data/processed/hourly_workers.parquet
-!/WORKSPACE/output/data/intermediate_results/population
-!/WORKSPACE/output/data/intermediate_results/population/*.parquet
-!/WORKSPACE/output/data/intermediate_results/matched_population
-!/WORKSPACE/output/data/intermediate_results/matched_population/*.parquet
-!/WORKSPACE/output/data/intermediate_results/matched_schedules
-!/WORKSPACE/output/data/intermediate_results/matched_schedules/*.parquet
-!/WORKSPACE/output/data/intermediate_results/individual_schedules
-!/WORKSPACE/output/data/intermediate_results/individual_schedules/*.parquet
+!/data/processed/hourly_workers.parquet
+!/output/data/intermediate_results/population
+!/output/data/intermediate_results/population/*.parquet
+!/output/data/intermediate_results/matched_population
+!/output/data/intermediate_results/matched_population/*.parquet
+!/output/data/intermediate_results/matched_schedules
+!/output/data/intermediate_results/matched_schedules/*.parquet
+!/output/data/intermediate_results/individual_schedules
+!/output/data/intermediate_results/individual_schedules/*.parquet
