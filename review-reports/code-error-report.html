@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Code Error Report — eig-wagesubsidy-policy-sim</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      color: #1e293b;
+      background: #f8fafc;
+    }
+    .report-header {
+      background: #1e293b;
+      color: #f1f5f9;
+      padding: 2rem 2.5rem;
+    }
+    .report-header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.25rem;
+    }
+    .report-header .subtitle {
+      font-size: 0.9rem;
+      color: #94a3b8;
+    }
+    .report-header .meta {
+      margin-top: 1rem;
+      display: flex;
+      gap: 2rem;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      flex-wrap: wrap;
+    }
+    .report-header .meta span strong { color: #f1f5f9; }
+    .container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+    h2 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #1e293b;
+      margin: 2rem 0 1rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .summary-box {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+      color: #334155;
+      line-height: 1.7;
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+    }
+    .stat-card .count {
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .stat-card .label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 0.3rem;
+    }
+    .sev-critical .count { color: #dc2626; }
+    .sev-critical .label { color: #dc2626; }
+    .sev-high .count    { color: #ea580c; }
+    .sev-high .label    { color: #ea580c; }
+    .sev-medium .count  { color: #ca8a04; }
+    .sev-medium .label  { color: #ca8a04; }
+    .sev-low .count     { color: #2563eb; }
+    .sev-low .label     { color: #2563eb; }
+    .sev-info .count    { color: #64748b; }
+    .sev-info .label    { color: #64748b; }
+    .sev-suggestion .count { color: #16a34a; }
+    .sev-suggestion .label { color: #16a34a; }
+    .finding {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      margin-bottom: 1.25rem;
+      overflow: hidden;
+    }
+    .finding-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      border-left: 5px solid transparent;
+    }
+    .finding.critical .finding-header { border-left-color: #dc2626; }
+    .finding.high     .finding-header { border-left-color: #ea580c; }
+    .finding.medium   .finding-header { border-left-color: #ca8a04; }
+    .finding.low      .finding-header { border-left-color: #2563eb; }
+    .finding.info       .finding-header { border-left-color: #94a3b8; }
+    .finding.suggestion .finding-header { border-left-color: #16a34a; }
+    .finding-id {
+      font-size: 0.75rem;
+      font-weight: 700;
+      font-family: monospace;
+      color: #64748b;
+      min-width: 4.5rem;
+      padding-top: 0.15rem;
+    }
+    .finding-title-block { flex: 1; }
+    .finding-title {
+      font-weight: 600;
+      font-size: 1rem;
+      color: #1e293b;
+    }
+    .finding-meta {
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-top: 0.2rem;
+    }
+    .finding-meta .file { font-family: monospace; }
+    .severity-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+    .badge-critical { background: #fef2f2; color: #dc2626; }
+    .badge-high     { background: #fff7ed; color: #ea580c; }
+    .badge-medium   { background: #fefce8; color: #ca8a04; }
+    .badge-low      { background: #eff6ff; color: #2563eb; }
+    .badge-info       { background: #f1f5f9; color: #64748b; }
+    .badge-suggestion { background: #f0fdf4; color: #16a34a; }
+    .finding-body { padding: 0 1.25rem 1.25rem 3.75rem; }
+    .finding-section-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #94a3b8;
+      margin: 0.85rem 0 0.35rem;
+    }
+    .finding-text { font-size: 0.9rem; color: #334155; }
+    pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 6px;
+      padding: 1rem;
+      overflow-x: auto;
+      font-size: 0.82rem;
+      line-height: 1.55;
+      margin: 0.5rem 0;
+    }
+    code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
+    .code-label {
+      font-size: 0.7rem;
+      color: #64748b;
+      font-family: monospace;
+      margin-bottom: 0.15rem;
+    }
+    .data-currency-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .data-currency-table th {
+      background: #f1f5f9;
+      text-align: left;
+      padding: 0.65rem 1rem;
+      font-weight: 600;
+      color: #475569;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .data-currency-table td {
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid #f1f5f9;
+      color: #334155;
+    }
+    .data-currency-table tr:last-child td { border-bottom: none; }
+    .data-currency-note {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-bottom: 0.75rem;
+    }
+    .status-current {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      background: #f0fdf4;
+      color: #16a34a;
+    }
+    .status-outdated {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      background: #fffbeb;
+      color: #d97706;
+    }
+    .status-unknown {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      background: #f1f5f9;
+      color: #64748b;
+    }
+    .files-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .files-table th {
+      background: #f1f5f9;
+      text-align: left;
+      padding: 0.65rem 1rem;
+      font-weight: 600;
+      color: #475569;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .files-table td {
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid #f1f5f9;
+      color: #334155;
+    }
+    .files-table tr:last-child td { border-bottom: none; }
+    .files-table td:first-child { font-family: monospace; font-size: 0.82rem; color: #1e293b; }
+    .files-table .count-cell { text-align: center; font-weight: 600; }
+    .files-table .ok { color: #16a34a; }
+    .files-table .has-issues { color: #dc2626; }
+    .report-footer {
+      margin-top: 3rem;
+      padding: 1.5rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: #94a3b8;
+      border-top: 1px solid #e2e8f0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="report-header">
+  <h1>Code Error Report</h1>
+  <div class="subtitle">Definitive code bugs and efficiency/readability suggestions</div>
+  <div class="meta">
+    <span><strong>Project:</strong> eig-wagesubsidy-policy-sim</span>
+    <span><strong>Reviewed:</strong> 2026-07-07</span>
+    <span><strong>Files:</strong> 8 files across R, Python</span>
+    <span><strong>Reviewer:</strong> AI review agent (code-reviewer)</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <h2>Executive Summary</h2>
+  <div class="summary-box">
+    Scoped review of the newly internalized CPS ORG ingestion (4 vendored/utility R files, 4 Python files). The vendor edits pass: the <code>EIG-VENDOR-GUARD</code> <code>if_else</code> legacy branches in <code>01a_load-ipums-cps.R</code> are correct and provably inert when <code>use_star2_bool</code> is uniformly <code>TRUE</code> (the length-1 <code>NA_real_</code> false branch is never selected and recycles safely), <code>01b_build-org-panel.R</code> is byte-identical to upstream, and the R&#8594;Python parquet handoff is intact — every column the Python adapter reads (<code>HOURWAGE_CANON_NUM</code>, <code>nominal_weekly_wage_num</code>, <code>uhrsworkorg_used_num</code>, <code>NCHILD</code>, <code>RELATE</code>, <code>WKSTAT</code>, etc.) flows through because both R writers persist the full frame with no column drop. No CRITICAL or HIGH errors were found. One MEDIUM error was found: in <code>01a_data_ingest.py</code> the missing/zero-hours fallback is applied to <code>annual_hours</code> but not to <code>subsidy_hours</code>, silently producing a NaN/zero subsidy for affected eligible rows. Two LOW errors and one INFO observation concern edge-case fragility (nullable int cast, HISPAN edge codes, an unmapped-FIPS fallback). Two SUGGESTIONs address vectorization and a misleading variable name. Seeds are set (single-threaded ranger) so the R stage is reproducible.
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card sev-critical">
+      <div class="count">0</div>
+      <div class="label">Critical</div>
+    </div>
+    <div class="stat-card sev-high">
+      <div class="count">0</div>
+      <div class="label">High</div>
+    </div>
+    <div class="stat-card sev-medium">
+      <div class="count">1</div>
+      <div class="label">Medium</div>
+    </div>
+    <div class="stat-card sev-low">
+      <div class="count">2</div>
+      <div class="label">Low</div>
+    </div>
+    <div class="stat-card sev-info">
+      <div class="count">1</div>
+      <div class="label">Info</div>
+    </div>
+    <div class="stat-card sev-suggestion">
+      <div class="count">2</div>
+      <div class="label">Suggestions</div>
+    </div>
+  </div>
+
+  <h2>Findings</h2>
+
+  <!-- CE-001 MEDIUM -->
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">CE-001</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Missing/zero-hours fallback fixes annual_hours but not subsidy_hours — subsidy silently NaN/0</div>
+        <div class="finding-meta">
+          <span class="file">code/01_data_preparation/01a_data_ingest.py</span>
+          <span> · Line 339–366 · Python</span>
+        </div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Problematic Code</div>
+      <div class="code-label">code/01_data_preparation/01a_data_ingest.py:339</div>
+      <pre><code>eligible["weeks_multiplier"] = wkstat_vals.map(WKSTAT_WEEKS).fillna(DEFAULT_WEEKS).astype(int)
+eligible["annual_hours"]     = eligible["hours_epi"] * eligible["weeks_multiplier"]
+
+# Guard: if hours_epi is missing, fall back to config default
+fallback_hours_mask = eligible["annual_hours"].isna() | (eligible["annual_hours"] &lt;= 0)
+if fallback_hours_mask.sum() &gt; 0:
+    default_annual = cfg.get("ws_hours_per_year", 2000)
+    ...
+    eligible.loc[fallback_hours_mask, "annual_hours"] = default_annual
+
+# ── 7. Subsidy calculation ──
+SUBSIDY_HRS_CAP = cfg.get("ws_subsidy_hours_cap", 40)
+eligible["subsidy_hours"] = (
+    np.minimum(eligible["hours_epi"], SUBSIDY_HRS_CAP)   # &lt;- still raw hours_epi
+    * eligible["weeks_multiplier"]
+)
+...
+eligible["subsidy_annual"]  = eligible["subsidy_hr"] * eligible["subsidy_hours"]</code></pre>
+
+      <div class="finding-section-label">Why This Is Wrong</div>
+      <div class="finding-text">
+        A paid-hourly worker is admitted to <code>eligible</code> on the basis of a valid <code>hourly_wage_epi</code> (which for hourly-paid rows equals <code>HOURWAGE_CANON_NUM</code> and does not depend on hours). Such a row can therefore carry a missing or zero <code>hours_epi</code> (e.g. an hours-vary/997 case the upstream RF imputer did not resolve). The fallback block repairs <code>annual_hours</code> for exactly these rows (setting it to the 2000-hour default), so <code>baseline_income = employer_wage &times; 2000</code> is non-zero. But <code>subsidy_hours</code> is computed afterwards from the still-missing raw <code>hours_epi</code>: <code>np.minimum(NaN, 40) &times; weeks = NaN</code> (or <code>0</code> when hours are exactly 0). <code>subsidy_annual</code> is then NaN/0 for those workers. Because <code>pandas.Series.sum()</code> defaults to <code>skipna=True</code>, the affected rows are silently dropped from <code>gross_cost_bn</code> and <code>avg_subsidy</code> while their <code>weight</code> still counts in <code>total_workers_mn</code> and in the <code>avg_subsidy</code> denominator — understating program cost and the average subsidy. The presence of the <code>annual_hours</code> fallback shows the authors expect missing hours to occur, so the gap is a real inconsistency rather than a purely hypothetical one.
+      </div>
+
+      <div class="finding-section-label">Recommended Fix</div>
+      <pre><code># Derive a single filled hours-per-week series, then use it for BOTH
+# annual_hours and the capped subsidy_hours so the two stay consistent.
+default_weekly = cfg.get("ws_hours_per_year", 2000) / DEFAULT_WEEKS
+hours_filled = eligible["hours_epi"].where(
+    eligible["hours_epi"].gt(0), other=default_weekly
+).fillna(default_weekly)
+
+eligible["annual_hours"]  = hours_filled * eligible["weeks_multiplier"]
+eligible["subsidy_hours"] = (
+    np.minimum(hours_filled, SUBSIDY_HRS_CAP) * eligible["weeks_multiplier"]
+)</code></pre>
+      <div class="finding-text">
+        Compute the filled hours once and drive both <code>annual_hours</code> and <code>subsidy_hours</code> from it, so no eligible worker ends up with a non-zero baseline income but a NaN/zero subsidy. Alternatively, apply the same <code>fallback_hours_mask</code> repair to <code>subsidy_hours</code> before <code>subsidy_annual</code> is formed.
+      </div>
+    </div>
+  </div>
+
+  <!-- CE-002 LOW -->
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">CE-002</div>
+      <div class="finding-title-block">
+        <div class="finding-title">_int() casts coerced values straight to int64 — raises on any missing code</div>
+        <div class="finding-meta">
+          <span class="file">code/01_data_preparation/01a_data_ingest.py</span>
+          <span> · Line 215–216 · Python</span>
+        </div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Problematic Code</div>
+      <div class="code-label">code/01_data_preparation/01a_data_ingest.py:215</div>
+      <pre><code>def _int(col: str) -&gt; "pd.Series":
+    return pd.to_numeric(raw[col], errors="coerce").astype("int64")
+
+out = pd.DataFrame({
+    "year": _int("YEAR"), "month": _int("MONTH"),
+    ...
+    "statefip": _int("STATEFIP"), "marst": _int("MARST"),
+    "nchild": _int("NCHILD"), "wkstat": _int("WKSTAT"),
+    "relate": _int("RELATE"), "educ": _int("EDUC"), ...
+})</code></pre>
+
+      <div class="finding-section-label">Why This Is Wrong</div>
+      <div class="finding-text">
+        <code>errors="coerce"</code> deliberately turns any unparseable/missing value into <code>NaN</code>, but <code>.astype("int64")</code> cannot represent <code>NaN</code> and raises <code>IntCastingNaNError</code>, aborting the whole load. This applies to every column routed through <code>_int()</code> (<code>YEAR</code>, <code>MONTH</code>, <code>AGE</code>, <code>STATEFIP</code>, <code>MARST</code>, <code>NCHILD</code>, <code>WKSTAT</code>, <code>RELATE</code>, <code>EDUC</code>). In the current sample-gated employed panel these columns are fully populated (IPUMS NIU is a numeric code, not a null), so the current run is unaffected — hence LOW — but the coerce-then-hard-cast pattern is fragile: a single missing code in a future extract would crash the adapter rather than surface a clean diagnostic.
+      </div>
+
+      <div class="finding-section-label">Recommended Fix</div>
+      <pre><code>def _int(col: str) -&gt; "pd.Series":
+    # nullable integer tolerates coerced NaN; downstream comparisons still work
+    return pd.to_numeric(raw[col], errors="coerce").astype("Int64")</code></pre>
+      <div class="finding-text">
+        Use pandas' nullable <code>Int64</code> (or explicitly <code>.fillna(sentinel)</code> before the cast) so a stray missing value degrades gracefully instead of aborting the pipeline. Note the FIPS map key type is unaffected — <code>Int64</code> values still match the integer keys in <code>FIPS_TO_STATE</code>.
+      </div>
+    </div>
+  </div>
+
+  <!-- CE-003 LOW -->
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">CE-003</div>
+      <div class="finding-title-block">
+        <div class="finding-title">_race_ethnicity treats every HISPAN &gt; 0 as Hispanic, misclassifying "don't know"/"N/A" codes</div>
+        <div class="finding-meta">
+          <span class="file">code/01_data_preparation/01a_data_ingest.py</span>
+          <span> · Line 168–169 · Python</span>
+        </div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Problematic Code</div>
+      <div class="code-label">code/01_data_preparation/01a_data_ingest.py:168</div>
+      <pre><code>def _race_ethnicity(race: float, hisp: float) -&gt; str:
+    if pd.notna(hisp) and hisp &gt; 0:
+        return "Hispanic"
+    ...</code></pre>
+
+      <div class="finding-section-label">Why This Is Wrong</div>
+      <div class="finding-text">
+        Per the IPUMS CPS coding recorded in the dataset registry, <code>HISPAN</code> is <code>000</code> for not-Hispanic, <code>100–612</code> for specific Hispanic origins, and <code>901</code> ("do not know") / <code>902</code> ("N/A") for non-response. The predicate <code>hisp &gt; 0</code> classifies <code>901</code> and <code>902</code> as Hispanic, so any respondent whose Hispanic origin was not ascertained is silently coded into the "Hispanic" demographic bucket. The impact is small in a 2003+ basic-monthly universe (these codes are rare), and the identical pattern is used in <code>01h_nonemployed_pool.py</code>, so the two stages remain internally consistent — hence LOW rather than higher.
+      </div>
+
+      <div class="finding-section-label">Recommended Fix</div>
+      <pre><code>if pd.notna(hisp) and 0 &lt; hisp &lt; 901:   # 901 = don't know, 902 = N/A
+    return "Hispanic"</code></pre>
+      <div class="finding-text">
+        Bound the Hispanic test to the valid specific-origin range (<code>100–612</code>) so non-response codes fall through to the race-based branch. Apply the same fix in <code>01h</code> to keep the two demographic derivations aligned.
+      </div>
+    </div>
+  </div>
+
+  <!-- CE-004 INFO -->
+  <div class="finding info">
+    <div class="finding-header">
+      <div class="finding-id">CE-004</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Unmapped FIPS codes silently fall back to "TX" in the non-employed pool</div>
+        <div class="finding-meta">
+          <span class="file">code/01_data_preparation/01h_nonemployed_pool.py</span>
+          <span> · Line 253 · Python</span>
+        </div>
+      </div>
+      <span class="severity-badge badge-info">INFO</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Problematic Code</div>
+      <div class="code-label">code/01_data_preparation/01h_nonemployed_pool.py:253</div>
+      <pre><code>org["state_code"] = org["STATEFIP"].map(_FIPS).fillna("TX")</code></pre>
+
+      <div class="finding-section-label">Why This Is Wrong</div>
+      <div class="finding-text">
+        Any <code>STATEFIP</code> not present in the 50-states-plus-DC map (historical combined codes 61–90, or "state not identified" 99) is silently reassigned to Texas rather than dropped or flagged. This differs from the employed path in <code>01a_data_ingest.py</code>, which drops unmapped FIPS with a warning (lines 317–321). For a standard 50-state+DC extract there is nothing to remap so behavior is unchanged, but the fallback could quietly attribute non-employed population weight to TX if such codes ever appear. This line is <em>outside</em> the changed function (<code>_find_raw_org_dir</code> was the only edit in this file) — it is pre-existing and reported as INFO for author confirmation, not as a regression introduced by the internalization work.
+      </div>
+
+      <div class="finding-section-label">Recommended Fix</div>
+      <pre><code># Match 01a: drop unmapped FIPS with a diagnostic instead of coercing to TX
+org["state_code"] = org["STATEFIP"].map(_FIPS)
+unmapped = org["state_code"].isna()
+if unmapped.any():
+    print(f"01h | [warn] dropping {int(unmapped.sum())} rows with unmapped FIPS: "
+          f"{sorted(org.loc[unmapped, 'STATEFIP'].unique())}")
+    org = org[~unmapped].copy()</code></pre>
+      <div class="finding-text">
+        Confirm whether the "TX" fallback is intentional. Dropping (or explicitly logging) unmapped FIPS would make the non-employed pool consistent with the employed path and avoid a silent, geographically arbitrary reassignment.
+      </div>
+    </div>
+  </div>
+
+  <!-- CE-005 SUGGESTION -->
+  <div class="finding suggestion">
+    <div class="finding-header">
+      <div class="finding-id">CE-005</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Vectorize the row-wise demographic derivations in the adapter</div>
+        <div class="finding-meta">
+          <span class="file">code/01_data_preparation/01a_data_ingest.py</span>
+          <span> · Line 244–245, 326–329, 382 · Python</span>
+        </div>
+      </div>
+      <span class="severity-badge badge-suggestion">SUGGESTION</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Problematic Code</div>
+      <div class="code-label">code/01_data_preparation/01a_data_ingest.py:244</div>
+      <pre><code>out["race_ethnicity"] = [_race_ethnicity(r, h) for r, h in zip(race, hisp)]
+out["age_bin"]        = out["age"].apply(_age_bin)
+...
+eligible["family_type_key"] = [
+    _family_key(int(m), int(n)) for m, n in zip(eligible["marst"], eligible["nchild"])
+]
+...
+eligible["educ_group"] = eligible["educ"].apply(_educ_group)</code></pre>
+
+      <div class="finding-section-label">Why This Is Wrong</div>
+      <div class="finding-text">
+        These four derivations run a Python-level function once per row (list comprehension over <code>zip</code> or <code>Series.apply</code>) across the full ORG panel. They are correct, but on a multi-month panel of hundreds of thousands of rows the per-row Python call overhead is materially slower than a vectorized equivalent. This is a pure performance/readability improvement — correctness is unaffected.
+      </div>
+
+      <div class="finding-section-label">Recommended Fix</div>
+      <pre><code># age_bin via pd.cut (vectorized, ordered)
+out["age_bin"] = pd.cut(out["age"], bins=[-1, 24, 34, 44, 54, 64, 200],
+                        labels=["16-24","25-34","35-44","45-54","55-64","65+"])
+
+# race_ethnicity via np.select
+is_hisp = hisp.between(1, 900)
+out["race_ethnicity"] = np.select(
+    [is_hisp, race.eq(100), race.eq(200)],
+    ["Hispanic", "White, non-Hispanic", "Black, non-Hispanic"],
+    default="Other, non-Hispanic",
+)
+
+# family_type_key via vectorized string ops
+prefix = np.where(eligible["marst"].isin([1, 2]), "married", "single")
+suffix = np.where(eligible["nchild"] &gt;= 1, "2c", "0c")
+eligible["family_type_key"] = prefix + "_" + suffix
+
+# educ_group via map with default
+eligible["educ_group"] = eligible["educ"].map(_EDUC_MAP).fillna("Unknown")</code></pre>
+      <div class="finding-text">
+        Vectorized <code>pd.cut</code> / <code>np.select</code> / <code>map</code> replacements eliminate the per-row Python calls and read more declaratively. (The <code>np.select</code> form also incidentally fixes the CE-003 901/902 edge via <code>hisp.between(1, 900)</code>.)
+      </div>
+    </div>
+  </div>
+
+  <!-- CE-006 SUGGESTION -->
+  <div class="finding suggestion">
+    <div class="finding-header">
+      <div class="finding-id">CE-006</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Variable named median_subsidy actually holds a weighted mean</div>
+        <div class="finding-meta">
+          <span class="file">code/01_data_preparation/01a_data_ingest.py</span>
+          <span> · Line 402 · Python</span>
+        </div>
+      </div>
+      <span class="severity-badge badge-suggestion">SUGGESTION</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Problematic Code</div>
+      <div class="code-label">code/01_data_preparation/01a_data_ingest.py:402</div>
+      <pre><code>median_subsidy   = np.average(df["subsidy_hr"], weights=df["weight"])
+...
+print(f"  Weighted mean hourly subsidy: ${median_subsidy:.2f}/hr")</code></pre>
+
+      <div class="finding-section-label">Why This Is Wrong</div>
+      <div class="finding-text">
+        <code>np.average(..., weights=...)</code> computes a weighted <em>mean</em>, and the print label correctly says "Weighted mean hourly subsidy", but the variable is named <code>median_subsidy</code>. The value is fine; only the name is misleading and invites a future reader to treat it as a median. This is a readability issue, not a correctness bug.
+      </div>
+
+      <div class="finding-section-label">Recommended Fix</div>
+      <pre><code>mean_hourly_subsidy = np.average(df["subsidy_hr"], weights=df["weight"])
+...
+print(f"  Weighted mean hourly subsidy: ${mean_hourly_subsidy:.2f}/hr")</code></pre>
+      <div class="finding-text">
+        Rename to <code>mean_hourly_subsidy</code> so the identifier matches the statistic it stores.
+      </div>
+    </div>
+  </div>
+
+  <h2>Data Currency</h2>
+  <p class="data-currency-note">Checks whether recognized public datasets are using the latest available release. Informational only — researchers may deliberately use a specific vintage.</p>
+
+  <table class="data-currency-table">
+    <thead>
+      <tr>
+        <th>Dataset</th>
+        <th>Version in Code</th>
+        <th>Latest Available</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Current Population Survey — IPUMS CPS basic monthly (ORG / Earner Study, *2 era)</td>
+        <td>Last 12 complete monthly samples, discovered dynamically at extract time (<code>n_recent_samples_int = 12</code>; 2025–2026 window)</td>
+        <td>May 2026 basic monthly sample (IPUMS CPS)</td>
+        <td><span class="status-current">Current</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="data-currency-note">
+    Note: <code>00a_download-ipums-cps.R</code> discovers all available CPS monthly samples via the IPUMS API and keeps the most recent 12 (<code>utils::tail(sample_frame_df, n_recent_samples_int)</code>). Because the window is defined relative to whatever IPUMS currently publishes rather than pinned to fixed sample IDs, the extract self-tracks the latest release; the "Current" status reflects that dynamic behavior against the latest IPUMS CPS basic monthly sample (May 2026).
+  </p>
+
+  <h2>Reviewed Files</h2>
+  <table class="files-table">
+    <thead>
+      <tr>
+        <th>File</th>
+        <th>Language</th>
+        <th style="text-align:center">Lines</th>
+        <th style="text-align:center">Errors Found</th>
+        <th style="text-align:center">Highest Severity</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>code/00_ingest/00a_download-ipums-cps.R</td>
+        <td>R</td>
+        <td class="count-cell">417</td>
+        <td class="count-cell ok">0</td>
+        <td class="count-cell">—</td>
+      </tr>
+      <tr>
+        <td>code/00_ingest/01a_load-ipums-cps.R</td>
+        <td>R</td>
+        <td class="count-cell">476</td>
+        <td class="count-cell ok">0</td>
+        <td class="count-cell">—</td>
+      </tr>
+      <tr>
+        <td>code/00_ingest/01b_build-org-panel.R</td>
+        <td>R</td>
+        <td class="count-cell">1375</td>
+        <td class="count-cell ok">0</td>
+        <td class="count-cell">— (byte-identical to upstream)</td>
+      </tr>
+      <tr>
+        <td>code/_utils/00_packages.R</td>
+        <td>R</td>
+        <td class="count-cell">65</td>
+        <td class="count-cell ok">0</td>
+        <td class="count-cell">—</td>
+      </tr>
+      <tr>
+        <td>code/01_data_preparation/01a_data_ingest.py</td>
+        <td>Python</td>
+        <td class="count-cell">423</td>
+        <td class="count-cell has-issues">5</td>
+        <td class="count-cell">MEDIUM</td>
+      </tr>
+      <tr>
+        <td>code/01_data_preparation/01h_nonemployed_pool.py</td>
+        <td>Python</td>
+        <td class="count-cell">299</td>
+        <td class="count-cell has-issues">1</td>
+        <td class="count-cell">INFO</td>
+      </tr>
+      <tr>
+        <td>code/01_data_preparation/00_export_org_data.py</td>
+        <td>Python</td>
+        <td class="count-cell">30</td>
+        <td class="count-cell ok">0</td>
+        <td class="count-cell">—</td>
+      </tr>
+      <tr>
+        <td>code/run_all.py</td>
+        <td>Python</td>
+        <td class="count-cell">384</td>
+        <td class="count-cell ok">0</td>
+        <td class="count-cell">—</td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+<div class="report-footer">
+  Generated by AI review agent · code-reviewer · 2026-07-07<br>
+  Scope: definitive code errors + efficiency/readability suggestions — see methodology-report.html for design concerns
+</div>
+
+</body>
+</html>

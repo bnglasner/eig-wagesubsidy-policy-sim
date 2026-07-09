@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Methodology Report — eig-wagesubsidy-policy-sim</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 15px; line-height: 1.6; color: #1e293b; background: #f8fafc;
+    }
+    .report-header { background: #134e4a; color: #f0fdfa; padding: 2rem 2.5rem; }
+    .report-header h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.25rem; }
+    .report-header .subtitle { font-size: 0.9rem; color: #99f6e4; }
+    .report-header .meta { margin-top: 1rem; display: flex; gap: 2rem; flex-wrap: wrap; font-size: 0.85rem; color: #ccfbf1; }
+    .report-header .meta span strong { color: #f0fdfa; }
+    .container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+    h2 { font-size: 1.15rem; font-weight: 600; color: #1e293b; margin: 2rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid #e2e8f0; }
+    .summary-box { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; font-size: 0.95rem; color: #334155; line-height: 1.7; }
+    .risk-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+    .risk-label { font-size: 0.9rem; font-weight: 600; color: #475569; }
+    .risk-pill { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.3rem 0.9rem; border-radius: 9999px; }
+    .risk-high { background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; }
+    .risk-medium { background: #fff7ed; color: #ea580c; border: 1px solid #fdba74; }
+    .risk-low { background: #f0fdf4; color: #16a34a; border: 1px solid #86efac; }
+    .design-box { background: #fff; border: 1px solid #e2e8f0; border-left: 4px solid #134e4a; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 2rem; }
+    .design-box h3 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #134e4a; margin-bottom: 0.85rem; }
+    .design-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem 2rem; font-size: 0.88rem; }
+    .design-item { display: flex; gap: 0.5rem; }
+    .design-key { font-weight: 600; color: #475569; min-width: 10rem; }
+    .design-val { color: #1e293b; }
+    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 2rem; }
+    .stat-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; text-align: center; }
+    .stat-card .count { font-size: 2rem; font-weight: 700; line-height: 1; }
+    .stat-card .label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.3rem; }
+    .sev-high .count, .sev-high .label { color: #dc2626; }
+    .sev-medium .count, .sev-medium .label { color: #ea580c; }
+    .sev-low .count, .sev-low .label { color: #2563eb; }
+    .category-heading { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #64748b; margin: 1.5rem 0 0.75rem; padding: 0.4rem 0; border-bottom: 1px dashed #cbd5e1; }
+    .finding { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 1.25rem; overflow: hidden; }
+    .finding-header { display: flex; align-items: flex-start; gap: 1rem; padding: 1rem 1.25rem; border-left: 5px solid transparent; }
+    .finding.high .finding-header { border-left-color: #dc2626; }
+    .finding.medium .finding-header { border-left-color: #ea580c; }
+    .finding.low .finding-header { border-left-color: #2563eb; }
+    .finding-id { font-size: 0.75rem; font-weight: 700; font-family: monospace; color: #64748b; min-width: 4.5rem; padding-top: 0.15rem; }
+    .finding-title-block { flex: 1; }
+    .finding-title { font-weight: 600; font-size: 1rem; color: #1e293b; }
+    .finding-meta { font-size: 0.8rem; color: #64748b; margin-top: 0.2rem; }
+    .finding-meta .file { font-family: monospace; }
+    .severity-badge { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.2rem 0.55rem; border-radius: 4px; }
+    .badge-high { background: #fef2f2; color: #dc2626; }
+    .badge-medium { background: #fff7ed; color: #ea580c; }
+    .badge-low { background: #eff6ff; color: #2563eb; }
+    .finding-body { padding: 0 1.25rem 1.25rem 3.75rem; }
+    .finding-section-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #94a3b8; margin: 0.85rem 0 0.35rem; }
+    .finding-text { font-size: 0.9rem; color: #334155; }
+    pre { background: #0f172a; color: #e2e8f0; border-radius: 6px; padding: 1rem; overflow-x: auto; font-size: 0.82rem; line-height: 1.55; margin: 0.5rem 0; }
+    code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
+    .check-list { list-style: none; padding: 0; margin: 0.5rem 0; font-size: 0.9rem; color: #334155; }
+    .check-list li { padding: 0.25rem 0 0.25rem 1.5rem; position: relative; }
+    .check-list li::before { content: "→"; position: absolute; left: 0; color: #134e4a; font-weight: 700; }
+    .files-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+    .files-table th { background: #f1f5f9; text-align: left; padding: 0.65rem 1rem; font-weight: 600; color: #475569; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; }
+    .files-table td { padding: 0.6rem 1rem; border-bottom: 1px solid #f1f5f9; color: #334155; }
+    .files-table tr:last-child td { border-bottom: none; }
+    .files-table td:first-child { font-family: monospace; font-size: 0.82rem; color: #1e293b; }
+    .files-table .count-cell { text-align: center; font-weight: 600; }
+    .files-table .ok { color: #16a34a; }
+    .files-table .has-issues { color: #dc2626; }
+    .report-footer { margin-top: 3rem; padding: 1.5rem; text-align: center; font-size: 0.8rem; color: #94a3b8; border-top: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+
+<div class="report-header">
+  <h1>Methodology Report</h1>
+  <div class="subtitle">Econometric design concerns — err on side of flagging</div>
+  <div class="meta">
+    <span><strong>Project:</strong> eig-wagesubsidy-policy-sim</span>
+    <span><strong>Reviewed:</strong> 2026-07-07</span>
+    <span><strong>Files:</strong> 6 files across R, Python</span>
+    <span><strong>Reviewer:</strong> AI review agent (methodology-reviewer)</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <h2>Executive Summary</h2>
+
+  <div class="risk-row">
+    <span class="risk-label">Overall Methodological Risk:</span>
+    <span class="risk-pill risk-medium">MEDIUM</span>
+  </div>
+
+  <div class="summary-box">
+    This review covers the newly internalized CPS ORG wage-construction path: the three vendored EIG-Wage-Figure R stages (<code>00a</code>/<code>01a</code>/<code>01b</code>) plus the Python stages rewired to consume the EIG-native panel (<code>01a_data_ingest.py</code>, <code>01h_nonemployed_pool.py</code>) and <code>00_config.py</code>. The project is a survey-weighted descriptive policy microsimulation — there is no causal identification design (no DiD/RD/IV), so findings concentrate in Sample &amp; Data, Standard Errors, Descriptive Analysis, and Dataset Variable Usage.
+    <br><br>
+    <strong>Two focus-area conclusions are affirmatively verified.</strong> (1) The vendored subset's legacy/<code>*2</code> seam, the 2023m4–2024m12 rotation-group bridge, and the sex-separate Pareto topcode are genuinely inert for the 2025–2026 nominal window: the shipped diagnostics show <code>skipped_post_pareto_max_year</code> for every sex-year cell, only <code>year=2025</code>/<code>year=2026</code> partitions exist (legacy rows = 0), and the bridge fires only for <code>yr %in% c(2023, 2024)</code>. (2) The weighting contract is correct per the dataset registry: <code>EARNWT</code> (ORG earnings weight) drives the employed-earner wage/eligibility/cost statistics in <code>01a</code>, and <code>WTFINL</code> (basic-monthly population weight) drives the non-employed pool in <code>01h</code> — the correct weight-by-context split. MR-VU1 and MR-VU2 therefore pass.
+    <br><br>
+    <strong>Six MEDIUM concerns</strong> warrant author confirmation: a cross-stage <code>TARGET_WAGE</code> inconsistency (dynamic in <code>01a</code> vs. a static <code>16.80</code> in <code>01h</code>), the per-year RF hours imputation trained on partial calendar years inside the pooling window, the full-year annualization assumption behind <code>annual_hours</code>, the absence of any sampling-variance/replicate-weight quantification on the headline numbers, the Heckman exclusion restriction, and a nominal $0.50 floor that sits below the deflated EPI real floor. Five LOW items round out the report. No HIGH findings: the identification is descriptive, the inert-window claims hold, and the weight assignment is correct.
+  </div>
+
+  <h2>Research Design Assessment</h2>
+  <div class="design-box">
+    <h3>Inferred Research Design</h3>
+    <div class="design-grid">
+      <div class="design-item">
+        <span class="design-key">Identification Strategy:</span>
+        <span class="design-val">Descriptive policy microsimulation / survey-weighted cost accounting (no causal identification). Non-employed wages imputed via a Heckman two-step selection correction.</span>
+      </div>
+      <div class="design-item">
+        <span class="design-key">Treatment Variable:</span>
+        <span class="design-val">80-80 wage subsidy (simulated policy parameter, not an estimated treatment)</span>
+      </div>
+      <div class="design-item">
+        <span class="design-key">Outcome Variable(s):</span>
+        <span class="design-val">Eligibility (employer_wage &lt; TARGET_WAGE), subsidy_annual, gross/net program cost, non-employed MPL &amp; reservation wage</span>
+      </div>
+      <div class="design-item">
+        <span class="design-key">Unit of Analysis:</span>
+        <span class="design-val">CPS ORG person-month, pooled to a 12-month monthly-average population (weight ÷ n_months)</span>
+      </div>
+      <div class="design-item">
+        <span class="design-key">Standard Errors:</span>
+        <span class="design-val">None reported; behavioral sensitivity bands only (no sampling variance)</span>
+      </div>
+      <div class="design-item">
+        <span class="design-key">Fixed Effects:</span>
+        <span class="design-val">None</span>
+      </div>
+      <div class="design-item">
+        <span class="design-key">Sample Period:</span>
+        <span class="design-val">Pooled recent 12 monthly CPS samples (~2025m5–2026m5), *2-era wage variables, NOMINAL (no deflation)</span>
+      </div>
+      <div class="design-item">
+        <span class="design-key">Key Packages:</span>
+        <span class="design-val">ipumsr, ranger, arrow, dplyr (R); pandas, numpy, statsmodels (Python)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card sev-high"><div class="count">0</div><div class="label">High</div></div>
+    <div class="stat-card sev-medium"><div class="count">6</div><div class="label">Medium</div></div>
+    <div class="stat-card sev-low"><div class="count">5</div><div class="label">Low</div></div>
+  </div>
+
+  <h2>Findings</h2>
+
+  <div class="category-heading">MEDIUM — 6 finding(s)</div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Causal Inference</div>
+
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">MR-001</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Heckman exclusion restriction (marital status, number of children) is questionable</div>
+        <div class="finding-meta"><span class="file">code/01_data_preparation/01h_nonemployed_pool.py</span><span> · Causal Inference</span></div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code</div>
+      <pre><code>if not wage_eq:
+    cols["married"]  = df["MARST"].isin([1, 2]).to_numpy().astype(float)  # exclusion restriction
+    cols["nchild"]   = df["NCHILD"].to_numpy(float)                       # exclusion restriction
+    cols["has_child"]= (df["NCHILD"].to_numpy(float) &gt;= 1).astype(float)</code></pre>
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">The non-employed potential wage (MPL) is imputed with a two-step Heckman in which marital status and number of children enter the selection (participation) equation but are excluded from the wage equation. Valid identification requires these variables to affect participation but <em>not</em> the wage. The labor literature documents a marriage wage premium and a motherhood wage penalty, so both plausibly enter the wage equation directly. If the exclusion restriction fails, the selection correction is identified only off the nonlinearity of the inverse-Mills ratio (functional form), which is fragile and can yield unstable selection-corrected predictions. Because the imputed MPL then drives reservation wages and the elasticity-calibrated viable share, the induced-employment and net-cost estimates inherit this assumption. See the Heckman (1979) selection framework and standard critiques of weak/absent exclusion restrictions.</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Justify why marital status and children shift participation but not the offered wage in this population, or cite a source.</li>
+        <li>Report the IMR coefficient and its significance (already printed) and test sensitivity to dropping the IMR term (naive OLS) and to the cell-median fallback.</li>
+        <li>Assess whether the MPL distribution (p25/p50/p75) is stable across reasonable exclusion sets before relying on the non-employed cost contribution.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Standard Errors</div>
+
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">MR-002</div>
+      <div class="finding-title-block">
+        <div class="finding-title">No sampling variance on headline estimates; replicate weights unused; repeated persons treated as independent</div>
+        <div class="finding-meta"><span class="file">code/01_data_preparation/01a_data_ingest.py, 01h_nonemployed_pool.py</span><span> · Standard Errors</span></div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code</div>
+      <pre><code>n_months = eligible.groupby(["year", "month"]).ngroups
+eligible["weight"] = eligible["earnwt"] / n_months
+...
+total_workers_mn = df["weight"].sum() / 1e6
+gross_cost_bn    = (df["subsidy_annual"] * df["weight"]).sum() / 1e9</code></pre>
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">The headline eligibility count (~25–30M) and gross cost (~$40–60B) are reported as point estimates with no confidence interval. CPS ORG is a complex probability sample; IPUMS/Census publish replicate weights precisely so that sampling variance can be quantified, and neither stage declares a survey design or bootstraps standard errors (registry MR-VU3 "replicate weights" pitfall). Separately, pooling 12 monthly person-month files induces repeated observations of the same individual across the 4-8-4 rotation (same <code>CPSIDP</code> can enter as MISH 4 and MISH 8, and the non-employed pool draws all rotations), so treating person-months as independent understates variance. Dividing by <code>n_months</code> correctly rescales the weight to a monthly-average population, but does nothing for the induced within-person correlation. For a public-facing cost figure, an unreported margin of error is a meaningful omission (Lumley 2010, <em>Complex Surveys</em>).</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Add a sampling-variance estimate for eligibility and cost via CPS replicate weights (or a survey-design bootstrap over months/persons).</li>
+        <li>Confirm whether any individual (<code>CPSIDP</code>) appears more than once in the pooled eligible sample within the 12-month window and quantify the duplication.</li>
+        <li>Report at least an approximate CI or state explicitly that sampling uncertainty is not quantified and why (interactive/descriptive scope).</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Sample &amp; Data</div>
+
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">MR-003</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Cross-stage TARGET_WAGE inconsistency: dynamic in 01a, static $16.80 in 01h</div>
+        <div class="finding-meta"><span class="file">code/01_data_preparation/01a_data_ingest.py, 01h_nonemployed_pool.py, code/00_setup/00_config.py</span><span> · Sample &amp; Data</span></div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code</div>
+      <pre><code># 01a_data_ingest.py — target computed from the NEW window's data
+median_wage = _weighted_median(ph["hourly_wage_epi"].values, ph["earnwt"].values)
+TARGET_WAGE = round(median_wage * TARGET_PCT, 2)
+
+# 01h_nonemployed_pool.py — target taken from static config
+TARGET_WAGE = float(cfg.get("ws_target_wage", 16.80))   # 00_config.py: 0.80 * 21.00</code></pre>
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">The employed-eligibility stage (<code>01a</code>) recomputes <code>TARGET_WAGE</code> dynamically as 80% of the weighted median paid-hourly wage <em>in the new pooled window</em>, while the non-employed pool (<code>01h</code>) reads the hard-coded <code>ws_target_wage = 16.80</code> from config (derived from an assumed $21.00 median). If the new 2025–2026 window's median differs from $21.00, the two halves of the same policy simulation evaluate workers against <em>different</em> target thresholds — the employed against the data-driven target and the non-employed against a stale one. That is internally incoherent for a single policy and would bias the relative sizes of the employed vs. induced-entrant cost components. The whole point of internalizing a fresh window is that the median can move; the static config value should be regenerated or the two stages should share one computed target.</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Print the dynamic <code>TARGET_WAGE</code> from <code>01a</code> for the current window and compare it to the config <code>16.80</code>; confirm they coincide.</li>
+        <li>Have <code>01h</code> (and <code>00_config.py</code>) consume the single target computed in <code>01a</code> rather than a hard-coded constant, or regenerate the config value each run.</li>
+        <li>If they diverge, treat this as HIGH: re-run the non-employed pool and cost aggregation on the correct target.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">MR-004</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Per-year RF hours imputation trained on partial calendar years inside the 12-month pool</div>
+        <div class="finding-meta"><span class="file">code/00_ingest/01b_build-org-panel.R</span><span> · Sample &amp; Data</span></div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code</div>
+      <pre><code>for (yr in years_available_int) {
+  ...
+  rf_fit &lt;- ranger::ranger(target_num ~ ., data = rf_train_df,
+                           case.weights = rf_train_weights_num, seed = 42L,
+                           num.threads = 1L)   # fit per calendar year
+</code></pre>
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">The "hours vary"/"don't know" RF hours imputation is fit <em>per calendar year</em>. Under the recent 12-month window the <code>year=2025</code> partition holds only the window's 2025 months and <code>year=2026</code> only ~5 months, so each RF trains on a partial-year, seasonally non-representative slice rather than the full calendar year a companion full-history run would use. The author's own comparison shows ~2.4% of rows (the imputed-hours records: 1,620 in 2025, 1,070 in 2026 per <code>hours_rf_diagnostics.csv</code>) receive different imputed hours (mean |Δ| ≈ 1.3 weekly hours) purely from this windowing choice, and OOB R² is modest (0.27–0.30). Because imputed hours feed both the salaried hourly wage (<code>weekly / hours</code>) and <code>annual_hours = hours × weeks_multiplier</code>, the divergence propagates into <code>baseline_income</code> and the gross-cost estimate. The aggregate effect is likely small, but the calendar-year split is arbitrary relative to the pooling window and is not documented as a sensitivity check in the shipped pipeline.</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Quantify the aggregate cost/eligibility delta between the per-year RF and a single RF pooled over the full 12-month window; document it.</li>
+        <li>Consider fitting one RF over the pooled window (or over full calendar years) so imputed hours do not depend on where the window boundary falls.</li>
+        <li>Given OOB R² ≈ 0.3, report how sensitive annual-hours totals are to the imputed 2.4% of rows.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">MR-005</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Annualization via a fixed WKSTAT weeks-multiplier assumes full-year attachment</div>
+        <div class="finding-meta"><span class="file">code/01_data_preparation/01a_data_ingest.py</span><span> · Sample &amp; Data</span></div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code</div>
+      <pre><code>eligible["weeks_multiplier"] = wkstat_vals.map(WKSTAT_WEEKS).fillna(DEFAULT_WEEKS).astype(int)
+eligible["annual_hours"]     = eligible["hours_epi"] * eligible["weeks_multiplier"]
+eligible["baseline_income"]  = eligible["employer_wage"] * eligible["annual_hours"]</code></pre>
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">Annual hours (and therefore baseline income and the annual subsidy/cost) are built from a single point-in-time CPS ORG observation: usual weekly hours × a constant weeks-per-year mapped from the respondent's current <code>WKSTAT</code> status (52/48/40). This assumes the worker holds that labor-force status for the full year and ignores unemployment spells, mid-year job changes, and partial-year work. For a cost estimate that multiplies through annual hours, part-year workers surveyed while employed will have overstated annual hours and income. This is the established EIG method and is unchanged by the internalization, but it is a core measurement assumption behind the cost figure and should be disclosed and, ideally, bounded.</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>State the full-year-attachment assumption in the public methodology note and, if possible, benchmark annual hours against an ASEC weeks-worked distribution.</li>
+        <li>Report how the gross cost changes under a weeks-worked haircut for economically part-time / not-at-work categories (WKSTAT 14/21/22/42).</li>
+        <li>Confirm the <code>DEFAULT_WEEKS = 52</code> fallback is not silently absorbing a material share of rows.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Dataset Variable Usage</div>
+
+  <div class="finding medium">
+    <div class="finding-header">
+      <div class="finding-id">MR-006</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Nominal $0.50 floor sits below the deflated EPI $0.50 (1989 PCE) real floor</div>
+        <div class="finding-meta"><span class="file">code/01_data_preparation/01a_data_ingest.py</span><span> · Dataset Variable Usage</span></div>
+      </div>
+      <span class="severity-badge badge-medium">MEDIUM</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code</div>
+      <pre><code>NOMINAL_HOURLY_FLOOR = 0.50   # "nominal approximation of the EPI $0.50 (1989 PCE) lower bound"
+nominal_hourly = nominal_hourly.where(nominal_hourly &gt;= NOMINAL_HOURLY_FLOOR)
+...
+org["employer_wage"] = org["hourly_wage_epi"].clip(lower=FEDERAL_MIN_WAGE)  # 7.25 floor</code></pre>
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">Omitting the EPI $200 upper bound is fully defensible for a &lt;$16.80 target population (those workers are excluded by <code>employer_wage &lt; TARGET</code> regardless), and this is confirmed. The <em>lower</em> bound is the issue: EPI's $0.50 floor is expressed in 1989 PCE dollars, which is roughly $1.2–$1.3 in 2025 nominal terms. Applying a literal $0.50 <em>nominal</em> floor is therefore more permissive than the EPI-intended real floor, so measured wages in roughly [$0.50, $1.25] (often salaried <code>weekly / imputed-hours</code> artifacts) survive the clean, are then clipped up to the $7.25 federal minimum, and are counted as eligible at $7.25 with a large subsidy. This can modestly inflate the eligible count and cost with what are effectively data-error records. The direction of the omission (too low, not too high) is what makes it worth confirming.</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Deflate the EPI $0.50 (1989 PCE) floor to a sample-period nominal value (~$1.2–$1.3) and re-apply, or document why the literal $0.50 is intended.</li>
+        <li>Count how many rows fall in [$0.50, $7.25] before the federal-minimum clip and confirm they are not disproportionately salaried low-hours artifacts.</li>
+        <li>Report the sensitivity of the eligible count/cost to the floor choice.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="category-heading">LOW — 5 finding(s)</div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Regression Specification</div>
+
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">MR-007</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Heckman second-stage SEs uncorrected for the generated IMR regressor; Duan smearing assumes homoskedastic retransformation</div>
+        <div class="finding-meta"><span class="file">code/01_data_preparation/01h_nonemployed_pool.py</span><span> · Regression Specification</span></div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code</div>
+      <pre><code>ols   = sm.OLS(y, Xw.to_numpy()).fit()          # Xw includes imr (a generated regressor)
+smear = float(np.mean(np.exp(ols.resid)))       # Duan smearing (single global factor)</code></pre>
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">The wage OLS includes the inverse-Mills ratio, a regressor generated from a first-stage probit; conventional OLS standard errors on that stage are understated (they ignore first-stage estimation error — the standard two-step Heckman SE correction or a bootstrap is required). A single global Duan (1983) smearing factor also assumes the log-wage residual variance is constant across the covariate space; if it is not, the level-scale retransformation is biased. Impact here is limited because only point predictions are used to impute MPL (no inference is reported off this stage), so this is LOW — but if any SE or significance claim is ever drawn from these coefficients it should be corrected.</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>If coefficients/SEs are ever reported, use two-step Heckman SEs or bootstrap the full two-step.</li>
+        <li>Consider cell-wise smearing if residual variance differs materially by education/sex/age.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Sample &amp; Data</div>
+
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">MR-008</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Nominal wages pooled across a 12-month inflationary window without within-window deflation</div>
+        <div class="finding-meta"><span class="file">code/01_data_preparation/01a_data_ingest.py</span><span> · Sample &amp; Data</span></div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code</div>
+      <pre><code>median_wage = _weighted_median(ph["hourly_wage_epi"].values, ph["earnwt"].values)
+TARGET_WAGE = round(median_wage * TARGET_PCT, 2)   # single median over ~12 pooled nominal months</code></pre>
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">The nominal-subsidy choice (no PCE deflation) is disclosed and defensible for a single-year policy target. However, pooling ~12–13 monthly samples spanning 2025m5–2026m5 into one weighted median mixes nominal wages measured across a period with ~2–3% inflation, so late-window wages are mechanically a couple of percent higher than early-window wages. The effect on a median-based target is small (medians are robust and the drift is &lt;3%), but the within-window nominal drift is an undocumented modeling choice under the MR-VU3 "CPI variant / deflator" family — here the choice is explicitly "no deflation," which is fine, but the within-window mixing is not addressed.</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Note in the methodology that wages are pooled nominally across the window and quantify the max within-window price drift.</li>
+        <li>Optionally normalize all months to the window's midpoint nominal level before computing the median.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">MR-009</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Hard-coded 2,000-hour annual-hours fallback with unreported prevalence</div>
+        <div class="finding-meta"><span class="file">code/01_data_preparation/01a_data_ingest.py</span><span> · Sample &amp; Data</span></div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code</div>
+      <pre><code>fallback_hours_mask = eligible["annual_hours"].isna() | (eligible["annual_hours"] &lt;= 0)
+if fallback_hours_mask.sum() &gt; 0:
+    default_annual = cfg.get("ws_hours_per_year", 2000)
+    eligible.loc[fallback_hours_mask, "annual_hours"] = default_annual</code></pre>
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">Rows with missing/zero annual hours are assigned a flat 2,000-hour default (40×50). This is a small imputation, but a flat constant substituted for missing hours directly sets <code>baseline_income</code> and can influence the capped subsidy. The count is printed but not reported as a share of the eligible sample; if the share is non-trivial the flat default becomes an undocumented outcome-relevant assumption (MR-DA2 missing-data / MR-DA5 outlier-handling family).</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Report the fallback count as a percentage of the eligible sample; if &gt;1–2%, document or refine the imputation.</li>
+        <li>Confirm the 2,000-hour default does not systematically apply to a particular WKSTAT/pay-type group.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">MR-010</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Non-employed pool reads a hard-coded last-two-partition slice</div>
+        <div class="finding-meta"><span class="file">code/01_data_preparation/01h_nonemployed_pool.py</span><span> · Sample &amp; Data</span></div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code</div>
+      <pre><code>parts = sorted(raw_dir.glob("year=*/part-0.parquet"))[-2:]   # last two year partitions only
+org   = pd.concat([pd.read_parquet(p) for p in parts], ignore_index=True)</code></pre>
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">The non-employed pool is built from the last two year partitions via a hard-coded <code>[-2:]</code> slice. For the current 2025–2026 window this captures the entire 12-month sample and is correct. But it is a silent, un-parameterized restriction: if the recent-window scope ever spans three calendar years (e.g., a Nov–Oct window crossing a year boundary such that three <code>year=</code> partitions exist), <code>01h</code> would silently drop the earliest partition while <code>01a</code> (which globs all partitions) would not, desynchronizing the employed and non-employed samples. This is the MR-SA1 undocumented-restriction pattern.</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Read all year partitions (like <code>01a</code>) or derive the slice from the configured window length, rather than a fixed <code>[-2:]</code>.</li>
+        <li>Add an assertion that the months loaded by <code>01h</code> match those loaded by <code>01a</code>.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="category-heading" style="font-size:0.78rem; color:#94a3b8; border-color:#e2e8f0;">Descriptive Analysis</div>
+
+  <div class="finding low">
+    <div class="finding-header">
+      <div class="finding-id">MR-011</div>
+      <div class="finding-title-block">
+        <div class="finding-title">Empirical topcode detection is active (not a literal no-op); 249–264 non-hourly weekly-wage outliers left unadjusted</div>
+        <div class="finding-meta"><span class="file">code/00_ingest/01b_build-org-panel.R</span><span> · Descriptive Analysis</span></div>
+      </div>
+      <span class="severity-badge badge-low">LOW</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-section-label">Relevant Code</div>
+      <pre><code># topcode_detection_diagnostics.csv (shipped output)
+# 2025: empirical_mass_point, resolved_topcode=13258.23, n_at_topcode=264, has_topcode=TRUE
+# 2026: empirical_mass_point, resolved_topcode=10838.55, n_at_topcode=249, has_topcode=TRUE
+# pareto_diagnostics.csv: fit_status = "skipped_post_pareto_max_year" (all cells)</code></pre>
+      <div class="finding-section-label">Why This Is a Concern</div>
+      <div class="finding-text">The Pareto topcode <em>imputation</em> is correctly inert for 2025–2026 (every sex-year cell is <code>skipped_post_pareto_max_year</code> because <code>yr &gt; pareto_max_year_int = 2024</code>), confirming the spec claim. Strictly, though, the empirical mass-point <em>detection</em> still runs: it flags 264 (2025) and 249 (2026) non-hourly records at empirical weekly-wage maxima of ~$13,258 and ~$10,839, and because the Pareto is skipped these are left at their raw topcoded values (<code>pareto_topcode_imputed_flag = FALSE</code>). For the &lt;$16.80 subsidy population this is harmless — such workers are excluded by the eligibility filter and the dynamic median is computed over paid-hourly workers only, so these non-hourly outliers cannot leak into the target — but "inert no-op" is slightly imprecise: unadjusted upper-tail outliers remain in the panel. Worth a one-line confirmation that nothing downstream consumes them.</div>
+      <div class="finding-section-label">What to Check</div>
+      <ul class="check-list">
+        <li>Confirm no downstream statistic (median, mean wage, distributional figure) draws on the unadjusted non-hourly topcoded rows.</li>
+        <li>Document that for a &gt;2024 window the topcode is detected but not imputed, so these rows carry raw values by design.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Reviewed Files</h2>
+  <table class="files-table">
+    <thead>
+      <tr>
+        <th>File</th>
+        <th>Language</th>
+        <th style="text-align:center">Lines</th>
+        <th style="text-align:center">Concerns Found</th>
+        <th style="text-align:center">Highest Severity</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>code/00_ingest/00a_download-ipums-cps.R</td>
+        <td>R</td>
+        <td class="count-cell">417</td>
+        <td class="count-cell ok">0</td>
+        <td class="count-cell">—</td>
+      </tr>
+      <tr>
+        <td>code/00_ingest/01a_load-ipums-cps.R</td>
+        <td>R</td>
+        <td class="count-cell">476</td>
+        <td class="count-cell ok">0</td>
+        <td class="count-cell">—</td>
+      </tr>
+      <tr>
+        <td>code/00_ingest/01b_build-org-panel.R</td>
+        <td>R</td>
+        <td class="count-cell">1375</td>
+        <td class="count-cell has-issues">2</td>
+        <td class="count-cell">MEDIUM</td>
+      </tr>
+      <tr>
+        <td>code/01_data_preparation/01a_data_ingest.py</td>
+        <td>Python</td>
+        <td class="count-cell">423</td>
+        <td class="count-cell has-issues">6</td>
+        <td class="count-cell">MEDIUM</td>
+      </tr>
+      <tr>
+        <td>code/01_data_preparation/01h_nonemployed_pool.py</td>
+        <td>Python</td>
+        <td class="count-cell">299</td>
+        <td class="count-cell has-issues">4</td>
+        <td class="count-cell">MEDIUM</td>
+      </tr>
+      <tr>
+        <td>code/00_setup/00_config.py</td>
+        <td>Python</td>
+        <td class="count-cell">210</td>
+        <td class="count-cell has-issues">1</td>
+        <td class="count-cell">MEDIUM</td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+<div class="report-footer">
+  Generated by AI review agent · methodology-reviewer · 2026-07-07<br>
+  Scope: methodology &amp; design concerns — see code-error-report.html for definitive code bugs
+</div>
+
+</body>
+</html>

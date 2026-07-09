@@ -12,6 +12,11 @@ numpy==2.4.2
 plotly==5.24.1
 pyarrow==23.0.1
 
+# Econometrics — 01h Heckman selection-corrected MPL imputation for the non-employed pool
+# (pipeline/dev only; not used by the app). Probit + OLS two-step and the inverse Mills ratio.
+statsmodels>=0.14.5   # >=0.14.5 supports numpy 2.4+ (0.14.4 pins numpy<2.3 and conflicts)
+scipy>=1.13
+
 # PolicyEngine microsimulation — development/pipeline only, not required for production.
 # The app uses 204 pre-computed parquet schedules committed to the repo, so PolicyEngine
 # is never called at runtime. Install separately for local pipeline work:

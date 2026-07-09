@@ -1,5 +1,5 @@
 version: 1
-last_updated: 2026-06-16
+last_updated: 2026-07-08
 # =============================================================================
 # Canonical dataset registry — single source of truth for recognized public
 # dataset knowledge used across the AI review fleet.
@@ -77,8 +77,289 @@ datasets:
       search_strategy: '"Current Population Survey" latest annual data site:census.gov OR site:bls.gov'
       ipums_search_strategy: '"IPUMS CPS" latest data year site:ipums.org'
     vintages: []
-    variables: []
-    docs: []
+    # -------------------------------------------------------------------------
+    # PROJECT LAYER (eig-wagesubsidy-policy-sim): CPS ORG basic-monthly variables
+    # used by the wage-subsidy pipeline. verification: parsed. See docs entry.
+    # Tier 1 = confirmed vs in-repo IPUMS DDI cps_00305 (IPUMS CPS v13.0, ASEC 2025);
+    #          IPUMS-integrated coding applies to the basic-monthly ORG extract.
+    # Tier 2 = in-repo pipeline docs/code, NOT the authoritative ORG DDI.
+    # Tier 3 = requested but undocumented in-repo; requires an ORG DDI fetch.
+    # -------------------------------------------------------------------------
+    variables:
+      # --- Tier 1: confirmed against the in-repo IPUMS DDI (cps_00305.xml) ---
+      - name: YEAR
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); coding per IPUMS CPS v13.0 (ASEC 2025 DDI)"
+        source: "IPUMS CPS v13.0 DDI (in-repo extract cps_00305); Infrastructure/references/literature/data_dictionaries/2025_cps-asec_dictionary.xml"
+        definition: "Year in which the survey was conducted."
+        universe: "All records (technical variable)."
+        coding: "4-digit numeric."
+        verification: parsed
+      - name: MONTH
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); coding per IPUMS CPS v13.0 (ASEC 2025 DDI)"
+        source: "IPUMS CPS v13.0 DDI (in-repo extract cps_00305); Infrastructure/references/literature/data_dictionaries/2025_cps-asec_dictionary.xml"
+        definition: "Calendar month of the CPS interview."
+        universe: "All records."
+        coding: "01 January … 12 December."
+        verification: parsed
+      - name: CPSIDP
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); coding per IPUMS CPS v13.0 (ASEC 2025 DDI)"
+        source: "IPUMS CPS v13.0 DDI (in-repo extract cps_00305); Infrastructure/references/literature/data_dictionaries/2025_cps-asec_dictionary.xml"
+        definition: "IPUMS-CPS longitudinal person identifier linking individuals across samples via the 4-8-4 rotation (max 8 appearances, indexed by MISH). DDI advises verifying links with AGE/SEX/RACE."
+        universe: "All persons."
+        coding: "14-digit numeric."
+        verification: parsed
+      - name: EARNWT
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); coding per IPUMS CPS v13.0 (ASEC 2025 DDI)"
+        source: "IPUMS CPS v13.0 DDI (in-repo extract cps_00305); Infrastructure/references/literature/data_dictionaries/2025_cps-asec_dictionary.xml"
+        definition: "Person-level Outgoing Rotation / Earner Study weight; the correct weight for EARNWEEK, HOURWAGE, PAIDHOUR, UNION, UHRSWORKORG, WKSWORKORG, ELIGORG, OTPAY."
+        universe: "DDI (explicitly generalizes to basic monthly after 2010): civilians age 16+ in rotation groups (MISH) 4 or 8 who are not self-employed. EARNWT = 0 for the 6 non-earner-study rotations and for armed forces even in rotations 4/8."
+        coding: "8-digit with 4 implied decimals; IPUMS command files divide by 10,000."
+        note: "Correct weight for employed-earner wage statistics (01a). ~0 for non-earners, so the non-employed pool (01h) uses WTFINL. Pipeline converts monthly ORG weights via earnwt / n_months."
+        verification: parsed
+      - name: AGE
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); coding per IPUMS CPS v13.0 (ASEC 2025 DDI)"
+        source: "IPUMS CPS v13.0 DDI (in-repo extract cps_00305); Infrastructure/references/literature/data_dictionaries/2025_cps-asec_dictionary.xml"
+        definition: "Age at last birthday."
+        universe: "All persons."
+        coding: "Integer years; 00 = under 1 year; top code 99 = 99+."
+        verification: parsed
+      - name: SEX
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); coding per IPUMS CPS v13.0 (ASEC 2025 DDI)"
+        source: "IPUMS CPS v13.0 DDI (in-repo extract cps_00305); Infrastructure/references/literature/data_dictionaries/2025_cps-asec_dictionary.xml"
+        definition: "Each person's sex."
+        universe: "All persons."
+        coding: "1 Male; 2 Female; 9 NIU."
+        verification: parsed
+      - name: RACE
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); coding per IPUMS CPS v13.0 (ASEC 2025 DDI)"
+        source: "IPUMS CPS v13.0 DDI (in-repo extract cps_00305); Infrastructure/references/literature/data_dictionaries/2025_cps-asec_dictionary.xml"
+        definition: "Race; multiple-race reporting since 2003 (up to 26 codes since 2013)."
+        universe: "All persons."
+        coding: "100 White; 200 Black; 300 American Indian/Aleut/Eskimo; 650/651/652 Asian or Pacific Islander; 700 Other single race; 801+ multiple-race; 999 Blank."
+        verification: parsed
+      - name: HISPAN
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); coding per IPUMS CPS v13.0 (ASEC 2025 DDI)"
+        source: "IPUMS CPS v13.0 DDI (in-repo extract cps_00305); Infrastructure/references/literature/data_dictionaries/2025_cps-asec_dictionary.xml"
+        definition: "Hispanic/Spanish/Latino origin (2003+ question: 'Are you Spanish, Hispanic, or Latino?')."
+        universe: "All persons."
+        coding: "000 Not Hispanic; 100–612 specific Hispanic origins; 901 Do not know; 902 N/A."
+        verification: parsed
+      - name: MARST
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); coding per IPUMS CPS v13.0 (ASEC 2025 DDI)"
+        source: "IPUMS CPS v13.0 DDI (in-repo extract cps_00305); Infrastructure/references/literature/data_dictionaries/2025_cps-asec_dictionary.xml"
+        definition: "Current marital status, including whether the spouse lives in the same household."
+        universe: "All persons."
+        coding: "1 Married spouse present; 2 Married spouse absent; 3 Separated; 4 Divorced; 5 Widowed; 6 Never married/single; 7 Widowed or Divorced; 9 NIU. Consumers treat {1,2} as married."
+        verification: parsed
+      - name: NCHILD
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); coding per IPUMS CPS v13.0 (ASEC 2025 DDI)"
+        source: "IPUMS CPS v13.0 DDI (in-repo extract cps_00305); Infrastructure/references/literature/data_dictionaries/2025_cps-asec_dictionary.xml"
+        definition: "IPUMS-derived count of own children (any age, incl. step/adopted) residing with the person; 0 if none."
+        universe: "All persons."
+        coding: "0–9 (9 = 9+)."
+        note: "With MARST drives family_type_key and the single-mother matching cell. Export-doc §5 describes NCHILD as children under 18; [unverified: the DDI text says 'any age', not under 18]."
+        verification: parsed
+      - name: RELATE
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); coding per IPUMS CPS v13.0 (ASEC 2025 DDI)"
+        source: "IPUMS CPS v13.0 DDI (in-repo extract cps_00305); Infrastructure/references/literature/data_dictionaries/2025_cps-asec_dictionary.xml"
+        definition: "Relationship to household head/householder; 4-digit codes consistent with IPUMS-USA."
+        universe: "All persons."
+        coding: "DDI 4-digit: 0101 Head; 0201 Spouse; 0202 Opposite sex spouse; 0203 Same sex spouse; 0301 Child; 0303 Stepchild; 0501 Parent; 9999 NIU. Parquet stores integer form (0301->301, 0202->202, 0101->101). 01a excludes relate==301 & age<19 (tax dependents)."
+        note: "PROJECT.md 'spouse=202, children=301' = DDI 0202/0301. Populated code set for basic-monthly 2025–2026 [unverified: pending ORG DDI]."
+        verification: parsed
+      - name: EDUC
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); coding per IPUMS CPS v13.0 (ASEC 2025 DDI)"
+        source: "IPUMS CPS v13.0 DDI (in-repo extract cps_00305); Infrastructure/references/literature/data_dictionaries/2025_cps-asec_dictionary.xml"
+        definition: "Educational attainment recode (highest year of school or degree completed); combination of HIGRADE and EDUC99."
+        universe: "All persons."
+        coding: "000/001/002 NIU/none/preschool; 010–070 grades 1–12; 071 12th no diploma; 073 HS diploma/equiv; 080/081 some college; 091/092 Associate's; 111 Bachelor's; 123 Master's; 124 Professional; 125 Doctorate; 999 Missing."
+        verification: parsed
+      - name: EMPSTAT
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); coding per IPUMS CPS v13.0 (ASEC 2025 DDI)"
+        source: "IPUMS CPS v13.0 DDI (in-repo extract cps_00305); Infrastructure/references/literature/data_dictionaries/2025_cps-asec_dictionary.xml"
+        definition: "Labor-force status (working, seeking work, unemployed, or NILF activity). Armed forces coded NIU in the source employment-status variable."
+        universe: "All persons."
+        coding: "00 NIU; 01 Armed Forces; 10 At work; 12 Has job, not at work; 20/21/22 Unemployed; 30–36 Not in labor force. 01h defines employed as {10,12}."
+        verification: parsed
+      - name: CLASSWKR
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); coding per IPUMS CPS v13.0 (ASEC 2025 DDI)"
+        source: "IPUMS CPS v13.0 DDI (in-repo extract cps_00305); Infrastructure/references/literature/data_dictionaries/2025_cps-asec_dictionary.xml"
+        definition: "Class of worker (self-employed, private/public employee, armed forces, unpaid family worker), by the job with the most hours."
+        universe: "Employed / recently employed persons; armed forces coded NIU in source."
+        coding: "00 NIU; 10/13/14 Self-employed (excluded from EPI sample); 20–28 wage/salary detail; 29 Unpaid family worker; 99 Missing."
+        verification: parsed
+      - name: PAIDHOUR
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); coding per IPUMS CPS v13.0 (ASEC 2025 DDI)"
+        source: "IPUMS CPS v13.0 DDI (in-repo extract cps_00305); Infrastructure/references/literature/data_dictionaries/2025_cps-asec_dictionary.xml"
+        definition: "Dichotomous indicator of whether the respondent is paid by the hour for the current job. Outgoing Rotation/Earner Study question; DDI advises using EARNWT."
+        universe: "Earner Study respondents (rotations 4/8)."
+        coding: "0 NIU; 1 No; 2 Yes; 6 Refused; 7 Don't Know. PAIDHOUR==2 routes to reported hourly wage."
+        verification: parsed
+      - name: STATEFIP
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); coding per IPUMS CPS v13.0 (ASEC 2025 DDI)"
+        source: "IPUMS CPS v13.0 DDI (in-repo extract cps_00305); Infrastructure/references/literature/data_dictionaries/2025_cps-asec_dictionary.xml"
+        definition: "Household state of residence (FIPS coding, alphabetical)."
+        universe: "All households."
+        coding: "Standard 2-digit FIPS 01–56, historical combined-state codes 61–90, and 99 (state not identified). Consumers map to 50 states + DC."
+        verification: parsed
+      # --- Tier 2: in-repo pipeline docs/code, NOT the authoritative ORG DDI ---
+      - name: MISH
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); extract pending"
+        source: "In-repo pipeline docs (docs/org_integration_methodology.md §3, §4.1) and Python consumers (code/01_data_preparation/01h_nonemployed_pool.py); NOT the authoritative IPUMS ORG DDI"
+        definition: "Month-in-sample (rotation index). Earner Study / ORG questions are asked only in rotation months 4 and 8 (roughly 1/4 of basic-monthly respondents each month). 01h restricts the Heckman estimation sample to MISH in {4,8}."
+        universe: "[unverified: DDI universe pending ORG DDI]"
+        coding: "[unverified: full 1–8 rotation coding not in an in-repo codebook]"
+        verification: parsed
+      - name: WTFINL
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); extract pending"
+        source: "In-repo pipeline docs/code (code/01_data_preparation/00_export_org_data.py comment; 01h_nonemployed_pool.py); NOT the authoritative IPUMS ORG DDI. See curated cps `weights` (basic monthly person)."
+        definition: "Final basic-monthly person weight covering the civilian non-institutional population, including the unemployed and NILF. Unlike EARNWT (~0 for non-earners), WTFINL is populated for the non-employed."
+        universe: "[unverified: exact DDI universe pending ORG DDI]"
+        coding: "[unverified: implied-decimal scaling not confirmed in-repo]"
+        note: "Correct population weight for the non-employed matching pool (01h: weight = WTFINL / n_months)."
+        verification: parsed
+      - name: HOURWAGE2
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era, post-2023m3); extract pending"
+        source: "In-repo pipeline docs (docs/org_integration_methodology.md §4, §4.4) and consumers; NOT the authoritative IPUMS ORG DDI"
+        definition: "Harmonized/rounded hourly wage rate for paid-hourly workers; preferred *2-era successor to legacy HOURWAGE, used after the 2023m3 redesign (preference: HOURWAGE2, fallback HOURWAGE)."
+        universe: "Paid-hourly ORG earners (PAIDHOUR==2). [unverified: exact DDI universe pending ORG DDI]"
+        coding: "[unverified: exact HOURWAGE2 sentinel not stated in-repo; pipeline strips legacy HOURWAGE at >= 999.99]"
+        topcoding: "[unverified: HOURWAGE2 topcode not documented in-repo]"
+        verification: parsed
+      - name: EARNWEEK2
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era, post-2023m3); extract pending"
+        source: "In-repo pipeline docs (docs/org_integration_methodology.md §4.2, §4.5) and consumers; NOT the authoritative IPUMS ORG DDI"
+        definition: "Rounded/harmonized usual weekly earnings before taxes and deductions from the primary job (base pay + usual tips/commissions/overtime; excludes bonuses, irregular pay, secondary jobs). Preferred *2-era successor to legacy EARNWEEK."
+        universe: "[unverified: exact DDI universe pending ORG DDI]"
+        coding: "Values >= 999,999.99 treated as missing (*2 era); legacy EARNWEEK sentinel >= 9,999.99. 01h applies era-specific sentinels at the 2023m3 break."
+        topcoding: "Pre-Apr-2023 EARNWEEK topcoded at a sex-varying fixed threshold (~$2,884.61/week for men); pipeline applies Pareto imputation above the threshold plus a MISH-8 phase-in harmonization (Apr 2023–Mar 2024). Post-Apr-2023 uses a BLS dynamic cap."
+        verification: parsed
+      - name: UHRSWORK1
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); extract pending"
+        source: "In-repo pipeline docs (docs/org_integration_methodology.md §4.3) and consumers; NOT the authoritative IPUMS ORG DDI"
+        definition: "Usual weekly hours at the main job (basic-monthly version); preferred hours source in the wage denominator."
+        universe: "[unverified: exact DDI universe pending ORG DDI]"
+        coding: "Values >= 997 invalid/missing; hours > 99 treated as outliers and set missing."
+        verification: parsed
+      - name: UHRSWORKORG
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); extract pending"
+        source: "In-repo pipeline docs (docs/org_integration_methodology.md §4.3) and consumers; NOT the authoritative IPUMS ORG DDI"
+        definition: "Usual weekly hours, Outgoing Rotation supplement version (fallback to UHRSWORK1)."
+        universe: "ORG earners. [unverified: exact DDI universe pending ORG DDI]"
+        coding: "997 = hours vary week to week (triggers hours-vary imputation); 998/999 invalid/NIU (>= 997 -> NA)."
+        verification: parsed
+      - name: WKSTAT
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); extract pending"
+        source: "In-repo pipeline docs (docs/org_integration_methodology.md §15.3, transcribing IPUMS DDI codebook for extract #304); confirmed vs org_panel_2025.parquet. NOT a vendored ORG DDI."
+        definition: "BLS full/part-time work-status recode; drives the annual-hours weeks multiplier (01a: annual_hours = hours_epi × weeks_multiplier(WKSTAT))."
+        universe: "[unverified: exact DDI universe pending ORG DDI]"
+        coding: "11 FT hours usually FT (->52wk); 12 PT non-econ usually FT (48); 13 not at work usually FT (52); 14 FT usually PT econ (40); 15 FT usually PT non-econ (48); 21 PT econ usually FT (40); 22 PT usually PT econ (40); 41 PT usually PT non-econ (48); 42 not at work usually PT (48); 50/60 unemployed and 99 NIU filtered; default 52. Aggregate 10/20/40 absent post-2000."
+        verification: parsed
+      # --- Tier 3: requested but undocumented in-repo; needs an ORG DDI fetch ---
+      - name: OCC2010
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); extract pending"
+        source: "[unverified: not documented in any in-repo codebook; requires human-approved authoritative IPUMS ORG DDI fetch]"
+        definition: "[unverified: occupation (harmonized 2010 scheme) — not in vendored extract or in-repo docs]"
+        universe: "[unverified: pending ORG DDI]"
+        coding: "[unverified: pending ORG DDI]"
+        verification: parsed
+      - name: CITIZEN
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); extract pending"
+        source: "[unverified: not documented in any in-repo codebook; requires human-approved authoritative IPUMS ORG DDI fetch]"
+        definition: "[unverified: citizenship status — not in vendored extract or in-repo docs]"
+        universe: "[unverified: pending ORG DDI]"
+        coding: "[unverified: pending ORG DDI]"
+        verification: parsed
+      - name: IND1990
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); extract pending"
+        source: "[unverified: not documented in any in-repo codebook; requires human-approved authoritative IPUMS ORG DDI fetch]"
+        definition: "[unverified: industry (harmonized 1990 scheme) — not in vendored extract or in-repo docs]"
+        universe: "[unverified: pending ORG DDI]"
+        coding: "[unverified: pending ORG DDI]"
+        verification: parsed
+      - name: UNION
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); extract pending"
+        source: "[unverified: appears only inside the DDI EARNWT universe text as an Earner Study variable; not documented as its own variable in-repo; requires human-approved authoritative IPUMS ORG DDI fetch]"
+        definition: "[unverified: union membership/coverage — not documented in-repo]"
+        universe: "[unverified: pending ORG DDI]"
+        coding: "[unverified: pending ORG DDI]"
+        verification: parsed
+      - name: QHOURWAG
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); extract pending"
+        source: "[unverified: not documented in any in-repo codebook; name/spelling and existence require an authoritative IPUMS ORG DDI fetch]"
+        definition: "[unverified: IPUMS allocation/edit flag for HOURWAGE — not documented in-repo]"
+        universe: "[unverified: pending ORG DDI]"
+        coding: "[unverified: pending ORG DDI]"
+        verification: parsed
+      - name: QEARNWEE
+        vintage: "IPUMS-CPS basic monthly ORG 2025–2026 (*2 era); extract pending"
+        source: "[unverified: not documented in any in-repo codebook; name/spelling and existence require an authoritative IPUMS ORG DDI fetch]"
+        definition: "[unverified: IPUMS allocation/edit flag for EARNWEEK — not documented in-repo]"
+        universe: "[unverified: pending ORG DDI]"
+        coding: "[unverified: pending ORG DDI]"
+        verification: parsed
+      # --- ASEC 2025 extract variables (01c_asec_pull.R / 01d / 01e); Tier 1 vs
+      #     the same in-repo DDI (cps_00305.xml). See cps_asec_2025.md. Added
+      #     during the 2026-07-08 entry-from-nonemployment data-feasibility read. ---
+      - name: INCWAGE
+        vintage: "IPUMS CPS ASEC 2025 (income reference year 2024); IPUMS CPS v13.0 DDI"
+        source: "IPUMS CPS v13.0 DDI (in-repo extract cps_00305); Infrastructure/references/literature/data_dictionaries/2025_cps-asec_dictionary.xml"
+        definition: "Total pre-tax wage and salary income for the previous calendar year. ASEC 1988+ derived from a Census recode (OINCWAGE, plus INCLONGJ when applicable)."
+        universe: "All persons (ASEC 2025)."
+        coding: "99999999 N.I.U.; 99999998 Missing (1962-1966 only). Nominal dollars as reported."
+        topcoding: "Census disclosure-avoidance topcoding/swap-value methods vary across time; exact 2025 threshold [unverified: not stated in the DDI text itself]."
+        note: "01d_asec_preprocess.py: earner-candidate filter (INCWAGE > 0), hourly_wage_asec = INCWAGE / annual_hours_asec, and spouse_incwage (INCWAGE of RELATE==202)."
+        verification: parsed
+      - name: INCTOT
+        vintage: "IPUMS CPS ASEC 2025 (income reference year 2024); IPUMS CPS v13.0 DDI"
+        source: "IPUMS CPS v13.0 DDI (in-repo extract cps_00305); Infrastructure/references/literature/data_dictionaries/2025_cps-asec_dictionary.xml"
+        definition: "Total pre-tax personal income or losses from all sources for the previous calendar year."
+        universe: "All persons (ASEC 2025)."
+        coding: "999999999 N.I.U.; 999999998 Missing (1962-1964 only). Values can be negative."
+        topcoding: "Same Census disclosure-avoidance caveat as INCWAGE; exact threshold [unverified]."
+        note: "01d_asec_preprocess.py retains as a diagnostic/QC field; not used in matching or fiscal calculations."
+        verification: parsed
+      - name: WKSWORK2
+        vintage: "IPUMS CPS ASEC 2025 (income reference year 2024); IPUMS CPS v13.0 DDI"
+        source: "IPUMS CPS v13.0 DDI (in-repo extract cps_00305); Infrastructure/references/literature/data_dictionaries/2025_cps-asec_dictionary.xml"
+        definition: "Weeks worked for profit, pay, or as an unpaid family worker during the preceding calendar year, reported in intervals."
+        universe: "All persons (ASEC 2025)."
+        coding: "0 NIU; 1 1-13wk; 2 14-26wk; 3 27-39wk; 4 40-47wk; 5 48-49wk; 6 50-52wk; 9 Missing."
+        note: "01d_asec_preprocess.py maps to interval midpoints (WKSWORK2_MIDPOINTS: 7.0/20.0/33.0/43.5/48.5/51.0) to build annual_hours_asec."
+        verification: parsed
+      - name: UHRSWORKLY
+        vintage: "IPUMS CPS ASEC 2025 (income reference year 2024); IPUMS CPS v13.0 DDI"
+        source: "IPUMS CPS v13.0 DDI (in-repo extract cps_00305); Infrastructure/references/literature/data_dictionaries/2025_cps-asec_dictionary.xml"
+        definition: "Usual weekly hours for respondents who worked (or did temporary/part-time/seasonal work) during the previous calendar year."
+        universe: "Persons who worked or did temporary/part-time/seasonal work in the reference year."
+        coding: "2-digit numeric; 99 = 99+ hours; 999 = NIU."
+        note: "01d_asec_preprocess.py requires UHRSWORKLY > 0 for earner-candidate status; used with wks_worked to build annual_hours_asec and hourly_wage_asec."
+        verification: parsed
+      - name: FAMUNIT
+        vintage: "IPUMS CPS ASEC 2025 (income reference year 2024); IPUMS CPS v13.0 DDI"
+        source: "IPUMS CPS v13.0 DDI (in-repo extract cps_00305); Infrastructure/references/literature/data_dictionaries/2025_cps-asec_dictionary.xml"
+        definition: "IPUMS-derived family-unit-within-household indicator; primary families/individuals coded 1, secondary family groups coded higher."
+        universe: "All persons (ASEC 2025)."
+        coding: "01 1st family in household/group quarters; 02, 03, ... successive family groups."
+        note: "Requested in the 01c_asec_pull.R extract but not read by 01d_asec_preprocess.py, which builds the household roster via SERIAL + RELATE directly. [unverified: whether FAMUNIT would change roster construction for multi-family households; not exercised by current code]."
+        verification: parsed
+      - name: ASECWT
+        vintage: "IPUMS CPS ASEC 2025 (income reference year 2024); IPUMS CPS v13.0 DDI"
+        source: "IPUMS CPS v13.0 DDI (in-repo extract cps_00305); Infrastructure/references/literature/data_dictionaries/2025_cps-asec_dictionary.xml"
+        definition: "Person-level ASEC supplement weight. DDI: use WTFINL (not ASECWT) for non-ASEC person analyses, EARNWT for the earner-study variable set, ASECWTH for household-level ASEC analyses."
+        universe: "ASEC 2025 person sample (includes armed-services members and non-March Hispanic-oversample interviews, which WTFINL/EARNWT zero out)."
+        note: "Requested in the extract and retained in 01d_asec_preprocess.py's out_cols, but not visibly applied as an analysis weight in the primary-earner selection/matching read for this pass. See curated cps template weights (ASEC supplement, person) for the general entry."
+        verification: parsed
+      - name: ASECWTH
+        vintage: "IPUMS CPS ASEC 2025 (income reference year 2024); IPUMS CPS v13.0 DDI"
+        source: "IPUMS CPS v13.0 DDI (in-repo extract cps_00305); Infrastructure/references/literature/data_dictionaries/2025_cps-asec_dictionary.xml"
+        definition: "Household-level ASEC supplement weight; must be used (not HWTFINL) for unbiased ASEC household-level estimates."
+        universe: "ASEC 2025 household sample."
+        note: "Requested in the extract; [unverified: whether a household-level use is planned downstream — not visibly used in 01d/01e as read]."
+        verification: parsed
+    docs:
+      - Infrastructure/references/datasets/docs/cps_org_2025-2026.md
+      - Infrastructure/references/datasets/docs/cps_asec_2025.md
   # ---------------------------------------------------------------------------
   - id: acs
     name: American Community Survey (ACS)

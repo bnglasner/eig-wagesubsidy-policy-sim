@@ -1,3 +1,889 @@
 version: 1
-last_updated: 2026-03-27
-entries: []
+last_updated: 2026-07-09
+entries:
+  # ===== DATA DICTIONARIES / CODEBOOKS =====
+  - id: 2025-cps-asec-ipums-ddi
+    title: "Codebook for an IPUMS CPS Data Extract (cps_00305) — CPS ASEC 2025"
+    type: data_dictionary
+    topic_tags: [cps, ipums, codebook, ddi, asec, org, wage-subsidy, variable-documentation]
+    path: Infrastructure/references/literature/data_dictionaries/2025_cps-asec_dictionary.xml
+    source_url: https://cps.ipums.org/
+    added_on: 2026-07-07
+    status: parsed
+    relevance_note: "IPUMS CPS v13.0 DDI 2.5 codebook (DOI 10.18128/D030.V13.0, produced 2026-03-09) for the project's ASEC 2025 extract (March 2025 sample; March Basic + ASEC). Vintage: ASEC 2025 / IPUMS CPS v13.0. Authoritative in-repo source for 16 IPUMS-integrated variables (YEAR, MONTH, CPSIDP, EARNWT, AGE, SEX, RACE, HISPAN, MARST, NCHILD, RELATE, EDUC, EMPSTAT, CLASSWKR, PAIDHOUR, STATEFIP) documented for the pending CPS ORG basic-monthly 2025–2026 extract; integrated coding carries over to basic monthly, but per-variable universes should be reconfirmed against the ORG DDI. Copy of data/external/asec_2025_raw/cps_00305.xml. 2026-07-08 update: same artifact also used to document 7 ASEC-specific variables (INCWAGE, INCTOT, WKSWORK2, UHRSWORKLY, FAMUNIT, ASECWT, ASECWTH) requested by 01c_asec_pull.R and consumed by 01d/01e; see Infrastructure/references/datasets/docs/cps_asec_2025.md. No new artifact fetched."
+  # ===== THREAD A: Labor-supply elasticity estimates =====
+  - id: 2012-chetty-bounds-optimization-frictions
+    title: "Bounds on Elasticities with Optimization Frictions: A Synthesis of Micro and Macro Evidence on Labor Supply"
+    type: paper
+    topic_tags: [tier-1, labor-supply-elasticity, extensive-margin, intensive-margin, hicksian, consensus-anchor, thread-a]
+    path: Infrastructure/references/literature/summaries/2012_chetty_bounds-optimization-frictions.md
+    summary_path: Infrastructure/references/literature/summaries/2012_chetty_bounds-optimization-frictions.md
+    source_url: https://onlinelibrary.wiley.com/doi/abs/10.3982/ECTA9043
+    doi: 10.3982/ECTA9043
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "Consensus steady-state Hicksian elasticities (intensive 0.33, extensive 0.25) after frictions; central-case inputs for the dynamic 80-80 cost model."
+
+  - id: 2011-chetty-guren-manoli-weber-micro-macro
+    title: "Are Micro and Macro Labor Supply Elasticities Consistent? A Review of Evidence on the Intensive and Extensive Margins"
+    type: paper
+    topic_tags: [tier-1, labor-supply-elasticity, extensive-margin, intensive-margin, frisch, consensus-anchor, thread-a]
+    path: Infrastructure/references/literature/summaries/2011_chetty-guren-manoli-weber_micro-macro-elasticities.md
+    summary_path: Infrastructure/references/literature/summaries/2011_chetty-guren-manoli-weber_micro-macro-elasticities.md
+    source_url: https://www.aeaweb.org/articles?id=10.1257/aer.101.3.471
+    doi: 10.1257/aer.101.3.471
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "Reconciles micro vs. macro elasticities; tells the model to use steady-state (not large Frisch) values for a permanent subsidy."
+
+  - id: 2011-keane-labor-supply-taxes-survey
+    title: "Labor Supply and Taxes: A Survey"
+    type: paper
+    topic_tags: [tier-1, labor-supply-elasticity, survey, hicks-elasticity, frisch-elasticity, upper-bound, thread-a]
+    path: Infrastructure/references/literature/summaries/2011_keane_labor-supply-and-taxes-survey.md
+    summary_path: Infrastructure/references/literature/summaries/2011_keane_labor-supply-and-taxes-survey.md
+    source_url: https://www.aeaweb.org/articles?id=10.1257/jel.49.4.961
+    doi: 10.1257/jel.49.4.961
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "Higher-end elasticity anchor (avg Hicks ~0.31; Frisch 0.27-0.53); defines the upper bound of the model sensitivity range. Conflicts with Chetty/CBO lower values."
+
+  - id: 2012-mcclelland-mok-cbo-elasticity-review
+    title: "A Review of Recent Research on Labor Supply Elasticities (CBO Working Paper 2012-12)"
+    type: technical_note
+    topic_tags: [tier-2, cbo, labor-supply-elasticity, survey, substitution-income-effect, participation-elasticity, prime-age-men, thread-a, thread-b-angle1, thread-3-targetpool]
+    path: Infrastructure/references/literature/summaries/2012_mcclelland-mok_cbo-review-labor-supply-elasticities.md
+    summary_path: Infrastructure/references/literature/summaries/2012_mcclelland-mok_cbo-review-labor-supply-elasticities.md
+    source_url: https://www.cbo.gov/publication/43675
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "Official CBO elasticity review (pub 43675); reviews literature but does NOT itself state CBO's central set. Central params (substitution 0.24, income -0.05, aggregate ~0.19) are in companion pub 43674; 0.24/-0.05 corroborated, verbatim 0.19 unconfirmed (CBO PDFs block automated fetch). Thread-3 group ranges added: participation elasticity ~0-0.1 for men/single women (the largest 80-80 entry pool), ~0-0.3 married women, substantially higher for EITC-eligible single mothers (Chetty 0.25, Card-Hyslop ~0.4 cited); hours response small. The requested verbatim '0.3-1.2' EITC-eligible and '-0.1 to 0.2' hours ranges remain [unverified] vs the 403-blocked PDF; the men/single-women ~0-0.1 anchor is corroborated."
+
+  - id: 1999-blundell-macurdy-labor-supply-review
+    title: "Labor Supply: A Review of Alternative Approaches (Handbook of Labor Economics, ch. 27)"
+    type: paper
+    topic_tags: [tier-1, labor-supply-elasticity, handbook, methods, nonlinear-budget-constraints, thread-a]
+    path: Infrastructure/references/literature/summaries/1999_blundell-macurdy_labor-supply-review.md
+    summary_path: Infrastructure/references/literature/summaries/1999_blundell-macurdy_labor-supply-review.md
+    source_url: https://www.sciencedirect.com/science/article/abs/pii/S1573446399030084
+    doi: 10.1016/S1573-4463(99)03008-4
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "Canonical handbook framework for which elasticity concept applies to which counterfactual and how to model kinked/phase-out budget sets like the 80-80 fill. Chapter 27, pp. 1559-1695, vol. 3A (DOI validated)."
+
+  - id: 1996-eissa-liebman-eitc-labor-supply
+    title: "Labor Supply Response to the Earned Income Tax Credit"
+    type: paper
+    topic_tags: [tier-1, eitc, extensive-margin, single-mothers, measured-ex-post, thread-a]
+    path: Infrastructure/references/literature/summaries/1996_eissa-liebman_eitc-labor-supply.md
+    summary_path: Infrastructure/references/literature/summaries/1996_eissa-liebman_eitc-labor-supply.md
+    source_url: https://academic.oup.com/qje/article-abstract/111/2/605/1938452
+    doi: 10.2307/2946689
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "Foundational EITC evidence: extensive-margin participation up to ~2.8pp, no hours response. Lower-bound anchor for entry response."
+
+  - id: 2001-meyer-rosenbaum-welfare-eitc-single-mothers
+    title: "Welfare, the Earned Income Tax Credit, and the Labor Supply of Single Mothers"
+    type: paper
+    topic_tags: [tier-1, eitc, extensive-margin, single-mothers, measured-ex-post, thread-a]
+    path: Infrastructure/references/literature/summaries/2001_meyer-rosenbaum_welfare-eitc-single-mothers.md
+    summary_path: Infrastructure/references/literature/summaries/2001_meyer-rosenbaum_welfare-eitc-single-mothers.md
+    source_url: https://academic.oup.com/qje/article-abstract/116/3/1063/1899757
+    doi: 10.1162/00335530152466313
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "EITC explains ~60% of 1984-96 single-mother employment rise; upper anchor for entry response. Conflicts with Kleven (2024)."
+
+  - id: 2013-chetty-friedman-saez-eitc-knowledge-earnings
+    title: "Using Differences in Knowledge Across Neighborhoods to Uncover the Impacts of the EITC on Earnings"
+    type: paper
+    topic_tags: [tier-1, eitc, intensive-margin, bunching, take-up-salience, measured-ex-post, thread-a]
+    path: Infrastructure/references/literature/summaries/2013_chetty-friedman-saez_eitc-knowledge-earnings.md
+    summary_path: Infrastructure/references/literature/summaries/2013_chetty-friedman-saez_eitc-knowledge-earnings.md
+    source_url: https://www.aeaweb.org/articles?id=10.1257/aer.103.7.2683
+    doi: 10.1257/aer.103.7.2683
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "Intensive-margin earnings response to EITC mediated by knowledge/salience; supports a take-up parameter in the model."
+
+  - id: 2018-hoynes-patel-eitc-distribution-income
+    title: "Effective Policy for Reducing Poverty and Inequality? The EITC and the Distribution of Income"
+    type: paper
+    topic_tags: [tier-1, eitc, extensive-margin, dynamic-vs-static, distribution, measured-ex-post, thread-a, thread-b-angle1]
+    path: Infrastructure/references/literature/summaries/2018_hoynes-patel_eitc-distribution-income.md
+    summary_path: Infrastructure/references/literature/summaries/2018_hoynes-patel_eitc-distribution-income.md
+    source_url: https://jhr.uwpress.org/content/53/4/859
+    doi: 10.3368/jhr.53.4.1115.7494R1
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "$1,000 EITC -> ~7.3pp employment; static antipoverty calc understates impact ~50% by ignoring induced earnings. Core dynamic-modeling rationale."
+
+  - id: 2024-kleven-eitc-extensive-margin-reappraisal
+    title: "The EITC and the Extensive Margin: A Reappraisal"
+    type: paper
+    topic_tags: [tier-1, eitc, extensive-margin, conflict, specification-fragility, measured-ex-post, thread-a]
+    path: Infrastructure/references/literature/summaries/2024_kleven_eitc-extensive-margin-reappraisal.md
+    summary_path: Infrastructure/references/literature/summaries/2024_kleven_eitc-extensive-margin-reappraisal.md
+    source_url: https://www.sciencedirect.com/science/article/abs/pii/S0047272724000719
+    doi: 10.1016/j.jpubeco.2024.105135
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "KEY CONFLICT: EITC extensive-margin effects fragile/near zero except 1993 (confounded). Forces a wide entry-elasticity band with near-zero lower bound."
+
+  - id: 2002-saez-optimal-income-transfer
+    title: "Optimal Income Transfer Programs: Intensive versus Extensive Labor Supply Responses"
+    type: paper
+    topic_tags: [tier-1, optimal-tax, extensive-margin, intensive-margin, transfer-design, modeled-ex-ante, thread-a]
+    path: Infrastructure/references/literature/summaries/2002_saez_optimal-income-transfer-intensive-extensive.md
+    summary_path: Infrastructure/references/literature/summaries/2002_saez_optimal-income-transfer-intensive-extensive.md
+    source_url: https://academic.oup.com/qje/article-abstract/117/3/1039/1932939
+    doi: 10.1162/003355302760193959
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "Theory: extensive-margin dominance justifies EITC-type work subsidies (the 80-80 family); identifies the welfare-relevant elasticities."
+
+  - id: 2003-hotz-scholz-eitc-survey
+    title: "The Earned Income Tax Credit (Means-Tested Transfer Programs in the United States)"
+    type: paper
+    topic_tags: [tier-1, eitc, survey, demographic-heterogeneity, measured-ex-post, thread-a]
+    path: Infrastructure/references/literature/summaries/2003_hotz-scholz_earned-income-tax-credit.md
+    summary_path: Infrastructure/references/literature/summaries/2003_hotz-scholz_earned-income-tax-credit.md
+    source_url: https://www.nber.org/books-and-chapters/economics-means-tested-transfer-programs-united-states-volume-1/earned-income-tax-credit
+    doi: 10.7208/chicago/9780226533575.003.0004
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "Standard EITC survey; documents demographic heterogeneity (strong for single mothers, ~0 for men) the broad 80-80 population must carry. Chapter pp. 141-198 (DOI validated)."
+
+  - id: 1985-robins-nit-experiments-labor-supply
+    title: "NIT Income-Maintenance Experiments: Labor Supply Responses (Robins 1985; Gary; SIME/DIME)"
+    type: paper
+    topic_tags: [tier-1, negative-income-tax, experimental, income-effect, unconditional-transfer, measured-ex-post, thread-a]
+    path: Infrastructure/references/literature/summaries/1985_robins_nit-experiments-labor-supply.md
+    summary_path: Infrastructure/references/literature/summaries/1985_robins_nit-experiments-labor-supply.md
+    source_url: https://www.irp.wisc.edu/research/nit/
+    doi: 10.2307/145685
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "Experimental benchmark that unconditional guarantees reduce work; defines the contrast for the work-conditioned 80-80 and its income effect on hours. Robins 1985 JHR 20(4):567-582 (DOI validated); companion Burtless & Hausman 1978 JPE 86(6):1103-1130 (DOI 10.1086/260730)."
+
+  - id: 2022-2021-ctc-labor-supply-debate
+    title: "The 2021 Child Tax Credit Labor-Supply Debate (Corinth-Meyer et al. ex-ante vs. Bastian vs. Ananat et al. ex-post)"
+    type: paper
+    topic_tags: [tier-1, child-tax-credit, extensive-margin, modeled-vs-measured, conflict, elasticity-assumption, thread-a]
+    path: Infrastructure/references/literature/summaries/2022_corinth-meyer-vs-bastian_2021-ctc-labor-supply-debate.md
+    summary_path: Infrastructure/references/literature/summaries/2022_corinth-meyer-vs-bastian_2021-ctc-labor-supply-debate.md
+    source_url: https://www.nber.org/papers/w29366
+    doi: 10.3386/w29366
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "Modern case study where the assumed extensive-margin elasticity (0.75 vs. smaller) drives the headline employment-loss number; ex-ante simulations diverge from ex-post measurement. CORRECTED: ex-ante driver is Corinth et al. NBER w29366 (DOI 10.3386/w29366), not w29823; w29823 is the ex-post Ananat/Glasner/Hamilton/Parolin paper (DOI 10.3386/w29823); Bastian published NTJ 77(2):263-311 (DOI 10.1086/728703)."
+
+  # ===== THREAD B: Dynamic / behavioral cost modeling =====
+  # --- Angle 1: elasticity -> revenue feedback (dynamic scoring) ---
+  - id: 2016-hendren-policy-elasticity
+    title: "The Policy Elasticity"
+    type: paper
+    topic_tags: [tier-1, mvpf, fiscal-externality, dynamic-scoring, welfare-method, thread-b-angle1, thread-b-angle2]
+    path: Infrastructure/references/literature/summaries/2016_hendren_policy-elasticity.md
+    summary_path: Infrastructure/references/literature/summaries/2016_hendren_policy-elasticity.md
+    source_url: https://www.journals.uchicago.edu/doi/full/10.1086/685593
+    doi: 10.1086/685593
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "Welfare impact measurable from the revenue fiscal-externality alone; defines the 'policy elasticity' the 80-80 net-cost model should use."
+
+  - id: 2021-bastian-jones-eitc-pay-for-themselves
+    title: "Do EITC Expansions Pay for Themselves? Effects on Tax Revenue and Government Transfers"
+    type: paper
+    topic_tags: [tier-1, eitc, self-financing, fiscal-externality, tax-recapture, transfer-offset, measured-ex-post, thread-b-angle1]
+    path: Infrastructure/references/literature/summaries/2021_bastian-jones_eitc-pay-for-themselves.md
+    summary_path: Infrastructure/references/literature/summaries/2021_bastian-jones_eitc-pay-for-themselves.md
+    source_url: https://www.sciencedirect.com/science/article/abs/pii/S004727272030219X
+    doi: 10.1016/j.jpubeco.2020.104355
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "Net EITC cost ~17% of budgetary cost (~$0.83/dollar recovered) once fiscal externalities counted; direct template for the 80-80 net-cost calc. Upper bound, contingent on disputed elasticities."
+
+  - id: 2012-cbo-dynamic-scoring-labor-supply
+    title: "How Does CBO Model the Response of Labor Supply to Tax and Spending Policies? / Dynamic Analysis"
+    type: technical_note
+    topic_tags: [tier-2, cbo, dynamic-scoring, labor-supply-modeling, methodology, modeled-ex-ante, thread-b-angle1]
+    path: Infrastructure/references/literature/summaries/2012_cbo_dynamic-scoring-labor-supply-methodology.md
+    summary_path: Infrastructure/references/literature/summaries/2012_cbo_dynamic-scoring-labor-supply-methodology.md
+    source_url: https://www.cbo.gov/publication/43680
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "Official CBO methodology note (pub 43680): elasticity -> earnings -> budget feedback. Central params (substitution 0.24, income -0.05, aggregate ~0.19) stated in companion pub 43674; 0.24/-0.05 corroborated, verbatim 0.19 unconfirmed (CBO PDFs block automated fetch). The scoring convention the dynamic 80-80 model would emulate."
+
+  - id: 2023-jct-macroeconomic-analysis-methodology
+    title: "Macroeconomic Analysis at the Joint Committee on Taxation (MEG/OLG/DSGE; Revenue Estimating Process)"
+    type: technical_note
+    topic_tags: [tier-2, jct, dynamic-scoring, revenue-estimating, methodology, modeled-ex-ante, thread-b-angle1]
+    path: Infrastructure/references/literature/summaries/2023_jct_macroeconomic-analysis-methodology.md
+    summary_path: Infrastructure/references/literature/summaries/2023_jct_macroeconomic-analysis-methodology.md
+    source_url: https://www.jct.gov/operations/revenue-estimating/
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "Tax-side dynamic-scoring methodology; how induced labor supply flows into revenue feedback for the 80-80's recapture channel."
+
+  # --- Angle 2: MVPF / welfare framing ---
+  - id: 2020-hendren-sprung-keyser-unified-welfare-mvpf
+    title: "A Unified Welfare Analysis of Government Policies"
+    type: paper
+    topic_tags: [tier-1, mvpf, welfare-analysis, fiscal-externality, net-cost, modeled-ex-ante, thread-b-angle2]
+    path: Infrastructure/references/literature/summaries/2020_hendren-sprung-keyser_unified-welfare-mvpf.md
+    summary_path: Infrastructure/references/literature/summaries/2020_hendren-sprung-keyser_unified-welfare-mvpf.md
+    source_url: https://academic.oup.com/qje/article/135/3/1209/5781614
+    doi: 10.1093/qje/qjaa006
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "MVPF framework: net cost inclusive of behavioral fiscal externalities / willingness to pay. Operationalizes the 80-80 'net of recapture and safety-net' question."
+
+  # --- Angle 3: incidence & wage pass-through ---
+  - id: 2010-rothstein-eitc-incidence-tax
+    title: "Is the EITC as Good as an NIT? Conditional Cash Transfers and Tax Incidence"
+    type: paper
+    topic_tags: [tier-1, incidence, wage-pass-through, employer-capture, eitc, modeled-incidence, thread-b-angle3]
+    path: Infrastructure/references/literature/summaries/2010_rothstein_eitc-incidence-tax.md
+    summary_path: Infrastructure/references/literature/summaries/2010_rothstein_eitc-incidence-tax.md
+    source_url: https://www.aeaweb.org/articles?id=10.1257/pol.2.1.177
+    doi: 10.1257/pol.2.1.177
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "Work-subsidy-induced labor supply depresses wages; employers capture a large share. The pass-through/incidence parameter the 80-80 effective-cost model needs."
+
+  # --- Angle 4: ALMP / employment-program & wage-subsidy evidence ---
+  - id: 2018-card-kluve-weber-what-works-almp
+    title: "What Works? A Meta-Analysis of Recent Active Labor Market Program Evaluations (2018; with 2010 EJ predecessor)"
+    type: paper
+    topic_tags: [tier-1, almp, meta-analysis, employment-effects, time-horizon, measured-ex-post, thread-b-angle4]
+    path: Infrastructure/references/literature/summaries/2018_card-kluve-weber_what-works-almp-meta.md
+    summary_path: Infrastructure/references/literature/summaries/2018_card-kluve-weber_what-works-almp-meta.md
+    source_url: https://academic.oup.com/jeea/article-abstract/16/3/894/4430618
+    doi: 10.1093/jeea/jvx028
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "857 estimates: ALMP effects small short-run, more positive at 2-3 years; training/private-incentive best, public employment worst. Sets the time profile for induced-employment effects."
+
+  - id: 2013-neumark-grijalva-state-hiring-credits
+    title: "The Employment Effects of State Hiring Credits"
+    type: paper
+    topic_tags: [tier-1, hiring-credit, employment-subsidy, design-dependence, employer-side, measured-ex-post, thread-b-angle4]
+    path: Infrastructure/references/literature/summaries/2013_neumark-grijalva_state-hiring-credits.md
+    summary_path: Infrastructure/references/literature/summaries/2013_neumark-grijalva_state-hiring-credits.md
+    source_url: https://www.nber.org/papers/w18928
+    doi: 10.1177/0019793916683930
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "Subsidy effectiveness is design-dependent; employer-side contrast to the worker-side 80-80, cautioning that targeting/conditioning drive behavioral and fiscal outcomes. Published ILR Review 70(5):1111-1145 (DOI validated); NBER w18928 working-paper version."
+
+  # --- Angle 4 (cont.): DIRECT wage-subsidy / in-work-benefit / earnings-supplement program evaluations ---
+  - id: 2005-card-hyslop-time-limited-earnings-subsidy
+    title: "Estimating the Effects of a Time-Limited Earnings Subsidy for Welfare-Leavers"
+    type: paper
+    topic_tags: [tier-1, earnings-supplement, wage-fill-analog, extensive-margin, self-sufficiency-project, experimental, measured-ex-post, thread-b-angle4]
+    path: Infrastructure/references/literature/summaries/2005_card-hyslop_time-limited-earnings-subsidy-ssp.md
+    summary_path: Infrastructure/references/literature/summaries/2005_card-hyslop_time-limited-earnings-subsidy-ssp.md
+    source_url: https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1468-0262.2005.00637.x
+    doi: 10.1111/j.1468-0262.2005.00637.x
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "Closest experimental analog to a wage-fill: randomized earnings supplement conditional on full-time work (Canadian SSP). Large entry response during eligibility, fading after sunset; separates 'establishment' vs 'entitlement' incentives. Directly narrows the #1 gap (no measured elasticity for a wage-FILL design). Econometrica 73(6):1723-1770 (DOI validated). 2026-07-08: NBER w10647 PDF and SRDC final report (Michalopoulos et al. 2002, SSP54) read directly; recipient-sample numbers pinned -- full-time employment impact +12.6pp*** Year-2 average (28.5 vs 16.0, more than doubling), monthly peak ~15pp at start of Year 2, fading to ~2-3pp by Year 5; earnings +$101/month*** at Year-2 peak; supplement = half the gap to a $30,000 (NB) / $37,000 (BC) benchmark, roughly doubling PRE-TAX earnings at the minimum wage (~30 percent smaller net of taxes/transfers). Applicant-sample contrast (Ford et al. 2006, SSP72): +11.7pp peak in Year 3 with effects PERSISTING five years. See summary addendum."
+
+  - id: 2000-blundell-duncan-mccrae-meghir-wftc
+    title: "The Labour Market Impact of the Working Families' Tax Credit"
+    type: paper
+    topic_tags: [tier-1, in-work-benefit, wftc, structural-simulation, second-earner-disincentive, modeled-ex-ante, thread-b-angle4]
+    path: Infrastructure/references/literature/summaries/2000_blundell-duncan-mccrae-meghir_wftc-labour-market-impact.md
+    summary_path: Infrastructure/references/literature/summaries/2000_blundell-duncan-mccrae-meghir_wftc-labour-market-impact.md
+    source_url: https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1475-5890.2000.tb00581.x
+    doi: 10.1111/j.1475-5890.2000.tb00581.x
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "Leading non-US in-work-benefit analog (UK WFTC). Structural simulation: net participation gain is small because single-parent entry is offset by second-earner withdrawal under joint income tests. The extensive-vs-second-earner heterogeneity the broad 80-80 must carry. Fiscal Studies 21(1):75-104 (DOI validated)."
+
+  - id: 1998-katz-wage-subsidies-disadvantaged
+    title: "Wage Subsidies for the Disadvantaged"
+    type: paper
+    topic_tags: [tier-1, wage-subsidy, survey, design-taxonomy, take-up-stigma, thread-b-angle4]
+    path: Infrastructure/references/literature/summaries/1998_katz_wage-subsidies-for-the-disadvantaged.md
+    summary_path: Infrastructure/references/literature/summaries/1998_katz_wage-subsidies-for-the-disadvantaged.md
+    source_url: https://www.nber.org/papers/w5679
+    doi: 10.3386/w5679
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "Canonical economics survey of wage subsidies; supplies the design taxonomy (employer- vs worker-side, targeted vs broad, marginal vs stock) that locates the 80-80 and the lesson that take-up/stigma/conditioning — not the elasticity alone — drive effectiveness. Published chapter pp. 21-53 in Generating Jobs (Russell Sage, 1998); DOI is the NBER w5679 working-paper version (chapter DOI unverified)."
+
+  - id: 1993-bishop-montgomery-targeted-jobs-tax-credit
+    title: "Does the Targeted Jobs Tax Credit Create Jobs at Subsidized Firms?"
+    type: paper
+    topic_tags: [tier-1, employment-subsidy, new-jobs-tax-credit, targeted-jobs-tax-credit, windfall-displacement, employer-side, measured-ex-post, thread-b-angle4]
+    path: Infrastructure/references/literature/summaries/1993_bishop-montgomery_targeted-jobs-tax-credit.md
+    summary_path: Infrastructure/references/literature/summaries/1993_bishop-montgomery_targeted-jobs-tax-credit.md
+    source_url: https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1468-232x.1993.tb01051.x
+    doi: 10.1111/j.1468-232x.1993.tb01051.x
+    added_on: 2026-06-25
+    status: parsed
+    relevance_note: "Validated US empirical anchor for the New Jobs / Targeted Jobs Tax Credit lineage requested for angle 4. Documents windfall, displacement, and low take-up of a categorical employer-side credit — the failure modes the broad worker-side 80-80 is meant to avoid. Industrial Relations 32(3):289-306 (DOI validated). Related Bishop 1981 NJTC chapter and Bishop & Haveman 1979 AER P&P flagged [unverified] for DOI in the summary."
+
+  # --- Angle 3 (cont.): OWN-WAGE LABOR-DEMAND ELASTICITY (incidence magnitude anchor) ---
+  - id: 2015-lichter-peichl-siegloch-labor-demand-elasticity-meta
+    title: "The Own-Wage Elasticity of Labor Demand: A Meta-Regression Analysis"
+    type: paper
+    topic_tags: [tier-1, labor-demand-elasticity, incidence, wage-pass-through, meta-analysis, publication-bias, low-skilled, measured-ex-post, thread-b-angle3]
+    path: Infrastructure/references/literature/summaries/2015_lichter-peichl-siegloch_own-wage-elasticity-labor-demand-meta.md
+    summary_path: Infrastructure/references/literature/summaries/2015_lichter-peichl-siegloch_own-wage-elasticity-labor-demand-meta.md
+    source_url: https://www.sciencedirect.com/science/article/abs/pii/S0014292115001233
+    doi: 10.1016/j.euroecorev.2015.08.007
+    added_on: 2026-06-26
+    status: parsed
+    relevance_note: "Modern meta-regression of the own-wage LABOR-DEMAND elasticity (942 estimates, 105 studies). Raw mean -0.508 / median -0.386; bias-corrected consensus ~-0.3; demand MORE elastic for low-skilled/atypical workers and in the long run; upward publication selection means bias-corrected estimates are smaller in absolute value. Parameterizes the wage pass-through / incidence side of the dynamic cost model — fills the demand-magnitude gap the catalog lacked (had Rothstein on direction, not magnitude). EER 80:94-119 (DOI validated)."
+
+  - id: 1993-hamermesh-labor-demand
+    title: "Labor Demand"
+    type: paper
+    topic_tags: [tier-1, labor-demand-elasticity, incidence, consensus-anchor, monograph, measured-ex-post, thread-b-angle3]
+    path: Infrastructure/references/literature/summaries/1993_hamermesh_labor-demand.md
+    summary_path: Infrastructure/references/literature/summaries/1993_hamermesh_labor-demand.md
+    source_url: https://doi.org/10.1515/9780691222998
+    doi: 10.1515/9780691222998
+    added_on: 2026-06-26
+    status: parsed
+    relevance_note: "The classic ~-0.3 own-wage labor-demand elasticity consensus anchor (Princeton 1993). Foundational source the modern meta-analyses (Lichter et al. 2015; Popp 2023) revisit and confirm. Cite alongside Lichter et al. for the incidence module's demand elasticity. DOI 10.1515/9780691222998 validated; exact in-book page for the headline figure [unverified]."
+
+  - id: 2023-popp-labor-demand-elasticity-germany-meta
+    title: "How Elastic Is Labor Demand? A Meta-Analysis for the German Labor Market"
+    type: paper
+    topic_tags: [tier-1, labor-demand-elasticity, incidence, meta-analysis, low-skilled, germany, external-cross-check, measured-ex-post, thread-b-angle3]
+    path: Infrastructure/references/literature/summaries/2023_popp_labor-demand-elasticity-germany-meta.md
+    summary_path: Infrastructure/references/literature/summaries/2023_popp_labor-demand-elasticity-germany-meta.md
+    source_url: https://link.springer.com/article/10.1186/s12651-023-00337-8
+    doi: 10.1186/s12651-023-00337-8
+    added_on: 2026-06-26
+    status: parsed
+    relevance_note: "German meta-analysis (705 estimates, 105 studies): mean own-wage labor-demand elasticity ~-0.43, more elastic for low- and high-skilled workers and in the long run; endogeneity-correcting designs more negative. External cross-check on the demand-elasticity magnitude and skill gradient; sits modestly above the US/international ~-0.3 consensus, supporting a more-elastic value for a low-skill pool as a sensitivity case. JLMR 57(1) (DOI validated)."
+
+  - id: 2013-busso-gregory-kline-empowerment-zones-incidence
+    title: "Assessing the Incidence and Efficiency of a Prominent Place-Based Policy"
+    type: paper
+    topic_tags: [tier-1, incidence, wage-pass-through, employer-capture, wage-credit, empowerment-zones, place-based, measured-ex-post, thread-b-angle3]
+    path: Infrastructure/references/literature/summaries/2013_busso-gregory-kline_empowerment-zones-incidence.md
+    summary_path: Infrastructure/references/literature/summaries/2013_busso-gregory-kline_empowerment-zones-incidence.md
+    source_url: https://www.aeaweb.org/articles?id=10.1257/aer.103.2.897
+    doi: 10.1257/aer.103.2.897
+    added_on: 2026-06-26
+    status: parsed
+    relevance_note: "PRIORITY: closest US wage-credit analog. Federal Empowerment Zones raised local employment and local-worker wages (~$320M/yr) with stable rents/population — high worker pass-through, low landowner capture, modest efficiency cost, BECAUSE local markets had slack. Empirical counterweight to Rothstein's employer-capture concern; shows pass-through is market-slack-dependent. AER 103(2):897-947 (DOI validated)."
+
+  # --- Angle 3 (cont.): TAX/SUBSIDY PASS-THROUGH & STATE-DEPENDENT INCIDENCE ---
+  - id: 2012-saez-matsaganis-tsakloglou-payroll-tax-incidence
+    title: "Earnings Determination and Taxes: Evidence from a Cohort-Based Payroll Tax Reform in Greece"
+    type: paper
+    topic_tags: [tier-1, incidence, wage-pass-through, payroll-tax, statutory-incidence, wage-rigidity, measured-ex-post, thread-b-angle3]
+    path: Infrastructure/references/literature/summaries/2012_saez-matsaganis-tsakloglou_payroll-tax-incidence-greece.md
+    summary_path: Infrastructure/references/literature/summaries/2012_saez-matsaganis-tsakloglou_payroll-tax-incidence-greece.md
+    source_url: https://academic.oup.com/qje/article-abstract/127/1/493/1924221
+    doi: 10.1093/qje/qjr052
+    added_on: 2026-06-26
+    status: parsed
+    relevance_note: "Measured benchmark that statutory incidence STICKS: employer payroll taxes are not shifted to wages (firm absorbs), employee taxes borne by employees — no full shifting via wage adjustment. Counter-pole to Rothstein full-adjustment; bounds the pass-through parameter toward low employer capture in rigid-wage settings. QJE 127(1):493-533 (DOI validated; full given names supplied)."
+
+  - id: 2018-cahuc-carcillo-le-barbanchon-hiring-credits
+    title: "The Effectiveness of Hiring Credits"
+    type: paper
+    topic_tags: [tier-1, hiring-credit, wage-pass-through, employment-effects, state-dependence, recession, measured-ex-post, thread-b-angle3, thread-b-angle4]
+    path: Infrastructure/references/literature/summaries/2018_cahuc-carcillo-le-barbanchon_hiring-credits-effectiveness.md
+    summary_path: Infrastructure/references/literature/summaries/2018_cahuc-carcillo-le-barbanchon_hiring-credits-effectiveness.md
+    source_url: https://academic.oup.com/restud/article/86/2/593/4951519
+    doi: 10.1093/restud/rdy011
+    added_on: 2026-06-26
+    status: parsed
+    relevance_note: "French recession hiring credit: effective at raising employment in a slack market (elastic supply + rigid wages -> low wage pass-through), much less so in normal/tight markets (wage capture, windfall). State-dependent incidence; reinforces that subsidy pass-through depends on labor-market slack. REStud 86(2):593-626 (DOI validated; print year 2019)."
+
+  - id: 2021-benzarti-harju-payroll-tax-cuts-recessions
+    title: "Can Payroll Tax Cuts Help Firms During Recessions?"
+    type: paper
+    topic_tags: [tier-1, payroll-tax, wage-pass-through, incidence, state-dependence, recession, measured-ex-post, thread-b-angle3]
+    path: Infrastructure/references/literature/summaries/2021_benzarti-harju_payroll-tax-cuts-recessions.md
+    summary_path: Infrastructure/references/literature/summaries/2021_benzarti-harju_payroll-tax-cuts-recessions.md
+    source_url: https://www.sciencedirect.com/science/article/abs/pii/S0047272721000967
+    doi: 10.1016/j.jpubeco.2021.104472
+    added_on: 2026-06-26
+    status: parsed
+    relevance_note: "Finnish regional payroll-tax cut: passed through to WAGES in normal times, used to support EMPLOYMENT in recessions. Third measured data point (with Busso 2013, Cahuc 2019) that labor-market slack determines whether a wage-linked subsidy raises wages or employment — supports a slack-conditioned pass-through parameter, not a constant. J Public Econ 200:104472 (DOI validated)."
+
+  # ===== THREAD 3: Prime-age non-employment & the actual 80-80 target pool =====
+  - id: 2020-abraham-kearney-decline-epop
+    title: "Explaining the Decline in the US Employment-to-Population Ratio: A Review of the Evidence"
+    type: paper
+    topic_tags: [tier-1, prime-age, non-employment, labor-demand, china-shock, automation, target-pool, measured-ex-post, thread-3-targetpool]
+    path: Infrastructure/references/literature/summaries/2020_abraham-kearney_decline-employment-population-ratio.md
+    summary_path: Infrastructure/references/literature/summaries/2020_abraham-kearney_decline-employment-population-ratio.md
+    source_url: https://www.aeaweb.org/articles?id=10.1257/jel.20191480
+    doi: 10.1257/jel.20191480
+    added_on: 2026-06-26
+    status: parsed
+    relevance_note: "Sizes/diagnoses the non-employed prime-age pool the 80-80 draws from: EPOP fell 64.3->60.4% (3.8pp, 1999-2018), driven mainly by DEMAND factors (China trade shock ~0.92pp; robots second); DI/min-wage/incarceration smaller. Implies the prime-age entry response to a wage subsidy is modest (demand-driven non-employment), consistent with the ~0-0.1 CBO participation elasticity. JEL 58(3):585-643 (DOI validated)."
+
+  - id: 2016-cea-prime-age-male-lfp-decline
+    title: "The Long-Term Decline in Prime-Age Male Labor Force Participation"
+    type: technical_note
+    topic_tags: [tier-2, cea, prime-age-men, labor-force-participation, labor-demand, target-pool, thread-3-targetpool]
+    path: Infrastructure/references/literature/summaries/2016_cea_prime-age-male-labor-force-participation.md
+    summary_path: Infrastructure/references/literature/summaries/2016_cea_prime-age-male-labor-force-participation.md
+    source_url: https://obamawhitehouse.archives.gov/sites/default/files/page/files/20160620_cea_primeage_male_lfp.pdf
+    added_on: 2026-06-26
+    status: parsed
+    relevance_note: "Demand-side diagnosis of the 80-80's core target group (childless prime-age men). Participation fell most for men with HS-or-less (~14pp) alongside their relative wage declines -> labor-demand cause; participation higher where returns to work are higher (the lever the 80-80 wage fill pulls); SSDI explains at most ~0.3-0.5 of ~7.5pp. Government report, no DOI; exact figures read from report summaries [unverified] pending direct PDF confirmation."
+
+  # ===== THREAD 4: Search-and-matching foundations for the structural wage-subsidy simulation =====
+  # --- T4-Thread 1: DMP foundations, match surplus / viability, job-creation condition ---
+  - id: 1982-diamond-wage-determination-search-equilibrium
+    title: "Wage Determination and Efficiency in Search Equilibrium"
+    type: paper
+    topic_tags: [tier-1, search-matching, dmp, match-surplus, bilateral-bargaining, wage-determination, modeled-ex-ante, thread-4-smm, t4-thread1]
+    path: Infrastructure/references/literature/summaries/1982_diamond_wage-determination-efficiency-search.md
+    summary_path: Infrastructure/references/literature/summaries/1982_diamond_wage-determination-efficiency-search.md
+    source_url: https://www.jstor.org/stable/2297271
+    doi: 10.2307/2297271
+    added_on: 2026-06-30
+    status: parsed
+    relevance_note: "Founding DMP paper. With search frictions the wage is a DIVISION of bilateral match surplus, not a market-clearing price; privately bargained wage generically inefficient (motivates Hosios). Theoretical origin of the surplus-splitting wage rule w = r + beta*(y-r) the 80-80 incidence module uses. REStud 49(2):217-227 (DOI validated; end page [unverified])."
+
+  - id: 1994-mortensen-pissarides-job-creation-destruction
+    title: "Job Creation and Job Destruction in the Theory of Unemployment"
+    type: paper
+    topic_tags: [tier-1, search-matching, dmp, match-surplus, viability-condition, job-creation-condition, free-entry, reservation-productivity, modeled-ex-ante, thread-4-smm, t4-thread1]
+    path: Infrastructure/references/literature/summaries/1994_mortensen-pissarides_job-creation-destruction.md
+    summary_path: Infrastructure/references/literature/summaries/1994_mortensen-pissarides_job-creation-destruction.md
+    source_url: https://www.jstor.org/stable/2297896
+    doi: 10.2307/2297896
+    added_on: 2026-06-30
+    status: parsed
+    relevance_note: "Canonical search-matching model. Supplies BOTH equations the 80-80 simulation rests on: (1) viability/surplus condition S>=0 <=> y-r>=0 (classifies the structurally non-employed, the case r>y); (2) job-creation/free-entry condition pinning market tightness and how many viable matches form. A subsidy s enters surplus (y+s-r), shifts the reservation-productivity threshold, and is split by bargaining. REStud 61(3):397-415 (DOI validated, all fields match)."
+
+  - id: 2000-pissarides-equilibrium-unemployment-theory
+    title: "Equilibrium Unemployment Theory (2nd ed.)"
+    type: paper
+    topic_tags: [tier-1, search-matching, dmp, textbook, nash-bargaining, job-creation-condition, beveridge-curve, hosios, modeled-ex-ante, thread-4-smm, t4-thread1]
+    path: Infrastructure/references/literature/summaries/2000_pissarides_equilibrium-unemployment-theory.md
+    summary_path: Infrastructure/references/literature/summaries/2000_pissarides_equilibrium-unemployment-theory.md
+    source_url: https://mitpress.mit.edu/9780262161879/equilibrium-unemployment-theory/
+    doi: null
+    added_on: 2026-06-30
+    status: parsed
+    relevance_note: "Canonical graduate textbook stating the DMP three-equation system (matching function; free-entry job-creation; Nash-bargained wage w = r + beta*(y-r)) and the Hosios efficiency condition. Citable umbrella reference for the framework alongside Diamond 1982 and Mortensen-Pissarides 1994. MIT Press 2nd ed., 2000, ISBN 9780262161879. [unverified: no Crossref book DOI exists; BibTeX hand-assembled from publisher metadata, ISBN not re-confirmed this pass]."
+
+  - id: 2005-rogerson-shimer-wright-search-models-survey
+    title: "Search-Theoretic Models of the Labor Market: A Survey"
+    type: paper
+    topic_tags: [tier-1, search-matching, dmp, survey, wage-determination, nash-bargaining, wage-posting, modeled-ex-ante, thread-4-smm, t4-thread1]
+    path: Infrastructure/references/literature/summaries/2005_rogerson-shimer-wright_search-theoretic-models-survey.md
+    summary_path: Infrastructure/references/literature/summaries/2005_rogerson-shimer-wright_search-theoretic-models-survey.md
+    source_url: https://www.aeaweb.org/articles?id=10.1257/002205105775362014
+    doi: 10.1257/002205105775362014
+    added_on: 2026-06-30
+    status: parsed
+    relevance_note: "Authoritative JEL survey mapping the search-matching model family (matching function, match surplus = output net of outside options, wage protocols: Nash bargaining vs. posting vs. alternating offers; Hosios). Justifies the 80-80's choice of Nash bargaining over the surplus. JEL 43(4):959-988 (DOI validated, all fields match)."
+
+  # --- T4-Thread 2: Nash bargaining and the incidence of a wage/employment subsidy ---
+  - id: 2006-hungerbuhler-lehmann-optimal-taxation-search-equilibrium
+    title: "Optimal Redistributive Taxation in a Search Equilibrium Model"
+    type: paper
+    topic_tags: [tier-1, search-matching, nash-bargaining, incidence, optimal-tax, subsidy-split, wage-pass-through, modeled-ex-ante, thread-4-smm, t4-thread2, thread-b-angle3]
+    path: Infrastructure/references/literature/summaries/2006_hungerbuhler-lehmann_optimal-redistributive-taxation-search.md
+    summary_path: Infrastructure/references/literature/summaries/2006_hungerbuhler-lehmann_optimal-redistributive-taxation-search.md
+    source_url: https://academic.oup.com/restud/article/73/3/743/1576598
+    doi: 10.1111/j.1467-937x.2006.00394.x
+    added_on: 2026-06-30
+    status: parsed
+    relevance_note: "Thread 2 core: optimal taxation in a matching model with Nash-bargained wages. Micro-founds WHY a wage/employment subsidy is SPLIT (not fully captured by the worker): a per-worker subsidy s adds to joint surplus (y+s-r) and is divided beta to worker, (1-beta) to firm, replacing labor-demand-elasticity incidence with bargaining incidence. With Cahuc-Carcillo-Le Barbanchon 2019 and Rothstein 2010 (both in catalog) forms the incidence backbone. REStud 73(3):743-767 (DOI validated). [unverified: exact subsidy-split proposition numbers not pinned]."
+
+  # --- T4-Thread 3: empirical/calibration anchors for worker bargaining power beta ---
+  - id: 1990-hosios-efficiency-matching-search
+    title: "On the Efficiency of Matching and Related Models of Search and Unemployment"
+    type: paper
+    topic_tags: [tier-1, search-matching, bargaining-power, hosios-condition, efficiency, calibration-anchor, modeled-ex-ante, thread-4-smm, t4-thread3]
+    path: Infrastructure/references/literature/summaries/1990_hosios_efficiency-matching-search-unemployment.md
+    summary_path: Infrastructure/references/literature/summaries/1990_hosios_efficiency-matching-search-unemployment.md
+    source_url: https://www.jstor.org/stable/2297382
+    doi: 10.2307/2297382
+    added_on: 2026-06-30
+    status: parsed
+    relevance_note: "The Hosios condition: efficient worker bargaining share beta equals the matching-function elasticity wrt unemployment. Under a symmetric Cobb-Douglas matching function (elasticity 0.5) the efficient beta = 0.5 -> the focal CENTRAL value for the 80-80 incidence module, with a principled rationale. REStud 57(2):279-298 (DOI validated; end page [unverified])."
+
+  - id: 2005-shimer-cyclical-unemployment-vacancies
+    title: "The Cyclical Behavior of Equilibrium Unemployment and Vacancies"
+    type: paper
+    topic_tags: [tier-1, search-matching, bargaining-power, calibration-anchor, job-creation-condition, shimer-puzzle, modeled-ex-ante, measured-ex-post, thread-4-smm, t4-thread3]
+    path: Infrastructure/references/literature/summaries/2005_shimer_cyclical-behavior-unemployment-vacancies.md
+    summary_path: Infrastructure/references/literature/summaries/2005_shimer_cyclical-behavior-unemployment-vacancies.md
+    source_url: https://www.aeaweb.org/articles?id=10.1257/0002828053828572
+    doi: 10.1257/0002828053828572
+    added_on: 2026-06-30
+    status: parsed
+    relevance_note: "Benchmark quantitative DMP calibration. Standard practice ties beta to the matching elasticity via Hosios; Shimer's headline calibration uses beta ~ 0.72. With Hosios (beta=0.5 under symmetry) brackets a central beta ~0.5-0.7 sensitivity band for the surplus split. AER 95(1):25-49 (DOI validated). [unverified: exact 0.72 not re-read from full text; qualitative Hosios-pinned 0.5-0.72 range is robust]."
+
+  - id: 2008-hall-milgrom-limited-influence-wage-bargain
+    title: "The Limited Influence of Unemployment on the Wage Bargain"
+    type: paper
+    topic_tags: [tier-1, search-matching, bargaining-power, wage-rigidity, alternating-offers, outside-option, incidence-caveat, modeled-ex-ante, thread-4-smm, t4-thread2, t4-thread3]
+    path: Infrastructure/references/literature/summaries/2008_hall-milgrom_limited-influence-unemployment-wage-bargain.md
+    summary_path: Infrastructure/references/literature/summaries/2008_hall-milgrom_limited-influence-unemployment-wage-bargain.md
+    source_url: https://www.aeaweb.org/articles?id=10.1257/aer.98.4.1653
+    doi: 10.1257/aer.98.4.1653
+    added_on: 2026-06-30
+    status: parsed
+    relevance_note: "Delay-cost (alternating-offers) bargaining: the wage depends on delay costs, NOT primarily the outside option r, so wages respond LESS to r than textbook Nash implies (wage rigidity). Principal CAVEAT to the simple Nash split: under wage rigidity the firm may capture more of subsidy s in the short run than beta/(1-beta) predicts. Argues for treating Nash as one end of a pass-through range. AER 98(4):1653-1674 (DOI validated; mechanism confirmed vs abstract)."
+
+  # --- T4-Thread 4: reservation-wage determinants and levels (calibrating r_i) ---
+  - id: 2016-krueger-mueller-empirics-reservation-wages
+    title: "A Contribution to the Empirics of Reservation Wages"
+    type: paper
+    topic_tags: [tier-1, reservation-wage, value-of-nonemployment, prior-wage-anchoring, search, measured-ex-post, thread-4-smm, t4-thread4]
+    path: Infrastructure/references/literature/summaries/2016_krueger-mueller_empirics-of-reservation-wages.md
+    summary_path: Infrastructure/references/literature/summaries/2016_krueger-mueller_empirics-of-reservation-wages.md
+    source_url: https://www.aeaweb.org/articles?id=10.1257/pol.20140211
+    doi: 10.1257/pol.20140211
+    added_on: 2026-06-30
+    status: parsed
+    relevance_note: "Thread 4 core: high-frequency longitudinal reservation wages. Reservation wages start high, decline slowly, and ANCHOR ON THE PRIOR WAGE. Supports calibrating r_i as a high share of recent/prior earnings rather than from UI generosity alone -- the empirical bridge from observed characteristics to the structural r in y-r. AEJ:EP 8(1):142-179 (DOI validated; findings confirmed vs abstract). 2026-07-09: NBER w19870 full text read; ratio numbers PINNED -- reservation wage ~= 1.0x previous wage at entry (Table 2, 'essentially equal'), declining only 0.05-0.14 percent per WEEK; calibrated optimal benchmark 0.75->0.66; ACCEPTED wages ~0.90x prior wage (0.92 sample frame). Sample is UI-recipient unemployed -- no direct NILF reservation-wage measurement. See summary addendum."
+
+  # --- T4-Thread 5: wage subsidies and the minimum wage in search-matching with bargaining ---
+  - id: 2006-flinn-minimum-wage-search-matching-bargaining
+    title: "Minimum Wage Effects on Labor Market Outcomes under Search, Matching, and Endogenous Contact Rates"
+    type: paper
+    topic_tags: [tier-1, search-matching, minimum-wage, nash-bargaining, bargaining-power, structural-estimation, wage-floor, modeled-ex-ante, measured-ex-post, thread-4-smm, t4-thread5]
+    path: Infrastructure/references/literature/summaries/2006_flinn_minimum-wage-search-matching-bargaining.md
+    summary_path: Infrastructure/references/literature/summaries/2006_flinn_minimum-wage-search-matching-bargaining.md
+    source_url: https://onlinelibrary.wiley.com/doi/10.1111/j.1468-0262.2006.00693.x
+    doi: 10.1111/j.1468-0262.2006.00693.x
+    added_on: 2026-06-30
+    status: parsed
+    relevance_note: "Thread 5 core: structurally-estimated search-matching model with Nash bargaining and a binding minimum wage. Shows how the floor truncates the bargained-wage distribution and reshapes the viability/surplus margin -- exactly the framework the 80-80 needs since induced entrants land near the minimum. Supplies floor-truncation logic for the wage equation and an independent structural estimate of beta to cross-check. Econometrica 74(4):1013-1062 (DOI validated). [unverified: Flinn's beta point estimate not pinned]."
+
+  # ===== THREAD 6: EITC-design-decomposition -- can eps_ext be decomposed into an =====
+  # ===== EITC-specific-design component vs. a general labor-supply-response component? =====
+  # Spec: Infrastructure/specs/2026-07-08_entry-from-nonemployment-remodel.md
+  - id: 2002-meyer-labor-supply-extensive-intensive-margins
+    title: "Labor Supply at the Extensive and Intensive Margins: The EITC, Welfare, and Hours Worked"
+    type: paper
+    topic_tags: [tier-1, eitc, extensive-margin, intensive-margin, single-mothers, measured-ex-post, thread-6-decomposition]
+    path: Infrastructure/references/literature/summaries/2002_meyer_labor-supply-extensive-intensive-margins.md
+    summary_path: Infrastructure/references/literature/summaries/2002_meyer_labor-supply-extensive-intensive-margins.md
+    source_url: https://www.aeaweb.org/articles?id=10.1257/000282802320191642
+    doi: 10.1257/000282802320191642
+    added_on: 2026-07-08
+    status: parsed
+    relevance_note: "The specific 'Meyer 2002' citation embedded in 00_config.py comments and the two Agglomerations articles, re-verified. Documents that the EITC/welfare-reform labor-supply response for single mothers is almost entirely an EXTENSIVE-margin (participation) effect with little intensive-margin (hours) response. Does NOT itself contrast single mothers against men/childless adults -- that demographic-heterogeneity claim rests on McClelland & Mok (2012) and Hotz & Scholz, both already cataloged. AER P&P 92(2):373-379 (DOI validated)."
+
+  - id: 1994-phelps-low-wage-employment-subsidies-welfare-state
+    title: "Low-Wage Employment Subsidies versus the Welfare State"
+    type: paper
+    topic_tags: [tier-1, wage-subsidy, theory, employer-side, categorical-eligibility, phelps, modeled-ex-ante, thread-6-decomposition]
+    path: Infrastructure/references/literature/summaries/1994_phelps_low-wage-employment-subsidies-welfare-state.md
+    summary_path: Infrastructure/references/literature/summaries/1994_phelps_low-wage-employment-subsidies-welfare-state.md
+    source_url: http://www.columbia.edu/~esp2/lowwage.pdf
+    added_on: 2026-07-08
+    status: parsed
+    relevance_note: "Foundational theoretical case for a broad, non-categorical wage subsidy over the EITC; read in full. Explicitly critiques the EITC for depressing the market wage (via induced labor supply) and for excluding childless workers -- the project's own stated thesis. NOT an empirical elasticity source: a normative/theoretical AER P&P note proposing an EMPLOYER-side subsidy (structurally different from the worker-side 80-80). AER P&P 84(2):54-58. [unverified: no DOI located for this pre-DOI-era note; the companion monograph 'Rewarding Work' is 1997, not 1994 -- flagged and corrected in the summary]."
+
+  - id: 2013-huttunen-pirttila-uusitalo-low-wage-subsidies
+    title: "The Employment Effects of Low-Wage Subsidies"
+    type: paper
+    topic_tags: [tier-1, wage-subsidy, non-eitc, extensive-margin, null-result, employer-side, non-categorical, finland, measured-ex-post, thread-6-decomposition, household-composition-channel]
+    path: Infrastructure/references/literature/summaries/2013_huttunen-pirttila-uusitalo_employment-effects-low-wage-subsidies.md
+    summary_path: Infrastructure/references/literature/summaries/2013_huttunen-pirttila-uusitalo_employment-effects-low-wage-subsidies.md
+    source_url: https://www.sciencedirect.com/science/article/abs/pii/S0047272712001065
+    doi: 10.1016/j.jpubeco.2012.09.007
+    added_on: 2026-07-08
+    status: parsed
+    relevance_note: "Genuine non-EITC wage-subsidy evidence (Finnish employer-side payroll subsidy for older low-wage workers): finds NO extensive-margin employment effect, a small intensive-margin hours increase for incumbents. Complicates the 'removing EITC frictions increases entry' thesis -- either an employer-side-delivery artifact or evidence of a general labor-supply constraint. JPubEc 97:49-60 (DOI validated). 2026-07-08 re-verification: CONFIRMED employer-side (payroll-tax subsidy to the firm, not the worker) and CONFIRMED non-categorical (age/wage/hours eligibility only, no household-composition or children test) -- eligibility was never conditioned on children, so this paper speaks to the delivery-channel caution, not to the household-composition-channel question; citing it against that specific channel would overreach. See updated summary."
+
+  - id: 2003-bonin-kempe-schneider-kombilohn-workfare
+    title: "Kombilohn oder Workfare? Zur Wirksamkeit zweier arbeitsmarktpolitischer Strategien"
+    type: paper
+    topic_tags: [tier-1, wage-subsidy, non-eitc, kombilohn, worker-side, non-categorical, germany, deadweight-loss, modeled-ex-ante, thread-6-decomposition, household-composition-channel]
+    path: Infrastructure/references/literature/summaries/2003_bonin-kempe-schneider_kombilohn-workfare.md
+    summary_path: Infrastructure/references/literature/summaries/2003_bonin-kempe-schneider_kombilohn-workfare.md
+    source_url: https://docs.iza.org/dp587.pdf
+    doi: 10.3790/vjh.72.1.51
+    added_on: 2026-07-08
+    status: parsed
+    relevance_note: "The requested German Kombilohn wage-subsidy evidence. Microsimulation: wage subsidies produce only MARGINAL participation gains (37,300-104,000 net additional workers, a 2.3 percent stock reduction even in the generous variant), offset by negative intensive-margin (work-time) effects and high deadweight cost; workfare outperforms on net employment in this model. 2026-07-08 re-verification (full IZA DP 587 text read): CONFIRMED worker-side delivery (cash top-up paid to the worker via tax/welfare authority based on gross earnings, not an employer payroll rebate) and CONFIRMED non-categorical eligibility (scales with earnings only; worked example is an explicitly CHILDLESS single person). New finding: men's AGGREGATE labor supply nets NEGATIVE under the subsidy via intra-household coordination (subsidy claimed by the lower-wage/typically female partner, higher-earning male partner then works less) -- an EITC-like gendered pattern (gains concentrated among women, none/negative for men) produced by a non-categorical, worker-side subsidy, which undercuts rather than supports an expectation that removing categorical conditioning alone raises male entry. VfW 72(1):51-67 (DOI validated). See updated summary."
+
+  - id: 2015-nichols-rothstein-eitc-handbook-chapter
+    title: "The Earned Income Tax Credit (EITC)"
+    type: paper
+    topic_tags: [tier-1, eitc, handbook, household-composition-channel, childless-credit, non-custodial-parents, incidence, take-up, thread-6-decomposition]
+    path: Infrastructure/references/literature/summaries/2015_nichols-rothstein_eitc-handbook-chapter.md
+    summary_path: Infrastructure/references/literature/summaries/2015_nichols-rothstein_eitc-handbook-chapter.md
+    source_url: https://www.nber.org/papers/w21211
+    added_on: 2026-07-08
+    status: parsed
+    relevance_note: "Comprehensive EITC review (NBER WP 21211; published as a chapter in Moffitt ed., Economics of Means-Tested Transfer Programs Vol. I, U Chicago Press 2016). Pins the household-composition-channel mechanics directly: the 1993/1994 childless credit maxed at only ~15 percent of the one-child maximum; non-custodial parents are generally EITC-ineligible even when supporting a child; childless/ineligible workers may also bear wage-incidence costs of parents' EITC-induced labor supply without an offsetting credit; take-up is separately lower for childless filers (56-65 percent vs. 82-86 percent for parents). Does NOT provide a formal decomposition of credit-generosity vs. elasticity-by-family-type as the source of the parent/childless response gap -- confirms no clean decomposition exists in the literature. [unverified: published-chapter DOI 10.7208/9780226370507-004 does not resolve via doi.org; NBER working-paper version read in full instead]."
+
+  - id: 2011-neumark-wascher-minimum-wage-eitc-effectiveness
+    title: "Does a Higher Minimum Wage Enhance the Effectiveness of the Earned Income Tax Credit?"
+    type: paper
+    topic_tags: [tier-1, eitc, minimum-wage, childless-workers, crowd-out, incidence, measured-ex-post, household-composition-channel, thread-6-decomposition]
+    path: Infrastructure/references/literature/summaries/2011_neumark-wascher_minimum-wage-eitc-effectiveness.md
+    summary_path: Infrastructure/references/literature/summaries/2011_neumark-wascher_minimum-wage-eitc-effectiveness.md
+    source_url: https://journals.sagepub.com/doi/10.1177/001979391106400405
+    doi: 10.1177/001979391106400405
+    added_on: 2026-07-08
+    status: parsed
+    relevance_note: "State EITC x minimum-wage difference-in-differences. EITC generosity + higher minimum wage REINFORCES single mothers' employment gains but produces ADVERSE employment/earnings effects for less-skilled minority men and childless women -- a crowd-out/rationing channel distinct from (additive to) the childless credit's own small size. Flags a not-yet-verifiable newer AEA 2026 conference paper ('Unintended Consequences: Childless Workers, the EITC, and the Minimum Wage') as a lead for the next scouting pass, not cited as a source. ILR Review 64(4):712-746 (DOI validated)."
+
+  - id: 2018-miller-katz-azurdia-isen-schultz-aloisi-paycheck-plus-nyc
+    title: "Boosting the Earned Income Tax Credit for Singles: Final Impact Findings from the Paycheck Plus Demonstration in New York City"
+    type: paper
+    topic_tags: [tier-2, eitc, childless-workers, non-categorical, rct, measured-ex-post, noncustodial-parents, household-composition-channel, thread-6-decomposition]
+    path: Infrastructure/references/literature/summaries/2018_miller-katz-azurdia-isen-schultz-aloisi_paycheck-plus-nyc.md
+    summary_path: Infrastructure/references/literature/summaries/2018_miller-katz-azurdia-isen-schultz-aloisi_paycheck-plus-nyc.md
+    source_url: https://www.mdrc.org/work/publications/boosting-earned-income-tax-credit-singles
+    added_on: 2026-07-08
+    status: parsed
+    relevance_note: "PRIORITY: the closest experimental (RCT, n>6,000) test of the household-composition-channel hypothesis. A non-categorical, worker-side, earnings-linked credit (up to $2,000, income cap $30,000, ~4x/2x the federal childless EITC) raised overall employment 2.1-2.6pp, concentrated among women (up to 4.6pp) and 'disadvantaged men' including NONCUSTODIAL PARENTS and formerly incarcerated individuals (up to 5.8pp) -- well above the EITC-implied ~0.05 near-zero male response. Must be read against the Atlanta null replication (Yang et al. 2022, cataloged) -- genuinely mixed evidence, not a clean confirmation. 2026-07-08: primary report PDF read directly; Table ES.2 numbers now pinned -- all women +2.3*/+4.6***/+2.6* by year, +3.2pp*** pooled Years 1-3 (the study's most robust subgroup effect; these are CHILDLESS SINGLE women, direct evidence for the other_women cell); all men +0.5 ns pooled; more-disadvantaged men +5.8pp** in Year 3 only (+2.8 ns pooled). Earlier [unverified] flags on the 5.8/4.6 figures and author metadata resolved; see summary addendum."
+
+  - id: 2022-yang-bernardi-miller-katz-isen-paycheck-plus-atlanta
+    title: "An Earned Income Tax Credit That Works for Singles: Final Impact Findings from the Paycheck Plus Demonstration in Atlanta"
+    type: paper
+    topic_tags: [tier-2, eitc, childless-workers, non-categorical, rct, null-result, measured-ex-post, household-composition-channel, thread-6-decomposition]
+    path: Infrastructure/references/literature/summaries/2022_yang-bernardi-miller-katz-isen_paycheck-plus-atlanta.md
+    summary_path: Infrastructure/references/literature/summaries/2022_yang-bernardi-miller-katz-isen_paycheck-plus-atlanta.md
+    source_url: https://www.mdrc.org/work/publications/earned-income-tax-credit-works-singles
+    added_on: 2026-07-08
+    status: parsed
+    relevance_note: "PRIORITY: direct second-site RCT replication of Paycheck Plus NYC (Miller et al. 2018, cataloged) using the same non-categorical, earnings-linked design. Found NO employment effect in any year, for any subgroup (women, disadvantaged men, or overall) -- a precise null that directly contradicts the NYC result. The pair together is the single best piece of evidence that a non-categorical wage/earnings credit for childless and noncustodial men CAN but does NOT RELIABLY produce a larger employment response than the EITC's own near-zero male pattern -- supports a wide M2 band, not a raised central estimate. 2026-07-08: primary report PDF read directly; null point estimates now pinned WITH SEs/p-values (full sample any-earnings +0.1/+1.0/+1.1pp by year, all p>0.35; disadvantaged men -0.3/+0.7/+0.8pp, all p>0.69; women +0.5/-0.9/0.0pp, all p>0.63; Tables ES.1/7/8). CORRECTIONS: title page lists SIX authors (adds Rachael Metz); registered identifier OPRE Report 2022-54 exists; analysis N = 3,972 (1,996/1,976), not ~2,000 total. Early-year earnings gains for LESS disadvantaged men (p=0.015-0.052, faded by Year 3) are the one non-null pattern. See summary addendum."
+
+  - id: 2012-nichols-sorensen-lippold-ny-noncustodial-parent-eitc
+    title: "The New York Noncustodial Parent EITC: Its Impact on Child Support Payments and Employment"
+    type: paper
+    topic_tags: [tier-2, eitc, noncustodial-parents, regression-discontinuity, measured-ex-post, household-composition-channel, thread-6-decomposition]
+    path: Infrastructure/references/literature/summaries/2012_nichols-sorensen-lippold_ny-noncustodial-parent-eitc.md
+    summary_path: Infrastructure/references/literature/summaries/2012_nichols-sorensen-lippold_ny-noncustodial-parent-eitc.md
+    source_url: https://www.urban.org/research/publication/new-york-noncustodial-parent-eitc-its-impact-child-support-payments-and-employment
+    added_on: 2026-07-08
+    status: parsed
+    relevance_note: "State-level natural experiment reaching noncustodial parents excluded from the standard EITC by the custody/residency test -- the closest state analog to the 80-80's non-categorical reach. RD around the age-18 eligibility cutoff finds the credit increased full child-support payment by ~1pp; program take-up was very low (5,280 recipients). [unverified: the report's employment-effect point estimate could not be retrieved in readable form this pass -- flagged as an open item, not assumed null or positive]."
+
+  - id: 2001-miller-knox-parents-fair-share-final-lessons
+    title: "The Challenge of Helping Low-Income Fathers Support Their Children: Final Lessons from Parents' Fair Share"
+    type: paper
+    topic_tags: [tier-2, noncustodial-fathers, rct, employment-services, measured-ex-post, household-composition-channel, thread-6-decomposition]
+    path: Infrastructure/references/literature/summaries/2001_miller-knox_parents-fair-share-final-lessons.md
+    summary_path: Infrastructure/references/literature/summaries/2001_miller-knox_parents-fair-share-final-lessons.md
+    source_url: https://www.mdrc.org/work/publications/challenge-helping-low-income-fathers-support-their-children
+    added_on: 2026-07-08
+    status: parsed
+    relevance_note: "Canonical 1990s RCT (n>5,500, 7 sites) targeting low-income noncustodial fathers -- the population most directly excluded from the EITC by household composition. NOT a wage subsidy (job search/training + enhanced child-support enforcement + peer support/mediation); found employment/earnings gains for the LEAST-employable men only, none for more job-ready men -- the same 'responsive subgroup is the most disadvantaged slice of men, not men broadly' pattern independently found in Paycheck Plus NYC. Evidence this population is not intrinsically unmovable, but not evidence specifically about a wage-subsidy instrument. [unverified: exact earnings/employment point estimates for the least-employable subgroup not pinned to a number this pass]."
+
+  - id: 2024-lee-michelmore-pilkauskas-wimer-childless-eitc-arpa
+    title: "Effects of the Expansion of the Earned Income Tax Credit for Childless Young Adults on Material Wellbeing"
+    type: paper
+    topic_tags: [tier-1, eitc, childless-workers, arpa-2021, material-hardship, measured-ex-post, household-composition-channel, thread-6-decomposition]
+    path: Infrastructure/references/literature/summaries/2024_lee-michelmore-pilkauskas-wimer_childless-eitc-arpa-material-wellbeing.md
+    summary_path: Infrastructure/references/literature/summaries/2024_lee-michelmore-pilkauskas-wimer_childless-eitc-arpa-material-wellbeing.md
+    source_url: https://www.nber.org/papers/w32571
+    doi: 10.2139/ssrn.4867435
+    added_on: 2026-07-08
+    status: parsed
+    relevance_note: "Academic ex-post evaluation of the 2021 ARPA temporary childless-EITC expansion (roughly tripled maximum credit, minimum age lowered 25 to 19). DiD on Household Pulse Survey data finds reduced housing hardship and suggestive reductions in food/expense hardship among low-income childless young adults. Measures MATERIAL HARDSHIP, not employment/labor supply -- confirms no verified academic study of the ARPA expansion's employment effect specifically was located this pass, a genuine literature gap rather than a null finding. NBER WP 32571 (SSRN DOI validated)."
+
+  # --- Thread 6 (cont.): married / partnered / childless-single women (`other_women` band) ---
+  - id: 2004-eissa-hoynes-eitc-married-couples
+    title: "Taxes and the Labor Market Participation of Married Couples: The Earned Income Tax Credit"
+    type: paper
+    topic_tags: [tier-1, eitc, married-women, second-earner-disincentive, household-income-test, extensive-margin, negative-effect, measured-ex-post, thread-6-decomposition, other-women-band]
+    path: Infrastructure/references/literature/summaries/2004_eissa-hoynes_eitc-married-couples-participation.md
+    summary_path: Infrastructure/references/literature/summaries/2004_eissa-hoynes_eitc-married-couples-participation.md
+    source_url: https://www.sciencedirect.com/science/article/abs/pii/S0047272703001440
+    doi: 10.1016/j.jpubeco.2003.09.005
+    added_on: 2026-07-08
+    status: parsed
+    relevance_note: "The canonical secondary-earner result: 1984-96 EITC expansions REDUCED married women's labor-force participation by just over one percentage point (1993 expansion DiD: ~1pp; reduced-form: ~1pp) while raising married men's only slightly — 'the EITC is effectively subsidizing married mothers to stay at home.' Magnitude verified against two Eissa-Hoynes-authored NBER sources (w6856 abstract; w11729 full text read directly). KEY for the other_women band: the dominant channel is the HOUSEHOLD-INCOME phase-out, which the individually-assessed 80-80 lacks by design; only the smaller intra-household income-effect channel (Bonin 2003's coordination result) transfers. Supports widening the other_women band downward toward ~0, NOT a negative central value. JPubE 88(9-10):1931-1958 (DOI validated)."
+
+  - id: 2007-blau-kahn-married-women-labor-supply
+    title: "Changes in the Labor Supply Behavior of Married Women: 1980-2000"
+    type: paper
+    topic_tags: [tier-1, married-women, labor-supply-elasticity, elasticity-decline, cross-wage-elasticity, measured-ex-post, thread-a, thread-6-decomposition, other-women-band]
+    path: Infrastructure/references/literature/summaries/2007_blau-kahn_married-women-labor-supply-1980-2000.md
+    summary_path: Infrastructure/references/literature/summaries/2007_blau-kahn_married-women-labor-supply-1980-2000.md
+    source_url: https://www.journals.uchicago.edu/doi/10.1086/513416
+    doi: 10.1086/513416
+    added_on: 2026-07-08
+    status: parsed
+    relevance_note: "Married women's own-wage labor-supply elasticity FELL 50-56 percent between 1980 and 2000, and the (negative) elasticity wrt husband's wage fell 38-47 percent in absolute value (verified from the authors' abstract; level estimates ~0.8-0.9 -> ~0.4 commonly cited but [unverified] this pass). Married women remain MORE wage-elastic than men and single women (per McClelland-Mok 2012) — the ordering behind other_women sitting between men and single mothers is right — but older married-women elasticities are upper bounds, and the household-coordination drag is itself shrinking. JOLE 25(3):393-438 (DOI validated)."
+
+  - id: 2006-brewer-duncan-shephard-suarez-wftc-labour-supply
+    title: "Did Working Families' Tax Credit Work? The Impact of In-Work Support on Labour Supply in Great Britain"
+    type: paper
+    topic_tags: [tier-1, in-work-benefit, wftc, second-earner-disincentive, household-income-test, structural-estimation, measured-ex-post, thread-6-decomposition, other-women-band, thread-b-angle4]
+    path: Infrastructure/references/literature/summaries/2006_brewer-duncan-shephard-suarez_wftc-labour-supply.md
+    summary_path: Infrastructure/references/literature/summaries/2006_brewer-duncan-shephard-suarez_wftc-labour-supply.md
+    source_url: https://www.sciencedirect.com/science/article/abs/pii/S0927537105000928
+    doi: 10.1016/j.labeco.2005.11.002
+    added_on: 2026-07-08
+    status: parsed
+    relevance_note: "The measured/structural WFTC evaluation quantifying the second-earner penalty of a household-income-assessed credit: by 2002 WFTC raised lone mothers' labour supply +5.11pp but REDUCED mothers-in-couples' by 0.57pp (fathers in couples +0.75pp; net +81,000 workers) — numbers pinned to the directly-read HMRC final-evaluation abstract (2005 report version). Bounds the household-testing drag on partnered women at roughly -0.5 to -1pp even under a full family means test — the design cell the 80-80 avoids. Labour Economics 13(6):699-720 (DOI validated; journal-version point estimates [unverified], possibly -0.2pp in the published vintage)."
+
+  - id: 2009-francesconi-rainer-vanderklaauw-inwork-couples
+    title: "The Effects of In-Work Benefit Reform in Britain on Couples: Theory and Evidence"
+    type: paper
+    topic_tags: [tier-1, in-work-benefit, wftc, married-women, partner-heterogeneity, null-result, measured-ex-post, thread-6-decomposition, other-women-band]
+    path: Infrastructure/references/literature/summaries/2009_francesconi-rainer-vanderklaauw_inwork-benefit-reform-couples.md
+    summary_path: Infrastructure/references/literature/summaries/2009_francesconi-rainer-vanderklaauw_inwork-benefit-reform-couples.md
+    source_url: https://academic.oup.com/ej/article/119/535/F66/5089498
+    doi: 10.1111/j.1468-0297.2008.02225.x
+    added_on: 2026-07-08
+    status: parsed
+    relevance_note: "Ex-post BHPS panel evidence on WFTC and couples: on average, small and statistically INSIGNIFICANT effects on married mothers' decisions, with sharp heterogeneity by partner status — insignificant for married mothers with a WORKING partner, POSITIVE for those with a non-working partner (where the household test does not bite). Softens the Brewer/Eissa-Hoynes negatives (measured average ~0, not large-negative) and isolates the binding-household-test condition the 80-80 removes for all partnered women. EJ 119(535):F66-F100 (DOI validated). [unverified: subgroup point magnitudes not read from paywalled full text.]"
+
+  - id: 2008-stancanelli-french-tax-credit-employment-women
+    title: "Evaluating the Impact of the French Tax Credit on the Employment Rate of Women"
+    type: paper
+    topic_tags: [tier-1, in-work-benefit, non-eitc, ppe, france, household-income-test, second-earner-disincentive, measured-ex-post, thread-6-decomposition]
+    path: Infrastructure/references/literature/summaries/2008_stancanelli_french-tax-credit-employment-women.md
+    summary_path: Infrastructure/references/literature/summaries/2008_stancanelli_french-tax-credit-employment-women.md
+    source_url: https://www.sciencedirect.com/science/article/abs/pii/S004727270800039X
+    doi: 10.1016/j.jpubeco.2008.02.007
+    added_on: 2026-07-08
+    status: parsed
+    relevance_note: "French Prime pour l'Emploi (PPE), household-income-tested and structurally distinct from the EITC. Finds a significant NEGATIVE employment effect for married women (household income test disincentive), weak positive for cohabiting women, insignificant for lone mothers. Isolates household-income-testing as an independent design lever distinct from annual timing or categorical eligibility -- directly relevant to Requirement M5 (net-of-household-income reservation framing). JPubEc 92(10-11):2036-2047 (DOI validated). 2026-07-08 addendum (other_women pass): assessment structure re-verified -- PPE is computed on INDIVIDUAL earnings with an eligibility ceiling on total household resources; the married (jointly taxed, ~-3pp) vs cohabiting (individually taxed, POSITIVE) contrast is the catalog's closest within-paper test of individual vs household assessment holding the instrument fixed. See updated summary."
+
+  - id: 2019-azmat-incidence-salience-spillovers-tax-credits
+    title: "Incidence, Salience and Spillovers: The Direct and Indirect Effects of Tax Credits on Wages"
+    type: paper
+    topic_tags: [tier-1, salience, incidence, wftc, uk, payment-channel, wage-capture, measured-ex-post, thread-6-decomposition]
+    path: Infrastructure/references/literature/summaries/2019_azmat_incidence-salience-spillovers-tax-credits-wages.md
+    summary_path: Infrastructure/references/literature/summaries/2019_azmat_incidence-salience-spillovers-tax-credits-wages.md
+    source_url: https://onlinelibrary.wiley.com/doi/full/10.3982/QE319
+    doi: 10.3982/QE319
+    added_on: 2026-07-08
+    status: parsed
+    relevance_note: "Key payment-CHANNEL salience paper. UK WFTC was paid through the employer (not directly to the worker like the EITC), making it salient to the FIRM: employers cut claimant wages ~30% of the credit value (~7% of wage), with negative spillovers to non-claimant coworkers. Shows delivery channel/salience changes wage incidence independent of schedule generosity -- a caution for the 80-80's incidence module, not only evidence for the entry margin. Quantitative Economics 10(1):239-273 (DOI validated)."
+
+  - id: 2013-chetty-saez-teaching-tax-code
+    title: "Teaching the Tax Code: Earnings Responses to an Experiment with EITC Recipients"
+    type: paper
+    topic_tags: [tier-1, eitc, salience, information-experiment, null-result, intensive-margin, measured-ex-post, thread-6-decomposition]
+    path: Infrastructure/references/literature/summaries/2013_chetty-saez_teaching-tax-code.md
+    summary_path: Infrastructure/references/literature/summaries/2013_chetty-saez_teaching-tax-code.md
+    source_url: https://www.aeaweb.org/articles?id=10.1257/app.5.1.1
+    doi: 10.1257/app.5.1.1
+    added_on: 2026-07-08
+    status: parsed
+    relevance_note: "Large randomized EITC-information experiment (43,000 H&R Block filers): NO significant average earnings effect from providing schedule information, only preparer-mediated heterogeneity. Complicates a simple 'EITC opacity alone mutes response' story. Cited here in place of an unverifiable 'Jacob-Ludwig EITC salience' reference requested in the scouting brief -- no such paper could be confirmed to exist; this is the closest verified match to the described experiment. AEJ:Applied 5(1):1-31 (DOI validated)."
+
+  - id: 2015-bhargava-manoli-psychological-frictions-takeup
+    title: "Psychological Frictions and the Incomplete Take-Up of Social Benefits: Evidence from an IRS Field Experiment"
+    type: paper
+    topic_tags: [tier-1, eitc, salience, take-up, information-experiment, measured-ex-post, thread-6-decomposition]
+    path: Infrastructure/references/literature/summaries/2015_bhargava-manoli_psychological-frictions-takeup.md
+    summary_path: Infrastructure/references/literature/summaries/2015_bhargava-manoli_psychological-frictions-takeup.md
+    source_url: https://www.aeaweb.org/articles?id=10.1257/aer.20121493
+    doi: 10.1257/aer.20121493
+    added_on: 2026-07-08
+    status: parsed
+    relevance_note: "Randomized IRS field experiment (35,050 EITC non-claimants): simplification/salience substantially raised BENEFIT TAKE-UP; stigma/hassle-cost reductions did not. Strong evidence salience matters for take-up of an already-earned credit; paired with Chetty-Saez (2013, null on labor-supply/earnings) this brackets the honest answer -- salience moves claiming more reliably than it moves the underlying labor-supply margin. AER 105(11):3489-3529 (DOI validated)."
+
+  - id: 2012-cbo-effective-marginal-tax-rates-low-moderate-income
+    title: "Effective Marginal Tax Rates for Low- and Moderate-Income Workers"
+    type: technical_note
+    topic_tags: [tier-2, cbo, emtr, phase-out-cliff, eitc, snap, methods, thread-6-decomposition]
+    path: Infrastructure/references/literature/summaries/2012_cbo_effective-marginal-tax-rates-low-moderate-income-workers.md
+    summary_path: Infrastructure/references/literature/summaries/2012_cbo_effective-marginal-tax-rates-low-moderate-income-workers.md
+    source_url: https://www.cbo.gov/publication/43709
+    added_on: 2026-07-08
+    status: parsed
+    relevance_note: "The correct, distinct CBO 'effective marginal tax rate' citation (pub 43709, Nov 2012) referenced generically in 00_config.py comments -- distinct from the labor-supply-elasticity (pub 43675) and dynamic-scoring (pubs 43674/43680) CBO reports already cataloged. Documents EITC phase-out as one driver of elevated EMTRs but shows payroll tax and SNAP phase-out are comparably large drivers -- the 80-80 avoiding its OWN internal cliff does not exempt workers from the ambient system EMTR. Directly informs Requirement M5 (net-of-tax-and-transfer reservation income). [unverified: headline ~30% EMTR figure and component breakdown read from a secondary summary; cbo.gov blocks automated fetch (HTTP 403 confirmed this pass)]."
+
+  # ===== THREAD 7: Entry-margin reality-anchoring (2026-07-09 targeted pass) =====
+  # Five questions: reservation values of the non-employed; the 1990s natural experiment;
+  # wage-responsive share of the 59M pool; hours response to clean (no-phase-out) wage
+  # increases; wage scale of entrants from nonemployment.
+  - id: 2018-hall-mueller-wage-dispersion-search
+    title: "Wage Dispersion and Search Behavior: The Importance of Nonwage Job Values"
+    type: paper
+    topic_tags: [tier-1, reservation-wage, nonwage-job-values, value-of-nonemployment, search, structural-estimation, measured-ex-post, thread-4-smm, t4-thread4, thread-7-entry-anchor]
+    path: Infrastructure/references/literature/summaries/2018_hall-mueller_wage-dispersion-search-behavior.md
+    summary_path: Infrastructure/references/literature/summaries/2018_hall-mueller_wage-dispersion-search-behavior.md
+    source_url: https://www.journals.uchicago.edu/doi/abs/10.1086/697739
+    doi: 10.1086/697739
+    added_on: 2026-07-09
+    status: parsed
+    relevance_note: "Companion to Krueger-Mueller 2016 (same NJ survey data): identifies from actual acceptance decisions the distributions of offered wages (SD 0.24), NONWAGE job values (SD 0.34, larger than wages), job values (0.38), and personal productivity (0.43). Jobseekers frequently accept below their stated reservation wage; ~two-thirds of offer rejections are NONWAGE-motivated. Key for interpreting the model's calibrated reservation markups: large implied wage-multiples bundle nonwage job values and non-work option values (health, caregiving, benefits) -- and symmetrically, a pure wage fill moves only the wage argument of the job-value comparison, so entry responses run below wage-gap-closure arithmetic. UI-recipient unemployed sample; NO direct NILF measurement. JPE 126(4):1594-1637 (DOI validated). [unverified: mean flow value of nonwork not pinned]."
+
+  - id: 2003-grogger-time-limits-eitc-female-headed
+    title: "The Effects of Time Limits, the EITC, and Other Policy Changes on Welfare Use, Work, and Income among Female-Headed Families"
+    type: paper
+    topic_tags: [tier-1, eitc, welfare-reform, time-limits, extensive-margin, single-mothers, decomposition, measured-ex-post, thread-a, thread-7-entry-anchor]
+    path: Infrastructure/references/literature/summaries/2003_grogger_time-limits-eitc-female-headed-families.md
+    summary_path: Infrastructure/references/literature/summaries/2003_grogger_time-limits-eitc-female-headed-families.md
+    source_url: https://direct.mit.edu/rest/article-abstract/85/2/394/57401
+    doi: 10.1162/003465303765299891
+    added_on: 2026-07-09
+    status: parsed
+    relevance_note: "Canonical decomposition of the 1993-99 single-mother employment surge (NBER w8153 read in full): EITC explains 34 percent of the employment increase ($1,000 max-credit increase -> +3.6pp employment), business cycle 21 percent, welfare reforms the rest; policy+EITC+cycle jointly explain 71 percent. With Fang-Keane 2004: the wage-subsidy component ALONE of the closest macro-scale precedent moved single-mother employment ~3-4pp over ~6 years, in the most wage-responsive demographic on record, with a boom and welfare-reform sticks assisting. The per-dollar benchmark any 80-80 entry projection should be compared against. REStat 85(2):394-408 (DOI validated)."
+
+  - id: 2004-fang-keane-welfare-reform-single-mothers
+    title: "Assessing the Impact of Welfare Reform on Single Mothers"
+    type: paper
+    topic_tags: [tier-1, eitc, welfare-reform, work-requirements, time-limits, extensive-margin, single-mothers, decomposition, measured-ex-post, thread-a, thread-7-entry-anchor]
+    path: Infrastructure/references/literature/summaries/2004_fang-keane_welfare-reform-single-mothers.md
+    summary_path: Infrastructure/references/literature/summaries/2004_fang-keane_welfare-reform-single-mothers.md
+    source_url: https://www.brookings.edu/wp-content/uploads/2004/01/2004a_bpea_fang.pdf
+    doi: 10.1353/eca.2004.0015
+    added_on: 2026-07-09
+    status: parsed
+    relevance_note: "Brookings-hosted final PDF read directly; headline decomposition PINNED: single mothers' work participation rose 11.3pp from 1993 to 2002, attributed EITC 33 percent (~3.7pp), macroeconomy 25 percent, work requirements 17 percent, time limits 10 percent; welfare participation fell 23pp (work requirements 57 percent). Post-1996 the work rate rose only 74->79 percent -- most of the gain came in the 1993-96 EITC+boom window. Nearly one-quarter of welfare leavers did not start work. THE quantitative anchor for what a permanent several-thousand-dollar increase in the net return to work did at macro scale for the most responsive group. BPEA 2004(1):1-116 (DOI via Crossref)."
+
+  - id: 2013-maestas-mullen-strand-ssdi-work
+    title: "Does Disability Insurance Receipt Discourage Work? Using Examiner Assignment to Estimate Causal Effects of SSDI Receipt"
+    type: paper
+    topic_tags: [tier-1, ssdi, disability, work-capacity, target-pool, extensive-margin, measured-ex-post, thread-3-targetpool, thread-7-entry-anchor]
+    path: Infrastructure/references/literature/summaries/2013_maestas-mullen-strand_ssdi-discourage-work.md
+    summary_path: Infrastructure/references/literature/summaries/2013_maestas-mullen-strand_ssdi-discourage-work.md
+    source_url: https://www.aeaweb.org/articles?id=10.1257/aer.103.5.1797
+    doi: 10.1257/aer.103.5.1797
+    added_on: 2026-07-09
+    status: parsed
+    relevance_note: "The standard causal bound on disabled-pool work capacity: only ~23 percent of SSDI applicants are marginal (examiner-dependent), and for them employment would have been 28pp higher WITHOUT benefit receipt (0 for severe impairments, up to ~50pp for the least severe). Treatment is complete benefit denial -- far stronger than a wage subsidy stacking against SSDI's earnings-test benefit-loss risk. Caps the defensible entry-risk share of the model's ~9.7M disabled segment at a small fraction. AER 103(5):1797-1829 (DOI validated)."
+
+  - id: 2017-krueger-where-have-workers-gone
+    title: "Where Have All the Workers Gone? An Inquiry into the Decline of the U.S. Labor Force Participation Rate"
+    type: paper
+    topic_tags: [tier-1, prime-age, nilf, target-pool, disability, opioids, caregiving, retirement, pain, measured-ex-post, thread-3-targetpool, thread-7-entry-anchor]
+    path: Infrastructure/references/literature/summaries/2017_krueger_where-have-all-the-workers-gone.md
+    summary_path: Infrastructure/references/literature/summaries/2017_krueger_where-have-all-the-workers-gone.md
+    source_url: https://www.brookings.edu/wp-content/uploads/2017/09/1_krueger.pdf
+    doi: 10.1353/eca.2017.0012
+    added_on: 2026-07-09
+    status: parsed
+    relevance_note: "BPEA Fall 2017 conference PDF read directly. Composition evidence on the NILF pool the 80-80 draws from: ~half of NILF prime-age men may have a serious health condition barring work; 44-47 percent took pain medication the previous day (~2/3 prescription); 25-35 percent on SSDI and ~half may ever have applied; opioid-prescription growth accounts for ~0.6pp / ~20 percent of the male LFP decline 1999-2015 (the circulating '43 percent' is an earlier-draft figure, NOT in this version); 60 percent of NILF prime-age women cite home responsibilities and show no SWB evidence of eagerness to return; 2007-17 retirement-rate rise (2.2pp) nearly matches the LFP decline (2.8pp) and retirements are permanent exits; youth decline offset by schooling. Directly disciplines the entry-risk share of the 59M pool. BPEA 2017(2):1-87 (DOI via Crossref). [unverified: final published pagination not re-checked against conference draft]."
+
+  - id: 2007-fehr-goette-wages-high-field-experiment
+    title: "Do Workers Work More if Wages Are High? Evidence from a Randomized Field Experiment"
+    type: paper
+    topic_tags: [tier-1, intensive-margin, hours-elasticity, frisch, clean-wage-variation, no-phase-out, field-experiment, measured-ex-post, thread-a, thread-7-entry-anchor]
+    path: Infrastructure/references/literature/summaries/2007_fehr-goette_workers-work-more-wages-high.md
+    summary_path: Infrastructure/references/literature/summaries/2007_fehr-goette_workers-work-more-wages-high.md
+    source_url: https://www.aeaweb.org/articles?id=10.1257/aer.97.1.298
+    doi: 10.1257/aer.97.1.298
+    added_on: 2026-07-09
+    status: parsed
+    relevance_note: "The cleanest measured hours response to a salient, per-unit, NO-phase-out wage increase (randomized 25 percent commission raise, Zurich bike messengers; IZA DP 1002 read in full): Frisch elasticity of overall labor supply 1.12-1.25, of shifts worked 1.34-1.50; effort per shift -6 percent (loss-averse workers only). Directly stress-tests eps_int=0.05: the EITC hours null reflects the EITC's plateau/phase-out design, not a general hours non-response; for the 80-80's transparent 54-percent marginal-hour raise, 0.05 is a lower bound (hours constraints per Chetty 2012), not a central case -- the Chetty Hicksian intensive 0.33 is the better central anchor. Frisch/transitory caveat: upper bound for a permanent subsidy. AER 97(1):298-317 (DOI validated)."
+
+  - id: 2016-schmieder-vonwachter-bender-nonemployment-wages
+    title: "The Effect of Unemployment Benefits and Nonemployment Durations on Wages"
+    type: paper
+    topic_tags: [tier-1, reemployment-wages, nonemployment-duration, wage-scale, skill-depreciation, potential-wage-imputation, regression-discontinuity, measured-ex-post, thread-7-entry-anchor]
+    path: Infrastructure/references/literature/summaries/2016_schmieder-vonwachter-bender_nonemployment-duration-wages.md
+    summary_path: Infrastructure/references/literature/summaries/2016_schmieder-vonwachter-bender_nonemployment-duration-wages.md
+    source_url: https://www.aeaweb.org/articles?id=10.1257/aer.20141566
+    doi: 10.1257/aer.20141566
+    added_on: 2026-07-09
+    status: parsed
+    relevance_note: "Causal anchor for the wage-scale sanity check (NBER w19772 read directly): each month of nonemployment reduces reemployment WAGE OFFERS by 0.8 percent (German admin data, age-discontinuity RD/IV) -- offers deteriorate with time out, ~17-18 percent at 24 months, compounding for the multi-year NILF stock. Implies the model's all-earner (44 percent salaried) MPL imputation overstates the long-nonemployed pool's opportunities; with Krueger-Mueller's accepted-wage ratio ~0.90, entrants take entry-priced jobs 10-30 percent below incumbent-structure imputations. Cuts BOTH ways: more of the pool is below the $16.80 target (larger eligible share) but on lower private wages (bigger fill per entrant, weaker net-gain arithmetic at imputed wages). AER 106(3):739-777 (DOI validated). [unverified: US-level analog not cataloged this pass]."

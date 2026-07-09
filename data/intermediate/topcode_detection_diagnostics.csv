@@ -1,0 +1,3 @@
+year,topcode_source_chr,n_nonmissing_int,n_at_topcode_int,mass_share_num,has_topcode_bool,resolved_topcode_value_num,expected_legacy_topcode_num,detected_matches_legacy_bool
+2025,empirical_mass_point,68733,264,0.0038409497621229977,TRUE,13258.23,NA,NA
+2026,empirical_mass_point,47782,249,0.005211167385207819,TRUE,10838.55,NA,NA

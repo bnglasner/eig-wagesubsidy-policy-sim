@@ -8,7 +8,7 @@ annual-income / assumed-hours wage proxy.
 
 Architecture (two-source design)
 ---------------------------------
-  CPS ORG (org_workers_{year}.parquet)
+  CPS ORG (data/intermediate/cps_org_panel — in-repo EIG-Wage-Figure elements)
     └─ Who is eligible and at what wage rate
   PolicyEngine pre-computed schedules (individual_schedules/)
     └─ How taxes and transfers respond to the subsidy
@@ -52,6 +52,7 @@ data/processed/hourly_workers.parquet
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 import warnings
 from pathlib import Path
@@ -76,6 +77,13 @@ PATH_DATA           = _cfg_mod.PATH_DATA
 FEDERAL_MIN_WAGE = cfg["ws_base_wage"]    # 7.25
 SUBSIDY_PCT      = cfg["ws_subsidy_pct"]  # 0.80
 TARGET_PCT       = cfg["ws_target_pct"]   # 0.80
+
+# EIG low-end wage clean: nominal approximation of the EPI $0.50 (1989 PCE)
+# lower bound. Nominal hourly wages below this are treated as invalid so
+# near-zero divide artifacts do not drag the weighted median. The $200 upper
+# bound and PCE deflation are out of scope for this nominal subsidy path.
+# See Infrastructure/specs/2026-07-07_org-wage-internalization.md.
+NOMINAL_HOURLY_FLOOR = 0.50
 
 # ── WKSTAT → annual weeks multiplier ─────────────────────────────────────────
 # Source: IPUMS DDI codebook for extract #304 (confirmed March 2026).
@@ -143,21 +151,111 @@ def _educ_group(code: int) -> str:
     return _EDUC_MAP.get(int(code), "Unknown")
 
 
+def _age_bin(a: int) -> str:
+    a = int(a)
+    if a < 25:
+        return "16-24"
+    if a < 35:
+        return "25-34"
+    if a < 45:
+        return "35-44"
+    if a < 55:
+        return "45-54"
+    if a < 65:
+        return "55-64"
+    return "65+"
+
+
+def _race_ethnicity(race: float, hisp: float) -> str:
+    if pd.notna(hisp) and hisp > 0:
+        return "Hispanic"
+    r = int(race) if pd.notna(race) else -1
+    if r == 100:
+        return "White, non-Hispanic"
+    if r == 200:
+        return "Black, non-Hispanic"
+    return "Other, non-Hispanic"
+
+
+def _load_and_adapt_org_panel() -> pd.DataFrame:
+    """Load the in-repo vendored CPS ORG panel (EIG-Wage-Figure 01b output) and
+    adapt its EIG-native columns to the internal names the rest of this stage
+    uses. Replaces the retired 00_export_org_data.py and the defunct
+    real-wages-generations-ipums cross-repo dependency; the wage value and the
+    sample gate are the EIG repo's own (every panel row already passed the EPI
+    SWA gate in 01b). See Infrastructure/specs/2026-07-07_org-wage-internalization.md.
+    """
+    panel_dir = PATH_DATA / "intermediate" / "cps_org_panel"
+    parts = sorted(panel_dir.glob("year=*/part-0.parquet"))
+    if not parts:
+        raise FileNotFoundError(
+            f"No cps_org_panel partitions under {panel_dir}.\n"
+            "Run the in-repo R ingestion stage first (see code/00_ingest/):\n"
+            "  Rscript code/00_ingest/00a_download-ipums-cps.R\n"
+            "  Rscript code/00_ingest/01a_load-ipums-cps.R\n"
+            "  Rscript code/00_ingest/01b_build-org-panel.R"
+        )
+    raw = pd.concat([pd.read_parquet(p) for p in parts], ignore_index=True)
+
+    paidhour = pd.to_numeric(raw["PAIDHOUR"], errors="coerce")
+    hours = pd.to_numeric(raw["uhrsworkorg_used_num"], errors="coerce")
+    hw_canon = pd.to_numeric(raw["HOURWAGE_CANON_NUM"], errors="coerce")
+    weekly = pd.to_numeric(raw["nominal_weekly_wage_num"], errors="coerce")
+
+    # EIG nominal hourly wage (02a metric routing): hourly-paid workers use
+    # HOURWAGE_CANON_NUM; salaried workers use weekly earnings / usual weekly
+    # hours (01b's RF-imputed primary hours). Deflation is out of scope.
+    salaried_hourly = weekly / hours.where(hours > 0)
+    nominal_hourly = pd.Series(
+        np.where(paidhour == 2, hw_canon, salaried_hourly), index=raw.index
+    )
+    # EIG low-end clean: sub-floor nominal wages -> invalid (see NOMINAL_HOURLY_FLOOR).
+    nominal_hourly = nominal_hourly.where(nominal_hourly >= NOMINAL_HOURLY_FLOOR)
+    valid = nominal_hourly.notna() & np.isfinite(nominal_hourly) & (nominal_hourly > 0)
+
+    def _int(col: str) -> "pd.Series":
+        return pd.to_numeric(raw[col], errors="coerce").astype("int64")
+
+    out = pd.DataFrame(
+        {
+            "year": _int("YEAR"),
+            "month": _int("MONTH"),
+            "earnwt": pd.to_numeric(raw["EARNWT"], errors="coerce"),
+            "age": _int("AGE"),
+            "statefip": _int("STATEFIP"),
+            "marst": _int("MARST"),
+            "nchild": _int("NCHILD"),
+            "wkstat": _int("WKSTAT"),
+            "relate": _int("RELATE"),
+            "educ": _int("EDUC"),
+            "hours_epi": hours,
+            "hourly_wage_epi": nominal_hourly,
+            "hourly_wage_epi_valid": valid,
+            "paid_hourly": (paidhour == 2),
+            # Every cps_org_panel row already passed the EPI SWA sample gate in 01b.
+            "epi_sample_eligible": True,
+            "weekly_earn_epi": weekly,
+        }
+    )
+    out["sex_label"] = np.where(
+        pd.to_numeric(raw["SEX"], errors="coerce") == 1, "Male", "Female"
+    )
+    race = pd.to_numeric(raw["RACE"], errors="coerce")
+    hisp = pd.to_numeric(raw["HISPAN"], errors="coerce")
+    out["race_ethnicity"] = [_race_ethnicity(r, h) for r, h in zip(race, hisp)]
+    out["age_bin"] = out["age"].apply(_age_bin)
+    return out
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main() -> None:
-    # ── 1. Locate input file ──────────────────────────────────────────────────
-    ext_dir = PATH_DATA / "external"
-    candidates = sorted(ext_dir.glob("org_workers_*.parquet"))
-    if not candidates:
-        raise FileNotFoundError(
-            f"No org_workers_*.parquet found in {ext_dir}.\n"
-            "Run 00_export_org_data.py first."
-        )
-    org_path = candidates[-1]   # most recent year
-    print(f"01a | Reading ORG workers from: {org_path.name}")
-
-    org = pd.read_parquet(org_path)
+    # ── 1. Load in-repo CPS ORG panel (EIG-Wage-Figure elements) ──────────────
+    # Reads data/intermediate/cps_org_panel (vendored R ingestion, code/00_ingest/)
+    # and adapts EIG-native columns to this stage's internal names. Replaces the
+    # retired 00_export_org_data.py + the defunct real-wages-generations-ipums dep.
+    org = _load_and_adapt_org_panel()
+    print("01a | Loaded in-repo CPS ORG panel (data/intermediate/cps_org_panel)")
     print(f"  Total rows: {len(org):,}  |  years: {sorted(org['year'].unique())}")
 
     # ── 2. Dynamic median wage and TARGET_WAGE ────────────────────────────────
@@ -176,6 +274,20 @@ def main() -> None:
     TARGET_WAGE = round(median_wage * TARGET_PCT, 2)
     print(f"  Weighted median wage (paid-hourly): ${median_wage:.2f}/hr")
     print(f"  TARGET_WAGE (80% of median):        ${TARGET_WAGE:.2f}/hr")
+
+    # Persist the dynamically-computed target so downstream stages evaluate the
+    # SAME policy threshold. 01h reads this (falling back to cfg["ws_target_wage"])
+    # instead of the static config value, keeping the employed and non-employed
+    # halves on one threshold when the window median shifts. (Review MR-003.)
+    target_meta = {
+        "target_wage": TARGET_WAGE,
+        "median_wage": round(float(median_wage), 4),
+        "target_pct": TARGET_PCT,
+        "n_source_rows": int(len(ph)),
+    }
+    (PATH_DATA_PROCESSED / "org_target_wage.json").write_text(
+        json.dumps(target_meta, indent=2)
+    )
 
     # ── 3. Eligibility filter ─────────────────────────────────────────────────
     # Apply federal minimum wage floor first
@@ -256,8 +368,13 @@ def main() -> None:
     # (Multiple-job workers: each job is treated independently per policy design;
     # CPS ORG captures the primary job, so we cap hours_epi at the per-job limit.)
     SUBSIDY_HRS_CAP = cfg.get("ws_subsidy_hours_cap", 40)
+    # CE-001: use the SAME fallback-repaired hours basis as annual_hours so
+    # workers whose raw hours were missing/zero (annual_hours defaulted above)
+    # are not silently dropped from subsidy totals via NaN subsidy_hours.
+    default_weekly = cfg.get("ws_hours_per_year", 2000) / 52.0
+    hours_for_subsidy = eligible["hours_epi"].where(~fallback_hours_mask, default_weekly)
     eligible["subsidy_hours"] = (
-        np.minimum(eligible["hours_epi"], SUBSIDY_HRS_CAP)
+        np.minimum(hours_for_subsidy, SUBSIDY_HRS_CAP)
         * eligible["weeks_multiplier"]
     )
 

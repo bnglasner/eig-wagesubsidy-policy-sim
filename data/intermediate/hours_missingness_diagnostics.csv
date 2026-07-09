@@ -1,0 +1,5 @@
+year,paidhour_int,reason_chr,imputed_bool,n_int
+2025,1,vary,TRUE,1121
+2025,2,vary,TRUE,499
+2026,1,vary,TRUE,713
+2026,2,vary,TRUE,357

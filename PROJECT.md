@@ -14,7 +14,7 @@ The 80-80 Rule is a direct-to-worker transfer that fills 80 percent of the gap b
 
 | Data Source | Type | Owner/Location | Time Coverage | Access Notes |
 |---|---|---|---|---|
-| CPS Outgoing Rotation Group (ORG) | Public microdata (IPUMS) | Companion repo `real-wages-generations-ipums`; ingested to `data/external/` | Pooled 2025–2026 | Wage-rate identification. Uses EPI-constructed hourly wages and ORG earnings weights. |
+| CPS Outgoing Rotation Group (ORG) | Public microdata (IPUMS-CPS, `*2` era) | **Internalized in-repo** (2026-07-07) via the vendored EIG-Wage-Figure build in `code/00_ingest/` (upstream `EIG-Wage-Figure-Explain-Everything` @ `33bbcb7`); raw → `data/raw/cps_org/`, gated panel → `data/intermediate/cps_org_panel/`. No longer depends on the sibling repo at run time (`EIG_ORG_RAW_DIR` optional override for the companion comparison). | Most recent 12 complete monthly samples (currently 2025m5–2026m5) | Wage-rate identification. EIG SWA sample gate + seeded `ranger` RF hours imputation. `EARNWT` (ORG earnings weight) for employed-earner wage/eligibility/cost; `WTFINL` for the non-employed pool (`01h`). See `docs/org_ingestion_internalized.md` and `Infrastructure/specs/2026-07-07_org-wage-internalization.md`. |
 | CPS ASEC | Public microdata (IPUMS API) | `data/external/` | 2025 vintage | Spouse income and child ages for matched households. The 2025 vintage changed RELATE codes: spouse is 202, children are 301. |
 | PolicyEngine-US | Microsimulation model (Python package) | Pre-computed household income schedules in `output/data/intermediate_results/` | 2026 policy year | Tax and safety-net interactions. `household_net_income` excludes ACA Premium Tax Credits and Medicaid by default; corrected in post-processing. |
 

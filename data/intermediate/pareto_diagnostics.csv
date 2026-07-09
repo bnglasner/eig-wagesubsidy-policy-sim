@@ -1,0 +1,5 @@
+year,sex,n_in_cell_int,n_above_threshold_int,fitted_alpha_num,n_imputed_int,n_left_at_topcode_int,fit_status
+2025,1,35222,0,NA,0,182,skipped_post_pareto_max_year
+2025,2,33477,0,NA,0,82,skipped_post_pareto_max_year
+2026,1,24124,0,NA,0,169,skipped_post_pareto_max_year
+2026,2,23645,0,NA,0,80,skipped_post_pareto_max_year
