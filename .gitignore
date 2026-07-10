@@ -88,3 +88,9 @@ policyengine_us_cache/
 !/output/data/intermediate_results/matched_schedules/*.parquet
 !/output/data/intermediate_results/individual_schedules
 !/output/data/intermediate_results/individual_schedules/*.parquet
+
+# Ephemeral agent worktrees (created under .claude/worktrees/ by tooling)
+.claude/worktrees/
+
+# Microsoft Office lock/owner temp files
+~$*
