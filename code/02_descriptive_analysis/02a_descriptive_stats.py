@@ -211,7 +211,12 @@ def _agg_by_group(
         valid_mask = workers[col].isin(ordered_labels)
     else:
         valid_mask = workers[col].notna()
-    workers = workers[valid_mask]
+    # Re-base to a positional 0..m-1 index so that `net_income_delta` (filtered
+    # positionally on the next line) stays aligned with `grp.index` inside the
+    # loop even when `valid_mask` drops rows. Without the reset, a dropped row
+    # makes `grp.index` carry original labels that overrun the length-m array —
+    # an IndexError, or a silent misalignment pulling the wrong worker's delta.
+    workers = workers[valid_mask].reset_index(drop=True)
     net_income_delta = net_income_delta[valid_mask.values]
     rows = []
     groups = workers.groupby(col, observed=True)
