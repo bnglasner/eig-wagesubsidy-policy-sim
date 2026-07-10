@@ -676,6 +676,88 @@ fig15_hours_margin <- function() {
 }
 
 # ===========================================================================
+# FIGURE A1 - Hourly-wage distribution of the paid-hourly workforce
+# ===========================================================================
+figA1_wage_distribution <- function() {
+  # Weighted histogram of the paid-hourly workforce (the eligibility denominator).
+  # Target wage is read at runtime from the pipeline JSON -- never hard-coded.
+  tw <- jsonlite::fromJSON(file.path(ROOT, "data", "processed", "org_target_wage.json"))
+  target <- tw$target_wage      # 16.80
+  med <- tw$median_wage         # 21.00
+
+  d_full <- as.data.frame(pop("hourly_wage_distribution"))
+  total_M <- sum(d_full$weight) / 1e6                                   # 73.27M
+  below_pct <- sum(d_full$weight[d_full$hourly_wage < target]) /
+    sum(d_full$weight) * 100                                           # 21.7%
+
+  # Display window: focus on the mass of the distribution ($7-$40). A thin
+  # upper tail (~9.5% of workers) earns more; disclosed in the note rather than
+  # compressing the informative range (Tufte: quote data in context).
+  x_cap <- 40
+  above_cap_pct <- sum(d_full$weight[d_full$hourly_wage > x_cap]) /
+    sum(d_full$weight) * 100
+  d <- d_full[d_full$hourly_wage <= x_cap, ]
+  plotted_M <- sum(d$weight) / 1e6
+
+  # Two encoded hues + neutral: gold = below target (eligible), green = at/above.
+  d$eligible <- ifelse(d$hourly_wage < target,
+                       "Below target (eligible)", "At or above target")
+
+  y_top <- 6.6   # headroom for the target label above the tallest bin (~6.0M)
+
+  p <- ggplot(d, aes(x = hourly_wage, weight = weight / 1e6, fill = eligible)) +
+    # Whole-dollar bins (wages heap on round dollars); boundary = 0 puts
+    # $8, $9, ... on bin edges.
+    geom_histogram(binwidth = 1, boundary = 0, color = "white",
+                   linewidth = 0.15) +
+    geom_vline(xintercept = target, color = COL[["eig_teal_900"]],
+               linetype = "dashed", linewidth = 0.5) +
+    annotate("text", x = target, y = y_top,
+             label = sprintf("$%.2f\ntarget wage", target),
+             hjust = 1.08, vjust = 1, size = 2.8, lineheight = 0.9,
+             fontface = "bold", color = COL[["eig_teal_900"]],
+             family = tokens$EIG_FONT_BODY_PRIMARY) +
+    # Direct region labels in lieu of a legend.
+    annotate("text", x = 10.5, y = 5.4,
+             label = sprintf("Below target\n(eligible): %.0f%%", below_pct),
+             size = 2.7, lineheight = 0.9, color = COL[["eig_gold_600"]],
+             fontface = "bold", family = tokens$EIG_FONT_BODY_PRIMARY) +
+    annotate("text", x = 30, y = 5.4,
+             label = "At or above target",
+             size = 2.7, color = COL[["eig_green_700"]],
+             fontface = "bold", family = tokens$EIG_FONT_BODY_PRIMARY) +
+    scale_fill_manual(
+      values = c("Below target (eligible)" = COL[["eig_gold_600"]],
+                 "At or above target" = COL[["eig_green_700"]]),
+      guide = "none") +
+    scale_x_continuous(labels = scales::label_dollar(accuracy = 1),
+                       breaks = seq(10, 40, by = 10),
+                       expand = expansion(mult = c(0.01, 0.02))) +
+    scale_y_continuous(limits = c(0, y_top),
+                       expand = expansion(mult = c(0, 0))) +
+    coord_cartesian(clip = "off") +
+    labs(
+      title = "Figure A1. About one in five paid-hourly workers\nearn below the target.",
+      subtitle = sprintf("Median hourly wage $%.2f; %.1f%% earn below the $%.2f target.",
+                         med, below_pct, target),
+      x = "Hourly wage", y = "Workers (millions)",
+      caption = eig_caption(
+        note = sprintf(paste0("Denominator is the %.1fM paid-hourly workforce (the eligibility base). The dashed line ",
+                              "marks\nthe $%.2f target wage. Whole-dollar bins; a thin tail of %.1f%% earning above $%d ",
+                              "is not shown."),
+                      total_M, target, above_cap_pct, x_cap)
+      )
+    ) +
+    eig_theme_ggplot(tokens = tokens, base_size = 10)
+
+  eig_save_fig(p, "figA1_wage_distribution",
+               width = 6.8, height = 3.8, root = ROOT)
+
+  invisible(list(target = target, total_M = total_M,
+                 plotted_M = plotted_M, below_pct = below_pct))
+}
+
+# ===========================================================================
 # Driver
 # ===========================================================================
 cat("Building EIG supporting figure suite (Batch 2)\n")
@@ -692,8 +774,11 @@ fig12_reservation_wage()
 fig13_pool_wage_distribution()
 fig14_mpl_uncertainty()
 fig15_hours_margin()
+a1 <- figA1_wage_distribution()
 
 cat("\nFig 11 schedule file used:", f11, "\n")
+cat(sprintf("Fig A1  target=$%.2f (from JSON) | workforce=%.2fM | plotted<=$40=%.2fM | below-target=%.1f%%\n",
+            a1$target, a1$total_M, a1$plotted_M, a1$below_pct))
 cat(sprintf("Fig 11b anchors  H=1000: no=$%.0f sub=$%.0f | H=2000: no=$%.0f sub=$%.0f | H=3000: no=$%.0f sub=$%.0f | crossover=%.0f hrs (%.1f hr/wk)\n",
             anch$a1000["no"], anch$a1000["sub"], anch$a2000["no"], anch$a2000["sub"],
             anch$a3000["no"], anch$a3000["sub"], anch$crossover_hours, anch$crossover_hours / 50))

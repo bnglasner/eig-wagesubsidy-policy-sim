@@ -101,6 +101,19 @@ def main() -> None:
     print(f"02e | Wrote {out_path} | {len(out)} group rows | overall take-up {overall:.1f}% "
           f"(recipients {total_recip/1e6:.2f}M / base {base['earnwt'].sum()/n_months/1e6:.2f}M)")
 
+    # Per-worker hourly-wage distribution of the paid-hourly workforce (the same
+    # base as the take-up denominator, Table A1 row 3). One row per worker with a
+    # period-average weight; feeds the Figure A1 histogram. The target line is
+    # read separately from org_target_wage.json — never hard-coded in the figure.
+    dist = pd.DataFrame({
+        "hourly_wage": base["employer_wage"].to_numpy(),
+        "weight": (base["earnwt"] / n_months).to_numpy(),
+    })
+    dist_path = out_dir / "hourly_wage_distribution.parquet"
+    dist.to_parquet(dist_path, index=False)
+    print(f"02e | Wrote {dist_path} | {len(dist):,} paid-hourly workers "
+          f"(weighted {dist['weight'].sum()/1e6:.2f}M; target from org_target_wage.json = ${target:.2f})")
+
 
 if __name__ == "__main__":
     main()

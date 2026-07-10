@@ -343,6 +343,12 @@ Table A1 walks the sample down from the broad hourly workforce to the eligible p
 *Note: Each row is a period-average weighted headcount (`EARNWT`, averaged over the 12 monthly samples). The paid-hourly step removes salaried workers whose weekly pay implies an hourly-equivalent wage; the self-employed and workers without a measurable hourly wage are excluded throughout. The eligible population is 21.7 percent of the 73.3 million paid-hourly workforce (row 3). The $16.80 target is 80 percent of the $21.00 paid-hourly median; because reported hourly wages cluster on round-dollar values, the eligible count is sensitive to the exact target.*
 *Source: Economic Innovation Group 80-80 wage subsidy simulation, 2026; Current Population Survey Outgoing Rotation Group, May 2025–May 2026, via IPUMS-CPS.*
 
+Figure A1 shows that same population as a distribution. Reported hourly wages heap on round-dollar values, and the $16.80 target sits on a dense stretch of the distribution—so the eligible count is sensitive to exactly where the target lands.
+
+**Figure A1. About one in five paid-hourly workers earn below the target.**
+
+![Distribution of hourly earnings among the paid-hourly workforce, with a dashed line marking the $16.80 target wage](../output/figures/main/figA1_wage_distribution.png)
+
 **Taxes and transfers.** Every dollar of earnings and subsidy is run through pre-computed household net-income schedules from PolicyEngine-US (2026 policy year): federal and state income taxes, payroll taxes, EITC, Child Tax Credit, SNAP, Medicaid/CHIP, ACA premium tax credits, TANF, SSI, and smaller programs, keyed by family type and state. Net income includes the ACA and Medicaid values that PolicyEngine excludes by default. One deliberate design assumption runs through everything: **the subsidy is modeled as taxable income that counts against means-tested benefit eligibility.** This is the conservative reading; if Congress excluded the subsidy from means-tests (as it does the EITC), net costs would rise and the benefit-cliff interactions in Section 7 would shrink. We chose the conservative treatment and report its consequences rather than assuming them away.
 
 ## 2. Two behavioral models, on purpose
