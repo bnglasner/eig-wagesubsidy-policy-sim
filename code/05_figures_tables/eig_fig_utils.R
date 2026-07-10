@@ -109,13 +109,44 @@ eig_caption <- function(source = EIG_SOURCE_LINE, note = NULL) {
 }
 
 # ---------------------------------------------------------------------------
-# Save helper: writes BOTH PNG (300 dpi) and SVG to output/figures/main/
+# Slide-figure spec loader
+# ---------------------------------------------------------------------------
+# Single source of truth for the slide-native companion figures. Returns the
+# named `figures` list from code/05_figures_tables/slide_figures.json.
+# See Infrastructure/specs/2026-07-09_slide-native-figures.md.
+eig_load_slide_spec <- function(root = NULL) {
+  if (is.null(root)) root <- eig_find_repo_root()
+  spec_path <- file.path(root, "code", "05_figures_tables", "slide_figures.json")
+  if (!file.exists(spec_path)) {
+    stop("Slide-figure spec not found: ", spec_path, call. = FALSE)
+  }
+  jsonlite::fromJSON(spec_path, simplifyVector = FALSE)$figures
+}
+
+# Return list(w, h) export dimensions for a slide figure from the spec (cached
+# in .eig_slide_spec_cache on first use).
+.eig_slide_spec_cache <- NULL
+eig_slide_dims <- function(slug, root = NULL) {
+  if (is.null(.eig_slide_spec_cache)) {
+    .eig_slide_spec_cache <<- eig_load_slide_spec(root)
+  }
+  s <- .eig_slide_spec_cache[[slug]]
+  if (is.null(s)) stop("No slide spec entry for '", slug, "'", call. = FALSE)
+  list(w = s$export_w, h = s$export_h)
+}
+
+# ---------------------------------------------------------------------------
+# Save helper: writes BOTH PNG (300 dpi) and SVG.
+#   target = "main"  -> output/figures/main/   (document figures; default)
+#   target = "slide" -> output/figures/slides/ (slide-native companions)
 # ---------------------------------------------------------------------------
 eig_save_fig <- function(plot, slug,
                          width = 6.5, height = 3.5,
-                         root = NULL) {
+                         root = NULL, target = c("main", "slide")) {
+  target <- match.arg(target)
   if (is.null(root)) root <- eig_find_repo_root()
-  outdir <- file.path(root, "output", "figures", "main")
+  subdir <- c(main = "main", slide = "slides")[[target]]
+  outdir <- file.path(root, "output", "figures", subdir)
   dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
 
   png_path <- file.path(outdir, paste0(slug, ".png"))

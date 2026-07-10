@@ -1,0 +1,60 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='828.00pt' height='360.00pt' viewBox='0 0 828.00 360.00'>
+<g class='svglite'>
+<defs>
+  <style type='text/css'><![CDATA[
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
+      fill: none;
+      stroke: #000000;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+    }
+    .svglite g.glyphgroup path {
+      fill: inherit;
+      stroke: none;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: #FFFFFF;'/>
+<defs>
+  <clipPath id='cpMC4wMHw4MjguMDB8MC4wMHwzNjAuMDA='>
+    <rect x='0.00' y='0.00' width='828.00' height='360.00' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHw4MjguMDB8MC4wMHwzNjAuMDA=)'>
+<rect x='0.000000000000064' y='0.00' width='828.00' height='360.00' style='stroke-width: 1.65; stroke: none; fill: #FFFFFF;' />
+</g>
+<defs>
+  <clipPath id='cpMTYxLjAxfDgxOS41M3w4LjQ3fDMxMC40Nw=='>
+    <rect x='161.01' y='8.47' width='658.52' height='302.00' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMTYxLjAxfDgxOS41M3w4LjQ3fDMxMC40Nw==)'>
+<rect x='161.01' y='8.47' width='658.52' height='302.00' style='stroke-width: 1.65; stroke: none; fill: #FFFFFF;' />
+<rect x='161.01' y='101.22' width='302.23' height='44.58' style='stroke-width: 1.65; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #19644D;' />
+<rect x='161.01' y='29.32' width='577.65' height='44.58' style='stroke-width: 1.65; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #19644D;' />
+<rect x='161.01' y='173.13' width='20.72' height='44.58' style='stroke-width: 1.65; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #19644D;' />
+<rect x='161.01' y='245.03' width='9.75' height='44.58' style='stroke-width: 1.65; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #19644D;' />
+<text x='471.63' y='129.30' style='font-size: 16.22px; font-family: "Open Sans";' textLength='55.89px' lengthAdjust='spacingAndGlyphs'>0.496M</text>
+<text x='747.04' y='57.40' style='font-size: 16.22px; font-family: "Open Sans";' textLength='55.89px' lengthAdjust='spacingAndGlyphs'>0.948M</text>
+<text x='190.11' y='201.20' style='font-size: 16.22px; font-family: "Open Sans";' textLength='55.89px' lengthAdjust='spacingAndGlyphs'>0.034M</text>
+<text x='179.14' y='273.11' style='font-size: 16.22px; font-family: "Open Sans";' textLength='55.89px' lengthAdjust='spacingAndGlyphs'>0.016M</text>
+</g>
+<g clip-path='url(#cpMC4wMHw4MjguMDB8MC4wMHwzNjAuMDA=)'>
+<text x='153.39' y='272.18' text-anchor='end' style='font-size: 13.60px; font-family: "Open Sans";' textLength='45.83px' lengthAdjust='spacingAndGlyphs'>Retired</text>
+<text x='153.39' y='200.27' text-anchor='end' style='font-size: 13.60px; font-family: "Open Sans";' textLength='55.03px' lengthAdjust='spacingAndGlyphs'>Disabled</text>
+<text x='153.39' y='128.37' text-anchor='end' style='font-size: 13.60px; font-family: "Open Sans";' textLength='81.16px' lengthAdjust='spacingAndGlyphs'>Unemployed</text>
+<text x='153.39' y='56.46' text-anchor='end' style='font-size: 13.60px; font-family: "Open Sans";' textLength='144.92px' lengthAdjust='spacingAndGlyphs'>Other non-participants</text>
+<text x='161.01' y='327.79' text-anchor='middle' style='font-size: 13.60px; font-family: "Open Sans";' textLength='39.09px' lengthAdjust='spacingAndGlyphs'>0.00M</text>
+<text x='313.35' y='327.79' text-anchor='middle' style='font-size: 13.60px; font-family: "Open Sans";' textLength='39.09px' lengthAdjust='spacingAndGlyphs'>0.25M</text>
+<text x='465.68' y='327.79' text-anchor='middle' style='font-size: 13.60px; font-family: "Open Sans";' textLength='39.09px' lengthAdjust='spacingAndGlyphs'>0.50M</text>
+<text x='618.01' y='327.79' text-anchor='middle' style='font-size: 13.60px; font-family: "Open Sans";' textLength='39.09px' lengthAdjust='spacingAndGlyphs'>0.75M</text>
+<text x='770.35' y='327.79' text-anchor='middle' style='font-size: 13.60px; font-family: "Open Sans";' textLength='39.09px' lengthAdjust='spacingAndGlyphs'>1.00M</text>
+<text x='490.27' y='347.43' text-anchor='middle' style='font-size: 17.00px; font-family: "Open Sans";' textLength='211.69px' lengthAdjust='spacingAndGlyphs'>Induced entrants (millions)</text>
+</g>
+</g>
+</svg>

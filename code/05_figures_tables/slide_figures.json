@@ -1,0 +1,132 @@
+{
+  "_doc": "Single source of truth for slide-native companion figures. R (05c/05d) reads layout + export dims to build output/figures/slides/. The deck generator reads headline/annotation/source/bullets. See Infrastructure/specs/2026-07-09_slide-native-figures.md.",
+  "_source_default": "Source: Economic Innovation Group 80-80 wage subsidy simulation, 2026.",
+  "figures": {
+    "fig01_subsidy_schedule": {
+      "layout": "wide", "export_w": 11.5, "export_h": 5.0,
+      "section": "A quick refresher",
+      "headline": "The subsidy fills 80% of the gap to a $16.80 target — in every paycheck.",
+      "annotation": "Target = 80% of the $21.00 paid-hourly median; $7.25 is the lowest creditable base wage."
+    },
+    "fig02_cost_waterfall": {
+      "layout": "wide", "export_w": 11.5, "export_h": 5.0,
+      "section": "What does it cost?",
+      "headline": "Taxes and safety-net savings cut the cost from $56B gross to $45B net.",
+      "annotation": "Recaptured taxes and SNAP/Medicaid savings, partly offset by higher ACA premium credits."
+    },
+    "fig13_cost_band": {
+      "layout": "wide", "export_w": 11.5, "export_h": 5.0,
+      "section": "What does it cost?",
+      "headline": "Only wholesale wage renegotiation escapes the $45–48B net range.",
+      "annotation": "Static, reduced-form, and structural models all cluster in the $45–48B net range."
+    },
+    "fig03_takeup_by_group": {
+      "layout": "twocol", "export_w": 8.2, "export_h": 6.2,
+      "section": "Who gets the money?",
+      "headline": "It reaches deepest among women, the young, and the least credentialed.",
+      "annotation": "Dashed line: overall take-up, 21.7% of the paid-hourly workforce.",
+      "bullets": [
+        "Women: 26.2% take-up vs. 17.2% for men; women are 60.5% of recipients.",
+        "Ages 16–24: 43.0% qualify — the highest take-up of any group.",
+        "Less than high school: 37.4% vs. 6.8% with a graduate degree.",
+        "Single parents: 23.5% qualify, above married parents (13.5%)."
+      ]
+    },
+    "fig04_subsidy_by_wage": {
+      "layout": "wide", "export_w": 11.5, "export_h": 5.0,
+      "section": "Who gets the money?",
+      "headline": "The lowest-wage workers receive the largest checks — by construction.",
+      "annotation": "Average annual subsidy runs from $10,281 at $7.25–9 down to $2,206 at $13–16.80."
+    },
+    "fig05_avg_subsidy_by_state": {
+      "layout": "twocol", "export_w": 7.0, "export_h": 5.0,
+      "section": "Who gets the money?",
+      "headline": "Because the target is national, money flows to lagging labor markets.",
+      "annotation": "Average annual subsidy per eligible worker, by state.",
+      "bullets": [
+        "Louisiana $4,981 and Mississippi $4,990 per eligible worker.",
+        "California $2,392 — less than half.",
+        "Louisiana: 317K eligible; West Virginia: 105K averaging $4,229.",
+        "No commission picks winners — the formula finds distressed places."
+      ]
+    },
+    "fig06_reservation_wage": {
+      "layout": "wide", "export_w": 11.5, "export_h": 5.0,
+      "section": "Does it pull people into work?",
+      "headline": "The subsidy exists to clear a worker's entry threshold.",
+      "annotation": "The employer's offer alone falls short; the subsidy lifts total pay over the worker's reservation wage."
+    },
+    "fig07_entry_band_by_cell": {
+      "layout": "wide", "export_w": 11.5, "export_h": 5.0,
+      "section": "Does it pull people into work?",
+      "headline": "Entry by group, benchmarked against the closest real-world precedents.",
+      "annotation": "1.49M central (floor 1.02M, high 3.81M) — between Paycheck Plus and the Self-Sufficiency Project."
+    },
+    "fig07b_entrants_by_status": {
+      "layout": "wide", "export_w": 11.5, "export_h": 5.0,
+      "section": "Does it pull people into work?",
+      "headline": "The entrants are mostly job-seekers — not the disabled or retired.",
+      "annotation": "About a third are unemployed searchers; the disabled and retired are ~3% of entrants."
+    },
+    "fig08_pool_wage_distribution": {
+      "layout": "wide", "export_w": 11.5, "export_h": 5.0,
+      "section": "Does it pull people into work?",
+      "headline": "Most non-workers could still command offers above the target.",
+      "annotation": "47.8% of the pool draws offers below $16.80, vs. 21.7% of paid-hourly workers."
+    },
+    "fig09_firm_capture": {
+      "layout": "wide", "export_w": 11.5, "export_h": 5.0,
+      "section": "Is it worth it?",
+      "headline": "Employers keep about 3% of the subsidy under realistic wage stickiness.",
+      "annotation": "No more than ~4% across bargaining assumptions; the $7.25 floor caps how far wages can fall."
+    },
+    "fig10_cost_per_job": {
+      "layout": "wide", "export_w": 11.5, "export_h": 5.0,
+      "section": "Is it worth it?",
+      "headline": "Cost per new job undercuts the job-creation policies we already run.",
+      "annotation": "~$5,300 marginal; ~$32K fully loaded vs. $154K+ Buy American and ~$900K steel tariffs."
+    },
+    "fig11_benefit_cliff": {
+      "layout": "wide", "export_w": 11.5, "export_h": 5.0,
+      "section": "The safety-net clawback",
+      "headline": "The subsidy has no cliff of its own — but it inherits everyone else's.",
+      "annotation": "Net income climbs with earnings, then drops where Medicaid and other benefits phase out."
+    },
+    "fig11b_net_income_by_hours": {
+      "layout": "wide", "export_w": 11.5, "export_h": 5.0,
+      "section": "The safety-net clawback",
+      "headline": "Past ~53 hours a week, the clawback can swallow the subsidy.",
+      "annotation": "The subsidy adds ~$7,800 net at 20 hrs/wk and ~$5,600 at 40; it caps at 2,080 hours a year."
+    },
+    "fig12_clawback_net_gain": {
+      "layout": "wide", "export_w": 11.5, "export_h": 5.0,
+      "section": "The safety-net clawback",
+      "headline": "Single mothers gain the least net value from working — half is clawed back.",
+      "annotation": "Median net return to working rises ~18% for single mothers vs. ~27% and ~23% for others."
+    },
+    "fig14_mpl_uncertainty": {
+      "layout": "twocol", "export_w": 6.6, "export_h": 6.0,
+      "section": "How sure are you?",
+      "headline": "Entry spans 0.23–3.81M; the wage penalty is the single largest lever.",
+      "annotation": "27-cell grid: penalty × dispersion × elasticity.",
+      "bullets": [
+        "Cost is the firm result: $45–48B net across all three models.",
+        "Entry is the wider band — drivers vary jointly, not one at a time.",
+        "Drivers: participation elasticity, offer dispersion, wage penalty.",
+        "Headline = evidence-central; a zero wage penalty is the setting the evidence rules out."
+      ]
+    },
+    "fig15_hours_margin": {
+      "layout": "wide", "export_w": 11.5, "export_h": 5.0,
+      "section": "How sure are you?",
+      "headline": "A second margin: part-timers add up to ~280K full-time-equivalents.",
+      "annotation": "Consensus elasticities (0.2–0.33) give 0.19–0.28M FTE, alongside ~0.7M FTE from entry."
+    },
+    "figA1_wage_distribution": {
+      "layout": "wide", "export_w": 11.5, "export_h": 5.0,
+      "section": "Technical appendix · the eligible base",
+      "headline": "About one in five paid-hourly workers earn below the target.",
+      "annotation": "Reported wages heap on round-dollar values; the $16.80 target sits on a dense stretch."
+    }
+  }
+}

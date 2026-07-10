@@ -1,0 +1,51 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='828.00pt' height='360.00pt' viewBox='0 0 828.00 360.00'>
+<g class='svglite'>
+<defs>
+  <style type='text/css'><![CDATA[
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
+      fill: none;
+      stroke: #000000;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+    }
+    .svglite g.glyphgroup path {
+      fill: inherit;
+      stroke: none;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: #FFFFFF;'/>
+<defs>
+  <clipPath id='cpMC4wMHw4MjguMDB8MC4wMHwzNjAuMDA='>
+    <rect x='0.00' y='0.00' width='828.00' height='360.00' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHw4MjguMDB8MC4wMHwzNjAuMDA=)'>
+<rect x='0.00' y='0.00' width='828.00' height='360.00' style='stroke-width: 1.65; stroke: none; fill: #FFFFFF;' />
+</g>
+<defs>
+  <clipPath id='cpMjEzLjAzfDgxOS41M3w4LjQ3fDM1MS41Mw=='>
+    <rect x='213.03' y='8.47' width='606.50' height='343.06' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMjEzLjAzfDgxOS41M3w4LjQ3fDM1MS41Mw==)'>
+<rect x='213.03' y='8.47' width='606.50' height='343.06' style='stroke-width: 1.65; stroke: none; fill: #FFFFFF;' />
+<rect x='213.03' y='253.97' width='89.63' height='66.47' style='stroke-width: 1.65; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #19644D;' />
+<rect x='213.03' y='146.77' width='283.83' height='66.47' style='stroke-width: 1.65; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #19644D;' />
+<rect x='213.03' y='39.56' width='418.28' height='66.47' style='stroke-width: 1.65; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #19644D;' />
+<text x='313.39' y='292.61' style='font-size: 15.14px; font-family: "Open Sans";' textLength='178.84px' lengthAdjust='spacingAndGlyphs'>0.06M FTE  (+$0.5B gross)</text>
+<text x='507.59' y='185.40' style='font-size: 15.14px; font-family: "Open Sans";' textLength='178.84px' lengthAdjust='spacingAndGlyphs'>0.19M FTE  (+$1.7B gross)</text>
+<text x='642.04' y='78.19' style='font-size: 15.14px; font-family: "Open Sans";' textLength='178.84px' lengthAdjust='spacingAndGlyphs'>0.28M FTE  (+$2.4B gross)</text>
+</g>
+<g clip-path='url(#cpMC4wMHw4MjguMDB8MC4wMHwzNjAuMDA=)'>
+<text x='205.41' y='292.06' text-anchor='end' style='font-size: 13.60px; font-family: "Open Sans";' textLength='196.94px' lengthAdjust='spacingAndGlyphs'>ε = 0.05 (EITC-benchmark floor)</text>
+<text x='205.41' y='184.85' text-anchor='end' style='font-size: 13.60px; font-family: "Open Sans";' textLength='103.64px' lengthAdjust='spacingAndGlyphs'>ε = 0.20 (central)</text>
+<text x='205.41' y='77.65' text-anchor='end' style='font-size: 13.60px; font-family: "Open Sans";' textLength='97.92px' lengthAdjust='spacingAndGlyphs'>ε = 0.33 (upper)</text>
+</g>
+</g>
+</svg>

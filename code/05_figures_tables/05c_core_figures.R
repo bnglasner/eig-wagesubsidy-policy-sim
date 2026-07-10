@@ -40,7 +40,9 @@ pop <- function(name) read_parquet(file.path(DATA_POP, paste0(name, ".parquet"))
 # ===========================================================================
 # FIGURE 1 - State choropleth: average annual subsidy per eligible worker
 # ===========================================================================
-fig1_choropleth <- function() {
+fig1_choropleth <- function(slide = FALSE) {
+  ts <- if (slide) 1.35 else 1.0  # twocol figure: modest label bump (side text carries detail)
+  bs <- if (slide) 14 else 10
   suppressWarnings(suppressMessages({
     library(sf)
     library(tigris)
@@ -82,26 +84,35 @@ fig1_choropleth <- function() {
       low = COL[["eig_cream_100"]], high = COL[["eig_gold_600"]],
       name = "Avg. annual\nsubsidy",
       labels = scales::label_dollar(),
-      guide = guide_colorbar(barwidth = 0.8, barheight = 6)
+      guide = guide_colorbar(barwidth = if (slide) 1.1 else 0.8,
+                             barheight = if (slide) 8 else 6)
     ) +
     # DC callout: point + leader + label
     annotate("point", x = dc_x, y = dc_y, size = 1.6,
              color = COL[["eig_teal_900"]]) +
     annotate("segment",
              x = dc_x, y = dc_y,
-             xend = dc_x + 620000, yend = dc_y - 380000,
+             xend = dc_x + if (slide) 520000 else 620000,
+             yend = dc_y - 380000,
              color = COL[["eig_teal_900"]], linewidth = 0.3) +
+    # Doc figure carries the full "highest, $value" callout; on the narrower
+    # twocol slide canvas the enlarged label would collide with the legend, so
+    # mark D.C. only and let the side bullets carry the detail (keep map clean).
+    # The slide label is right-aligned at the leader tip so it extends left into
+    # the Atlantic whitespace and clears the panel's right edge (Maine longitude).
     annotate("text",
-             x = dc_x + 640000, y = dc_y - 430000,
-             label = sprintf("D.C. — highest, %s", scales::dollar(dc_val)),
-             hjust = 0, vjust = 1, size = 2.9,
+             x = dc_x + if (slide) 520000 else 640000,
+             y = dc_y - 430000,
+             label = if (slide) "D.C."
+                     else sprintf("D.C. — highest, %s", scales::dollar(dc_val)),
+             hjust = if (slide) 1 else 0, vjust = 1, size = 2.9 * ts,
              family = tokens$EIG_FONT_BODY_PRIMARY,
              color = COL[["eig_teal_900"]]) +
     labs(
-      title = "Figure 5. Average annual subsidy per eligible worker by state.",
-      caption = eig_caption()
+      title = if (slide) NULL else "Figure 5. Average annual subsidy per eligible worker by state.",
+      caption = if (slide) NULL else eig_caption()
     ) +
-    eig_theme_ggplot(tokens = tokens, base_size = 10) +
+    eig_theme_ggplot(tokens = tokens, base_size = bs) +
     theme(
       axis.title = element_blank(),
       axis.text = element_blank(),
@@ -110,14 +121,32 @@ fig1_choropleth <- function() {
       legend.position = "right"
     )
 
-  eig_save_fig(p, "fig05_avg_subsidy_by_state",
-               width = 6.5, height = 4.6, root = ROOT)
+  # Slide declutter: side text carries the reader detail; enlarge the legend so
+  # the color scale reads at presentation distance and keep the map clean.
+  if (slide) {
+    p <- p + theme(
+      legend.title = element_text(size = 11),
+      legend.text = element_text(size = 10),
+      plot.margin = margin(t = 4, r = 6, b = 4, l = 6)
+    )
+  }
+
+  if (slide) {
+    sp <- eig_slide_dims("fig05_avg_subsidy_by_state")
+    eig_save_fig(p, "fig05_avg_subsidy_by_state",
+                 width = sp$w, height = sp$h, root = ROOT, target = "slide")
+  } else {
+    eig_save_fig(p, "fig05_avg_subsidy_by_state",
+                 width = 6.5, height = 4.6, root = ROOT)
+  }
 }
 
 # ===========================================================================
 # FIGURE 2 - The 80-80 subsidy schedule (computed from the formula)
 # ===========================================================================
-fig2_subsidy_schedule <- function() {
+fig2_subsidy_schedule <- function(slide = FALSE) {
+  ts <- if (slide) 1.9 else 1.0   # scale absolute geom/label sizes for slides
+  bs <- if (slide) 17 else 10     # theme base_size (title/axis scale off this)
   target <- 16.80
   base_wage <- 7.25
   match_rate <- 0.80
@@ -139,6 +168,9 @@ fig2_subsidy_schedule <- function() {
     # 45-degree line (no subsidy reference)
     geom_line(aes(y = emp), color = COL[["eig_green_500"]],
               linetype = "22", linewidth = 0.5) +
+    annotate("text", x = 18.6, y = 18.6, label = "No subsidy",
+             angle = 45, vjust = 1.9, size = 2.4 * ts,
+             family = tokens$EIG_FONT_BODY_PRIMARY, color = COL[["eig_green_500"]]) +
     # take-home schedule
     geom_line(aes(y = th), color = COL[["eig_green_700"]], linewidth = 1.1) +
     # reference lines: base wage and target
@@ -150,41 +182,49 @@ fig2_subsidy_schedule <- function() {
     geom_point(data = pts, aes(y = th), size = 2.2,
                color = COL[["eig_green_700"]]) +
     geom_text(data = pts, aes(y = th, label = lab),
-              hjust = -0.12, vjust = 1.5, size = 2.7,
+              hjust = -0.12, vjust = 1.5, size = 2.7 * ts,
               family = tokens$EIG_FONT_BODY_PRIMARY,
               color = COL[["eig_black"]]) +
     annotate("text", x = target, y = 8.4, label = "$16.80 target",
-             hjust = -0.06, size = 2.8, fontface = "bold",
+             hjust = -0.06, size = 2.8 * ts, fontface = "bold",
              family = tokens$EIG_FONT_BODY_PRIMARY,
              color = COL[["eig_teal_900"]]) +
     annotate("text", x = base_wage, y = 20.4, label = "$7.25 floor",
-             hjust = -0.08, size = 2.6,
+             hjust = -0.08, size = 2.6 * ts,
              family = tokens$EIG_FONT_BODY_PRIMARY, color = "#666666") +
     annotate("text", x = 10.6, y = 13.1, label = "Subsidy",
-             size = 2.9, fontface = "bold",
+             size = 2.9 * ts, fontface = "bold",
              family = tokens$EIG_FONT_BODY_PRIMARY,
              color = COL[["eig_gold_600"]]) +
     scale_x_continuous(labels = scales::label_dollar(), expand = expansion(mult = c(0.01, 0.03))) +
     scale_y_continuous(labels = scales::label_dollar()) +
     coord_cartesian(ylim = c(7, 21)) +
     labs(
-      title = "Figure 1. How the 80-80 subsidy fills the wage gap.",
+      title = if (slide) NULL else "Figure 1. How the 80-80 subsidy fills the wage gap.",
       x = "Employer hourly wage",
       y = "Worker take-home hourly wage",
-      caption = eig_caption(
+      caption = if (slide) NULL else eig_caption(
         note = "The subsidy pays 80 percent of the gap between the employer wage and the $16.80 target."
       )
     ) +
-    eig_theme_ggplot(tokens = tokens, base_size = 10)
+    eig_theme_ggplot(tokens = tokens, base_size = bs)
 
-  eig_save_fig(p, "fig01_subsidy_schedule",
-               width = 6.5, height = 4.0, root = ROOT)
+  if (slide) {
+    sp <- eig_slide_dims("fig01_subsidy_schedule")
+    eig_save_fig(p, "fig01_subsidy_schedule",
+                 width = sp$w, height = sp$h, root = ROOT, target = "slide")
+  } else {
+    eig_save_fig(p, "fig01_subsidy_schedule",
+                 width = 6.5, height = 4.0, root = ROOT)
+  }
 }
 
 # ===========================================================================
 # FIGURE 3 - Cost recapture waterfall (gross -> net)
 # ===========================================================================
-fig3_cost_waterfall <- function() {
+fig3_cost_waterfall <- function(slide = FALSE) {
+  ts <- if (slide) 1.9 else 1.0   # scale absolute geom/label sizes for slides
+  bs <- if (slide) 17 else 10     # theme base_size (title/axis scale off this)
   pi <- pop("program_interactions")
   s <- pop("summary")
 
@@ -222,7 +262,7 @@ fig3_cost_waterfall <- function() {
     comp %>% transmute(label, value,
                        type = ifelse(value >= 0, "Adds cost", "Recaptured")),
     tibble::tibble(label = "Other (net ~0)", value = other_val, type = "Recaptured"),
-    tibble::tibble(label = "Unattributed*", value = recon,
+    tibble::tibble(label = if (slide) "Unattributed" else "Unattributed*", value = recon,
                    type = "Reconciliation"),
     tibble::tibble(label = "Net cost", value = net_target, type = "Endpoint")
   )
@@ -244,7 +284,7 @@ fig3_cost_waterfall <- function() {
     idx = row_number(), ybot = ybot, ytop = ytop,
     lbl = ifelse(type %in% c("Endpoint"),
                  sprintf("$%.1f", value),
-                 sprintf("%+.1f", value)),
+                 ifelse(abs(value) < 0.05, "0.0", sprintf("%+.1f", value))),
     lab_y = ytop + 2.2
   )
   steps$label <- factor(steps$label, levels = steps$label)
@@ -279,7 +319,7 @@ fig3_cost_waterfall <- function() {
     geom_rect(aes(xmin = idx - 0.4, xmax = idx + 0.4,
                   ymin = ybot, ymax = ytop, fill = type)) +
     geom_text(aes(x = idx, y = lab_y, label = lbl),
-              size = 2.5, family = tokens$EIG_FONT_BODY_PRIMARY,
+              size = 2.5 * ts, family = tokens$EIG_FONT_BODY_PRIMARY,
               color = COL[["eig_black"]]) +
     scale_fill_manual(values = fills, name = NULL,
                       breaks = c("Endpoint", "Adds cost", "Recaptured", "Reconciliation")) +
@@ -288,20 +328,27 @@ fig3_cost_waterfall <- function() {
     scale_y_continuous(labels = scales::label_dollar(suffix = "B"),
                        expand = expansion(mult = c(0, 0.08))) +
     labs(
-      title = "Figure 2. From gross to net: taxes and safety-net offsets.",
+      title = if (slide) NULL else "Figure 2. From gross to net: taxes and safety-net offsets.",
       x = NULL, y = "Program cost",
-      caption = eig_caption(
+      caption = if (slide) NULL else eig_caption(
         note = "*Unattributed reconciles program-level offsets to the state-summed net cost. Values in billions of dollars."
       )
     ) +
-    eig_theme_ggplot(tokens = tokens, base_size = 10) +
+    eig_theme_ggplot(tokens = tokens, base_size = bs) +
     theme(
-      axis.text.x = element_text(angle = 45, hjust = 1, size = 7.5),
-      legend.position = "top"
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 7.5 * ts),
+      legend.position = "top",
+      plot.margin = margin(t = 6, r = 12, b = 6, l = if (slide) 26 else 6)
     )
 
-  eig_save_fig(p, "fig02_cost_waterfall",
-               width = 7.6, height = 4.8, root = ROOT)
+  if (slide) {
+    sp <- eig_slide_dims("fig02_cost_waterfall")
+    eig_save_fig(p, "fig02_cost_waterfall",
+                 width = sp$w, height = sp$h, root = ROOT, target = "slide")
+  } else {
+    eig_save_fig(p, "fig02_cost_waterfall",
+                 width = 7.6, height = 4.8, root = ROOT)
+  }
 
   invisible(list(pi_sum = pi_sum, net = net_target, recon = recon))
 }
@@ -309,7 +356,9 @@ fig3_cost_waterfall <- function() {
 # ===========================================================================
 # FIGURE 4 - Take-up rate by group (small multiples)
 # ===========================================================================
-fig4_takeup_by_group <- function() {
+fig4_takeup_by_group <- function(slide = FALSE) {
+  ts <- if (slide) 1.35 else 1.0  # twocol figure: modest label bump (side text carries detail)
+  bs <- if (slide) 14 else 10
   tug <- pop("take_up_by_group")
   # Data-driven overall take-up and paid-hourly denominator (the Sex partition
   # spans the whole population); avoids the stale hard-code the resync flagged.
@@ -317,7 +366,8 @@ fig4_takeup_by_group <- function() {
   overall <- sum(.sex$recipients_k) / sum(.sex$base_k) * 100
   base_M <- sum(.sex$base_k) / 1000
 
-  highlight <- c("16-24", "Less than HS", "Graduate degree")
+  # Highlight the three groups the headline names (women, youngest, least credentialed).
+  highlight <- c("Female", "16-24", "Less than HS")
   d <- tug %>%
     mutate(
       dimension = factor(dimension,
@@ -332,40 +382,63 @@ fig4_takeup_by_group <- function() {
                linetype = "dashed", linewidth = 0.4) +
     geom_col(width = 0.72) +
     geom_text(aes(label = sprintf("%.1f%%", take_up_pct)),
-              hjust = -0.15, size = 2.4,
+              hjust = -0.15, size = 2.4 * ts,
               family = tokens$EIG_FONT_BODY_PRIMARY,
               color = COL[["eig_black"]]) +
     scale_fill_manual(values = c("Notable" = COL[["eig_gold_600"]],
                                  "Other" = COL[["eig_green_700"]]),
                       guide = "none") +
     scale_x_continuous(labels = scales::label_percent(scale = 1),
-                       expand = expansion(mult = c(0, 0.18))) +
+                       expand = expansion(mult = c(0, if (slide) 0.28 else 0.18))) +
     facet_wrap(~ dimension, scales = "free_y", ncol = 2) +
     labs(
-      title = "Figure 3. Share of each group's paid-hourly workers who qualify.",
-      x = "Take-up rate", y = NULL,
-      caption = eig_caption(
+      title = if (slide) NULL else "Figure 3. Share of each group's paid-hourly\nworkers who qualify.",
+      x = if (slide) NULL else "Take-up rate", y = NULL,
+      caption = if (slide) NULL else eig_caption(
         note = paste0(sprintf("Dashed line: overall take-up (%.1f%%). Denominator is the ", overall),
                       sprintf("paid-hourly workforce (%.1fM).", base_M))
       )
     ) +
-    eig_theme_ggplot(tokens = tokens, base_size = 10) +
+    eig_theme_ggplot(tokens = tokens, base_size = bs) +
     theme(
       panel.grid.major.y = element_blank(),
       strip.text = element_text(face = "bold", hjust = 0,
                                 color = COL[["eig_teal_900"]]),
-      axis.text.y = element_text(size = 7.5),
+      axis.text.y = element_text(size = 7.5 * ts),
       panel.spacing.x = unit(1.1, "lines")
     )
 
-  eig_save_fig(p, "fig03_takeup_by_group",
-               width = 7.2, height = 6.4, root = ROOT)
+  # Slide declutter: every bar is value-labeled, so drop the redundant value
+  # axis and gridlines (Tufte data-ink); keep the dashed overall reference line.
+  if (slide) {
+    p <- p + theme(
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank(),
+      panel.grid.major.x = element_blank(),
+      strip.text = element_text(face = "bold", hjust = 0, size = 11,
+                                color = COL[["eig_teal_900"]]),
+      panel.spacing.x = unit(1.4, "lines"),
+      panel.spacing.y = unit(0.9, "lines"),
+      plot.margin = margin(t = 6, r = 16, b = 6, l = 6)
+    )
+  }
+
+  if (slide) {
+    sp <- eig_slide_dims("fig03_takeup_by_group")
+    eig_save_fig(p, "fig03_takeup_by_group",
+                 width = sp$w, height = sp$h, root = ROOT, target = "slide")
+  } else {
+    eig_save_fig(p, "fig03_takeup_by_group",
+                 width = 7.2, height = 6.4, root = ROOT)
+  }
 }
 
 # ===========================================================================
 # FIGURE 5 - Cost per new job (log scale)
 # ===========================================================================
-fig5_cost_per_job <- function() {
+fig5_cost_per_job <- function(slide = FALSE) {
+  ts <- if (slide) 1.9 else 1.0   # scale absolute geom/label sizes for slides
+  bs <- if (slide) 17 else 10     # theme base_size (title/axis scale off this)
   # Re-centered 2026-07-09 (paid-hourly eligibility; evidence-central headline):
   #   marginal    = gross subsidy paid per entrant-year at the evidence-central
   #                 (entrant gross $7.8B / 1.49M entrants ~ $5,266; PI-3: the rank
@@ -410,9 +483,9 @@ fig5_cost_per_job <- function() {
   full_pts <- tibble::tibble(
     policy = full_row$policy[c(1, 1, 1)],
     x = c(full_lo, full_mid, full_hi),
-    lab = c(sprintf("%s\nhigh scenario", dollar_k(full_lo)),
+    lab = c(sprintf("%s\nhigh (3.81M enter)", dollar_k(full_lo)),
             sprintf("%s evidence-central", dollar_k(full_mid)),
-            sprintf("%s\nfloor", dollar_k(full_hi))),
+            sprintf("%s\nfloor (1.02M enter)", dollar_k(full_hi))),
     hj = c(1.1, 0.5, -0.1),
     vj = c(1.4, -1.1, 1.4)
   )
@@ -430,11 +503,11 @@ fig5_cost_per_job <- function() {
     geom_point(data = full_pts, aes(x = x, y = policy), size = 3.4,
                color = COL[["eig_gold_600"]]) +
     geom_text(data = filter(d, !is.na(lab)),
-              aes(x = lab_x, label = lab), hjust = -0.18, size = 2.6,
+              aes(x = lab_x, label = lab), hjust = -0.18, size = 2.6 * ts,
               family = tokens$EIG_FONT_BODY_PRIMARY,
               color = COL[["eig_black"]]) +
     geom_text(data = full_pts, aes(x = x, y = policy, label = lab, hjust = hj, vjust = vj),
-              size = 2.5, lineheight = 0.95,
+              size = 2.5 * ts, lineheight = 0.95,
               family = tokens$EIG_FONT_BODY_PRIMARY,
               color = COL[["eig_black"]]) +
     scale_color_manual(values = fills, guide = "none") +
@@ -447,25 +520,39 @@ fig5_cost_per_job <- function() {
                   limits = c(2e3, 3e6),
                   expand = expansion(mult = c(0.02, 0.02))) +
     labs(
-      title = "Figure 10. Cost per job: the 80-80 subsidy\nversus other job-creation policies.",
+      title = if (slide) NULL else "Figure 10. Cost per job: the 80-80 subsidy\nversus other job-creation policies.",
       x = "Cost per job (log scale)", y = NULL,
-      caption = eig_caption(
+      caption = if (slide) NULL else eig_caption(
         note = paste0("Fully loaded = total net cost / induced entrants (floor / evidence-central / high). Marginal is\n",
                       "the gross subsidy per entrant-year (an independent hours mapping roughly doubles it).\n",
                       "Alternatives cited in EIG's first Agglomerations post (NBER; AEA; Peterson Institute).")
       )
     ) +
-    eig_theme_ggplot(tokens = tokens, base_size = 10) +
+    eig_theme_ggplot(tokens = tokens, base_size = bs) +
     theme(panel.grid.major.y = element_blank())
 
-  eig_save_fig(p, "fig10_cost_per_job",
-               width = 7.0, height = 4.1, root = ROOT)
+  # Slide only: long left-hand policy labels need extra left margin at the
+  # enlarged type so they clear the panel edge (keeps the doc figure untouched).
+  if (slide) {
+    p <- p + theme(plot.margin = margin(t = 6, r = 12, b = 6, l = 26))
+  }
+
+  if (slide) {
+    sp <- eig_slide_dims("fig10_cost_per_job")
+    eig_save_fig(p, "fig10_cost_per_job",
+                 width = sp$w, height = sp$h, root = ROOT, target = "slide")
+  } else {
+    eig_save_fig(p, "fig10_cost_per_job",
+                 width = 7.0, height = 4.1, root = ROOT)
+  }
 }
 
 # ===========================================================================
 # FIGURE 6 - Single-mother safety-net clawback
 # ===========================================================================
-fig6_clawback_net_gain <- function() {
+fig6_clawback_net_gain <- function(slide = FALSE) {
+  ts <- if (slide) 1.9 else 1.0   # scale absolute geom/label sizes for slides
+  bs <- if (slide) 17 else 10     # theme base_size (title/axis scale off this)
   # Read the evidence-central pool (status-differentiated ~10% penalty) so the clawback matches
   # the published headline entry; falls back to the canonical floor pool if it is absent.
   evc <- file.path(ROOT, "data", "processed", "nonemployed_pool_evidence_central.parquet")
@@ -498,42 +585,50 @@ fig6_clawback_net_gain <- function() {
   p <- ggplot(d, aes(x = pct, y = label, fill = hl)) +
     geom_col(width = 0.62) +
     geom_text(aes(label = sprintf("%.1f%%", pct)),
-              hjust = -0.15, size = 3.0,
+              hjust = -0.15, size = 3.0 * ts,
               family = tokens$EIG_FONT_BODY_PRIMARY,
               color = COL[["eig_black"]]) +
     scale_fill_manual(values = fills, guide = "none") +
     scale_x_continuous(labels = scales::label_percent(scale = 1),
                        expand = expansion(mult = c(0, 0.16))) +
     labs(
-      title = "Figure 12. The safety-net clawback:\nmedian net gain from working, by group.",
+      title = if (slide) NULL else "Figure 12. The safety-net clawback:\nmedian net gain from working, by group.",
       x = "Median net gain in the return to work", y = NULL,
-      caption = eig_caption(
+      caption = if (slide) NULL else eig_caption(
         note = paste0("Net gain reflects taxes and means-tested phase-outs, assuming the ",
                       "subsidy counts toward benefit eligibility. Reachable workers only.")
       )
     ) +
-    eig_theme_ggplot(tokens = tokens, base_size = 10) +
+    eig_theme_ggplot(tokens = tokens, base_size = bs) +
     theme(panel.grid.major.y = element_blank())
 
-  eig_save_fig(p, "fig12_clawback_net_gain",
-               width = 6.5, height = 3.5, root = ROOT)
+  if (slide) {
+    sp <- eig_slide_dims("fig12_clawback_net_gain")
+    eig_save_fig(p, "fig12_clawback_net_gain",
+                 width = sp$w, height = sp$h, root = ROOT, target = "slide")
+  } else {
+    eig_save_fig(p, "fig12_clawback_net_gain",
+                 width = 6.5, height = 3.5, root = ROOT)
+  }
 }
 
 # ===========================================================================
-# Driver
+# Driver (skipped when sourced for slide-variant builds: EIG_FIG_NO_RUN <- TRUE)
 # ===========================================================================
-cat("Building EIG core figure suite (Batch 1)\n")
-cat("Repo root:", ROOT, "\n\n")
+if (!exists("EIG_FIG_NO_RUN") || !isTRUE(EIG_FIG_NO_RUN)) {
+  cat("Building EIG core figure suite (Batch 1)\n")
+  cat("Repo root:", ROOT, "\n\n")
 
-fig1_choropleth()
-fig2_subsidy_schedule()
-wf <- fig3_cost_waterfall()
-fig4_takeup_by_group()
-fig5_cost_per_job()
-fig6_clawback_net_gain()
+  fig1_choropleth()
+  fig2_subsidy_schedule()
+  wf <- fig3_cost_waterfall()
+  fig4_takeup_by_group()
+  fig5_cost_per_job()
+  fig6_clawback_net_gain()
 
-cat(sprintf(
-  "\nWaterfall reconciliation: program_interactions sum = $%.2fB, net target = $%.2fB, unattributed bar = %+.2fB\n",
-  wf$pi_sum, wf$net, wf$recon
-))
-cat("Done.\n")
+  cat(sprintf(
+    "\nWaterfall reconciliation: program_interactions sum = $%.2fB, net target = $%.2fB, unattributed bar = %+.2fB\n",
+    wf$pi_sum, wf$net, wf$recon
+  ))
+  cat("Done.\n")
+}

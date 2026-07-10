@@ -44,7 +44,9 @@ pop <- function(name) read_parquet(file.path(DATA_POP, paste0(name, ".parquet"))
 # ===========================================================================
 # FIGURE 7 - Induced entry into work, by group (central + lower-upper band)
 # ===========================================================================
-fig7_entry_band_by_cell <- function() {
+fig7_entry_band_by_cell <- function(slide = FALSE) {
+  ts <- if (slide) 1.9 else 1.0   # scale absolute geom/label sizes for slides
+  bs <- if (slide) 17 else 10     # theme base_size (title/axis scale off this)
   # Re-centered (2026-07-09): per group, the range from the conservative floor (no wage penalty)
   # to the high joint corner, with the evidence-central marked. Reads the three headline bundles.
   hs <- pop("entry_headline_scenarios")
@@ -81,42 +83,50 @@ fig7_entry_band_by_cell <- function() {
                  inherit.aes = FALSE, color = "#BBBBBB", linewidth = 0.5) +
     geom_text(data = prec,
               aes(x = x, y = total_y - 0.24, label = lab),
-              inherit.aes = FALSE, vjust = 1, size = 2.1, lineheight = 0.9,
+              inherit.aes = FALSE, vjust = 1, size = 2.5 * ts, lineheight = 0.9,
               color = "#999999", family = tokens$EIG_FONT_BODY_PRIMARY) +
     geom_point(aes(x = mid), size = 3.6, color = COL[["eig_green_700"]]) +
     geom_text(aes(x = mid, label = sprintf("%.2fM", mid)),
-              vjust = -1.1, size = 2.7, family = tokens$EIG_FONT_BODY_PRIMARY,
+              vjust = -1.1, size = 2.7 * ts, family = tokens$EIG_FONT_BODY_PRIMARY,
               color = COL[["eig_black"]]) +
     geom_text(aes(x = hi, label = sprintf("%.2f", hi)),
-              hjust = -0.35, vjust = 0.5, size = 2.3, color = "#777777",
+              hjust = -0.35, vjust = 0.5, size = 2.3 * ts, color = "#777777",
               family = tokens$EIG_FONT_BODY_PRIMARY) +
     geom_text(aes(x = lo, label = sprintf("%.2f", lo)),
-              hjust = 1.35, vjust = 0.5, size = 2.3, color = "#777777",
+              hjust = 1.35, vjust = 0.5, size = 2.3 * ts, color = "#777777",
               family = tokens$EIG_FONT_BODY_PRIMARY) +
     scale_x_continuous(labels = scales::label_number(suffix = "M"),
                        limits = c(-0.1, 3.9),
                        expand = expansion(mult = c(0.02, 0.06))) +
     labs(
-      title = "Figure 7. Induced entry into work, by group\n(evidence-central, with floor–high range).",
+      title = if (slide) NULL else "Figure 7. Induced entry into work, by group\n(evidence-central, with floor–high range).",
       x = "Induced entrants (millions)", y = NULL,
-      caption = eig_caption(
+      caption = if (slide) NULL else eig_caption(
         note = paste0("The bar spans the conservative floor (no non-employment wage penalty) to the high joint\n",
                       "corner (20% penalty, full dispersion, upper elasticity); the point is the evidence-central\n",
                       "(status-differentiated ~10% penalty). Reference marks scale each precedent's employment\n",
                       "effect to the model's reachable pool.")
       )
     ) +
-    eig_theme_ggplot(tokens = tokens, base_size = 10) +
+    eig_theme_ggplot(tokens = tokens, base_size = bs) +
     theme(panel.grid.major.y = element_blank())
 
-  eig_save_fig(p, "fig07_entry_band_by_cell",
-               width = 7.2, height = 4.0, root = ROOT)
+  if (slide) {
+    sp <- eig_slide_dims("fig07_entry_band_by_cell")
+    eig_save_fig(p, "fig07_entry_band_by_cell",
+                 width = sp$w, height = sp$h, root = ROOT, target = "slide")
+  } else {
+    eig_save_fig(p, "fig07_entry_band_by_cell",
+                 width = 7.2, height = 4.0, root = ROOT)
+  }
 }
 
 # ===========================================================================
 # FIGURE 7b - Who the model predicts will enter, by prior status
 # ===========================================================================
-fig7b_entrants_by_status <- function() {
+fig7b_entrants_by_status <- function(slide = FALSE) {
+  ts <- if (slide) 1.9 else 1.0   # scale absolute geom/label sizes for slides
+  bs <- if (slide) 17 else 10     # theme base_size (title/axis scale off this)
   # Evidence-central composition (status-differentiated ~10% penalty; 1.49M headline), written by
   # 02g to entry_central_composition.parquet: unemployed 0.412M, other NILF 0.799M, disabled
   # 0.028M, retired 0.010M (~33% / 64% / 2% / 1%). Falls back to the floor sim if absent.
@@ -139,37 +149,45 @@ fig7b_entrants_by_status <- function() {
   p <- ggplot(d, aes(x = entrants_M, y = status)) +
     geom_col(width = 0.62, fill = COL[["eig_green_700"]]) +
     geom_text(aes(label = sprintf("%.3fM", entrants_M)),
-              hjust = -0.15, size = 3.0,
+              hjust = -0.15, size = 3.0 * ts,
               family = tokens$EIG_FONT_BODY_PRIMARY,
               color = COL[["eig_black"]]) +
     scale_x_continuous(labels = scales::label_number(suffix = "M"),
                        expand = expansion(mult = c(0, 0.14))) +
     labs(
-      title = "Figure 7b. Who the model predicts will enter,\nby prior status.",
+      title = if (slide) NULL else "Figure 7b. Who the model predicts will enter,\nby prior status.",
       x = "Induced entrants (millions)", y = NULL,
-      caption = eig_caption(
+      caption = if (slide) NULL else eig_caption(
         note = paste0("Entry propensity is weighted by prior labor-force status (CPS U-to-E vs. N-to-E flow ratios;\n",
                       "SSDI work-capacity evidence) and the employment probit; calibrated totals are unchanged.")
       )
     ) +
-    eig_theme_ggplot(tokens = tokens, base_size = 10) +
+    eig_theme_ggplot(tokens = tokens, base_size = bs) +
     theme(panel.grid.major.y = element_blank())
 
-  eig_save_fig(p, "fig07b_entrants_by_status",
-               width = 6.5, height = 3.2, root = ROOT)
+  if (slide) {
+    sp <- eig_slide_dims("fig07b_entrants_by_status")
+    eig_save_fig(p, "fig07b_entrants_by_status",
+                 width = sp$w, height = sp$h, root = ROOT, target = "slide")
+  } else {
+    eig_save_fig(p, "fig07b_entrants_by_status",
+                 width = 6.5, height = 3.2, root = ROOT)
+  }
 }
 
 # ===========================================================================
 # FIGURE 8 - Net annual cost is stable across models
 # ===========================================================================
-fig8_cost_band <- function() {
+fig8_cost_band <- function(slide = FALSE) {
+  ts <- if (slide) 1.9 else 1.0   # scale absolute geom/label sizes for slides
+  bs <- if (slide) 17 else 10     # theme base_size (title/axis scale off this)
   ms <- pop("matching_simulation")
   s <- pop("summary")
 
   static_net <- s$net_cost_bn[1]                      # 45.11
-  bs <- pop("behavioral_scenarios") %>%
+  bscn <- pop("behavioral_scenarios") %>%
     filter(scenario != "static")
-  rf_lo <- min(bs$net_cost_bn); rf_hi <- max(bs$net_cost_bn)   # reduced-form band
+  rf_lo <- min(bscn$net_cost_bn); rf_hi <- max(bscn$net_cost_bn)   # reduced-form band
 
   rigid <- ms %>% filter(wage_mode == "rigid")
   flex <- ms %>% filter(wage_mode == "flex")
@@ -191,44 +209,52 @@ fig8_cost_band <- function() {
     geom_point(aes(x = hi), size = 3) +
     geom_text(aes(x = hi, label = sprintf("$%.0f–$%.0fB", lo, hi)),
               data = filter(rows, lo != hi),
-              hjust = -0.12, vjust = 0.5, size = 2.6,
+              hjust = -0.12, vjust = 0.5, size = 2.6 * ts,
               family = tokens$EIG_FONT_BODY_PRIMARY, color = COL[["eig_black"]]) +
     geom_text(aes(x = mid, label = sprintf("$%.0fB", mid)),
               data = filter(rows, lo == hi),
-              hjust = -0.3, vjust = 0.5, size = 2.6,
+              hjust = -0.3, vjust = 0.5, size = 2.6 * ts,
               family = tokens$EIG_FONT_BODY_PRIMARY, color = COL[["eig_black"]]) +
     annotate("text", x = 88, y = 1, label = "disclosed upper bound,\nnot a forecast",
-             size = 2.4, color = GRAY, fontface = "italic",
+             size = 2.4 * ts, color = GRAY, fontface = "italic",
              family = tokens$EIG_FONT_BODY_PRIMARY, vjust = -0.9) +
     scale_color_manual(values = c("core" = COL[["eig_green_700"]], "bound" = GRAY),
                        guide = "none") +
     scale_linetype_manual(values = c("core" = "solid", "bound" = "22"),
                           guide = "none") +
     scale_x_continuous(labels = scales::label_dollar(suffix = "B"),
-                       limits = c(40, 125),
+                       limits = c(40, 108),
                        expand = expansion(mult = c(0.01, 0.06))) +
     labs(
-      title = "Figure 13. Net annual cost is stable across models; only full\nwage renegotiation escapes the $45–48 billion range.",
+      title = if (slide) NULL else "Figure 13. Net annual cost is stable across models; only full\nwage renegotiation escapes the $45–48 billion range.",
       x = "Net annual cost", y = NULL,
-      caption = eig_caption(
+      caption = if (slide) NULL else eig_caption(
         note = "Shaded band marks the $45–48B core range. Values in billions of dollars."
       )
     ) +
-    eig_theme_ggplot(tokens = tokens, base_size = 10) +
+    eig_theme_ggplot(tokens = tokens, base_size = bs) +
     theme(panel.grid.major.y = element_blank(),
-          axis.text.y = element_text(size = 8.5),
+          axis.text.y = element_text(size = 8.5 * ts),
           # Long y labels push the panel right; anchor the (wide) title to the
           # full plot so it does not clip at the right edge.
           plot.title.position = "plot")
 
-  eig_save_fig(p, "fig13_cost_band",
-               width = 7.4, height = 3.8, root = ROOT)
+  if (slide) {
+    sp <- eig_slide_dims("fig13_cost_band")
+    eig_save_fig(p, "fig13_cost_band",
+                 width = sp$w, height = sp$h, root = ROOT, target = "slide")
+  } else {
+    eig_save_fig(p, "fig13_cost_band",
+                 width = 7.4, height = 3.8, root = ROOT)
+  }
 }
 
 # ===========================================================================
 # FIGURE 9 - The lowest-wage workers receive the largest subsidies
 # ===========================================================================
-fig9_subsidy_by_wage <- function() {
+fig9_subsidy_by_wage <- function(slide = FALSE) {
+  ts <- if (slide) 1.9 else 1.0   # scale absolute geom/label sizes for slides
+  bs <- if (slide) 17 else 10     # theme base_size (title/axis scale off this)
   wb <- pop("by_wage_bracket") %>%
     mutate(wage_bracket = factor(wage_bracket,
                                  levels = rev(c("$7.25-$9", "$9-$11",
@@ -237,31 +263,39 @@ fig9_subsidy_by_wage <- function() {
   p <- ggplot(wb, aes(x = avg_annual_subsidy, y = wage_bracket)) +
     geom_col(width = 0.7, fill = COL[["eig_gold_600"]]) +
     geom_text(aes(label = scales::dollar(avg_annual_subsidy)),
-              hjust = -0.12, size = 3.0, family = tokens$EIG_FONT_BODY_PRIMARY,
+              hjust = -0.12, size = 3.0 * ts, family = tokens$EIG_FONT_BODY_PRIMARY,
               color = COL[["eig_black"]]) +
     geom_text(aes(label = sprintf("%.1fM workers", n_workers_k / 1000)),
-              x = 200, hjust = 0, vjust = 0.5, size = 2.5,
-              family = tokens$EIG_FONT_BODY_PRIMARY, color = "white") +
+              x = 200, hjust = 0, vjust = 0.5, size = 2.5 * ts,
+              family = tokens$EIG_FONT_BODY_PRIMARY, color = COL[["eig_teal_900"]]) +
     scale_x_continuous(labels = scales::label_dollar(),
                        expand = expansion(mult = c(0, 0.16))) +
     labs(
-      title = "Figure 4. The lowest-wage workers receive\nthe largest subsidies.",
+      title = if (slide) NULL else "Figure 4. The lowest-wage workers receive\nthe largest subsidies.",
       x = "Average annual subsidy", y = "Hourly wage bracket",
-      caption = eig_caption(
+      caption = if (slide) NULL else eig_caption(
         note = "Bar labels show the average annual subsidy; interior labels show the number of workers."
       )
     ) +
-    eig_theme_ggplot(tokens = tokens, base_size = 10) +
+    eig_theme_ggplot(tokens = tokens, base_size = bs) +
     theme(panel.grid.major.y = element_blank())
 
-  eig_save_fig(p, "fig04_subsidy_by_wage",
-               width = 6.6, height = 3.4, root = ROOT)
+  if (slide) {
+    sp <- eig_slide_dims("fig04_subsidy_by_wage")
+    eig_save_fig(p, "fig04_subsidy_by_wage",
+                 width = sp$w, height = sp$h, root = ROOT, target = "slide")
+  } else {
+    eig_save_fig(p, "fig04_subsidy_by_wage",
+                 width = 6.6, height = 3.4, root = ROOT)
+  }
 }
 
 # ===========================================================================
 # FIGURE 10 - Employers capture little under realistic wage stickiness
 # ===========================================================================
-fig10_firm_capture <- function() {
+fig10_firm_capture <- function(slide = FALSE) {
+  ts <- if (slide) 1.9 else 1.0   # scale absolute geom/label sizes for slides
+  bs <- if (slide) 17 else 10     # theme base_size (title/axis scale off this)
   ms <- pop("matching_simulation")
 
   beta_lab <- c("0.3" = "Rigid (β = 0.3)",
@@ -271,8 +305,8 @@ fig10_firm_capture <- function() {
   d <- ms %>%
     transmute(
       beta_tag = factor(beta_lab[as.character(beta)],
-                        levels = c("Central (β = 0.5)", "Measured (β = 0.7)",
-                                   "Rigid (β = 0.3)")),
+                        levels = c("Rigid (β = 0.3)", "Central (β = 0.5)",
+                                   "Measured (β = 0.7)")),
       series = ifelse(wage_mode == "rigid",
                       "Sticky incumbent wages (realistic)",
                       "All wages renegotiate (bound)"),
@@ -286,7 +320,7 @@ fig10_firm_capture <- function() {
     geom_col(position = position_dodge(width = 0.7), width = 0.62) +
     geom_text(aes(label = sprintf("%.1f%%", capture)),
               position = position_dodge(width = 0.7),
-              vjust = -0.4, size = 2.7, family = tokens$EIG_FONT_BODY_PRIMARY,
+              vjust = -0.4, size = 2.7 * ts, family = tokens$EIG_FONT_BODY_PRIMARY,
               color = COL[["eig_black"]]) +
     scale_fill_manual(values = c("Sticky incumbent wages (realistic)" = COL[["eig_green_700"]],
                                  "All wages renegotiate (bound)" = GRAY),
@@ -294,23 +328,31 @@ fig10_firm_capture <- function() {
     scale_y_continuous(labels = scales::label_percent(scale = 1),
                        expand = expansion(mult = c(0, 0.1))) +
     labs(
-      title = "Figure 9. Employers capture little under realistic wage stickiness.",
+      title = if (slide) NULL else "Figure 9. Employers capture little under realistic wage stickiness.",
       x = "Pass-through scenario", y = "Firm capture (share of gross cost)",
-      caption = eig_caption(
+      caption = if (slide) NULL else eig_caption(
         note = "The all-wages-renegotiate case is a disclosed upper bound, not a forecast."
       )
     ) +
-    eig_theme_ggplot(tokens = tokens, base_size = 10) +
+    eig_theme_ggplot(tokens = tokens, base_size = bs) +
     theme(legend.position = "top")
 
-  eig_save_fig(p, "fig09_firm_capture",
-               width = 6.8, height = 4.0, root = ROOT)
+  if (slide) {
+    sp <- eig_slide_dims("fig09_firm_capture")
+    eig_save_fig(p, "fig09_firm_capture",
+                 width = sp$w, height = sp$h, root = ROOT, target = "slide")
+  } else {
+    eig_save_fig(p, "fig09_firm_capture",
+                 width = 6.8, height = 4.0, root = ROOT)
+  }
 }
 
 # ===========================================================================
 # FIGURE 11 - Benefit cliffs a single-parent household crosses
 # ===========================================================================
-fig11_benefit_cliff <- function() {
+fig11_benefit_cliff <- function(slide = FALSE) {
+  ts <- if (slide) 1.9 else 1.0   # scale absolute geom/label sizes for slides
+  bs <- if (slide) 17 else 10     # theme base_size (title/axis scale off this)
   state <- "PA"  # Medicaid-expansion state; clear multi-cliff schedule
   sched_files <- Sys.glob(file.path(ROOT,
     "output/data/intermediate_results/individual_schedules/single_2c_*.parquet"))
@@ -339,37 +381,45 @@ fig11_benefit_cliff <- function() {
     geom_abline(slope = 1, intercept = 0, color = GRAY,
                 linetype = "22", linewidth = 0.4) +
     annotate("text", x = 41000, y = 41000, label = "earnings only",
-             angle = 33, size = 2.5, color = "#888888", vjust = -0.5,
+             angle = 33, size = 2.5 * ts, color = "#888888", vjust = -0.5,
              family = tokens$EIG_FONT_BODY_PRIMARY) +
     geom_line(aes(y = ni), color = COL[["eig_green_700"]], linewidth = 1.1) +
     geom_point(data = cliffs, aes(x = x, y = y), color = COL[["eig_gold_600"]],
                size = 2.6) +
     geom_text(data = cliffs, aes(x = x, y = y, label = lab),
               hjust = c(-0.06, 1.04, 1.04), vjust = c(1.8, 2.2, 1.6),
-              size = 2.5, family = tokens$EIG_FONT_BODY_PRIMARY,
+              size = 2.5 * ts, family = tokens$EIG_FONT_BODY_PRIMARY,
               color = COL[["eig_teal_900"]]) +
     scale_x_continuous(labels = scales::label_dollar(),
                        expand = expansion(mult = c(0.01, 0.03))) +
     scale_y_continuous(labels = scales::label_dollar()) +
     labs(
-      title = "Figure 11. Why the clawback bites: net income and the\nbenefit cliffs a single-parent household crosses.",
+      title = if (slide) NULL else "Figure 11. Why the clawback bites: net income and the\nbenefit cliffs a single-parent household crosses.",
       x = "Annual earnings", y = "Net income (incl. ACA & Medicaid value)",
-      caption = eig_caption(
+      caption = if (slide) NULL else eig_caption(
         note = paste0("One representative single-parent, two-child schedule (Pennsylvania), illustrative.\n",
                       "Net income includes ACA premium tax credits and Medicaid value, per the model.")
       )
     ) +
-    eig_theme_ggplot(tokens = tokens, base_size = 10)
+    eig_theme_ggplot(tokens = tokens, base_size = bs)
 
-  eig_save_fig(p, "fig11_benefit_cliff",
-               width = 7.0, height = 4.4, root = ROOT)
+  if (slide) {
+    sp <- eig_slide_dims("fig11_benefit_cliff")
+    eig_save_fig(p, "fig11_benefit_cliff",
+                 width = sp$w, height = sp$h, root = ROOT, target = "slide")
+  } else {
+    eig_save_fig(p, "fig11_benefit_cliff",
+                 width = 7.0, height = 4.4, root = ROOT)
+  }
   invisible(basename(file))
 }
 
 # ===========================================================================
 # FIGURE 11b - Net income by hours worked, with vs. without the 80-80 subsidy
 # ===========================================================================
-fig11b_net_income_by_hours <- function() {
+fig11b_net_income_by_hours <- function(slide = FALSE) {
+  ts <- if (slide) 1.9 else 1.0   # scale absolute geom/label sizes for slides
+  bs <- if (slide) 17 else 10     # theme base_size (title/axis scale off this)
   file <- file.path(ROOT,
     "output/data/intermediate_results/individual_schedules/single_2c_PA.parquet")
 
@@ -433,34 +483,59 @@ fig11b_net_income_by_hours <- function() {
               linewidth = 1.1) +
     annotate("text", x = cap_hours - 40, y = 55500,
              label = "Subsidy hours cap (2,080 hrs/yr)", angle = 90,
-             hjust = 0, vjust = 1.2, size = 2.5, color = COL[["eig_teal_900"]],
+             hjust = 0, vjust = 1.2, size = 2.5 * ts, color = COL[["eig_teal_900"]],
              family = tokens$EIG_FONT_BODY_PRIMARY) +
-    annotate("text", x = 2560, y = 63200,
-             label = "Counted as income, the subsidy pushes\nthe household across benefit cliffs",
-             hjust = 0.5, size = 2.5, fontface = "italic", color = COL[["eig_tan_500"]],
+    # On slides the 1.9x label is wide; left-anchor it clear of the vertical cap
+    # line/label, drop into the open right area, and re-wrap (same wording) so it
+    # fits without clipping or collision.
+    annotate("text",
+             x = if (slide) 2160 else 2560, y = if (slide) 60000 else 63200,
+             label = if (slide)
+               "Counted as income, the\nsubsidy pushes the\nhousehold across\nbenefit cliffs"
+             else "Counted as income, the subsidy pushes\nthe household across benefit cliffs",
+             hjust = if (slide) 0 else 0.5, size = 2.5 * ts, fontface = "italic",
+             color = COL[["eig_tan_500"]],
              family = tokens$EIG_FONT_BODY_PRIMARY) +
     scale_color_manual(
       values = c("With the wage subsidy" = COL[["eig_green_700"]],
-                 "Without the wage subsidy" = COL[["eig_teal_900"]]),
+                 "Without the wage subsidy" = GRAY),
       name = NULL,
       breaks = c("Without the wage subsidy", "With the wage subsidy")) +
     scale_x_continuous(breaks = hrs_breaks, labels = hrs_labels,
                        expand = expansion(mult = c(0.02, 0.05))) +
     scale_y_continuous(labels = scales::label_dollar()) +
     labs(
-      title = "Figure 11b. Net income by hours worked, with and without\nthe 80-80 subsidy.",
+      title = if (slide) NULL else "Figure 11b. Net income by hours worked, with and without\nthe 80-80 subsidy.",
       x = "Annual hours worked", y = "Net income (incl. ACA & Medicaid value)",
-      caption = eig_caption(
+      caption = if (slide) NULL else eig_caption(
         note = paste0("Illustrative: single parent of two, Pennsylvania, fixed $10 per hour. Hours span 0-60 per\n",
                       "week over a 50-week year; the subsidy is capped at 2,080 hours per year (the model's 40-hour-\n",
                       "per-week cap) and counted as taxable income. Net income includes ACA premium tax credits and Medicaid value.")
       )
     ) +
-    eig_theme_ggplot(tokens = tokens, base_size = 10) +
+    eig_theme_ggplot(tokens = tokens, base_size = bs) +
     theme(legend.position = "top")
 
-  eig_save_fig(p, "fig11b_net_income_by_hours",
-               width = 7.2, height = 4.6, root = ROOT)
+  # Mark the crossover the headline names (where the subsidized line drops below
+  # the unsubsidized one) so the ~53 hr/wk claim has a visual anchor.
+  if (!is.na(cross_x)) {
+    p <- p +
+      annotate("point", x = cross_x, y = NI(wage * cross_x),
+               size = 2.6, color = COL[["eig_tan_500"]]) +
+      annotate("text", x = cross_x, y = NI(wage * cross_x),
+               label = sprintf("~%.0f hr/wk", cross_x / 50),
+               hjust = 1.12, vjust = 2.0, size = 2.4 * ts, fontface = "italic",
+               color = COL[["eig_tan_500"]], family = tokens$EIG_FONT_BODY_PRIMARY)
+  }
+
+  if (slide) {
+    sp <- eig_slide_dims("fig11b_net_income_by_hours")
+    eig_save_fig(p, "fig11b_net_income_by_hours",
+                 width = sp$w, height = sp$h, root = ROOT, target = "slide")
+  } else {
+    eig_save_fig(p, "fig11b_net_income_by_hours",
+                 width = 7.2, height = 4.6, root = ROOT)
+  }
 
   invisible(list(
     a1000 = c(no = NI(wage * 1000), sub = NI(wage * 1000 + sub_ph * 1000)),
@@ -473,7 +548,9 @@ fig11b_net_income_by_hours <- function() {
 # ===========================================================================
 # FIGURE 12 - How the subsidy clears a worker's reservation wage (schematic)
 # ===========================================================================
-fig12_reservation_wage <- function() {
+fig12_reservation_wage <- function(slide = FALSE) {
+  ts <- if (slide) 1.9 else 1.0   # scale absolute geom/label sizes for slides
+  bs <- if (slide) 17 else 10     # theme base_size (title/axis scale off this)
   target <- 16.80
   offer <- 12
   reservation <- 14
@@ -495,15 +572,15 @@ fig12_reservation_wage <- function() {
                linetype = "solid", linewidth = 0.5) +
     geom_col(width = 0.55) +
     geom_text(aes(label = scales::dollar(value, accuracy = 0.01)),
-              hjust = -0.15, size = 3.0, family = tokens$EIG_FONT_BODY_PRIMARY,
+              hjust = -0.15, size = 3.0 * ts, family = tokens$EIG_FONT_BODY_PRIMARY,
               color = COL[["eig_black"]]) +
     annotate("text", x = reservation, y = 2.55,
              label = sprintf("Reservation wage: %s", scales::dollar(reservation)),
-             hjust = 1.03, vjust = 0, size = 2.7, fontface = "bold",
+             hjust = 1.03, vjust = 0, size = 2.7 * ts, fontface = "bold",
              color = COL[["eig_purple_800"]],
              family = tokens$EIG_FONT_BODY_PRIMARY) +
     annotate("text", x = reservation / 2, y = 0.42, label = "will not work below this",
-             size = 2.5, color = "#777777", fontface = "italic",
+             size = 2.5 * ts, color = "#777777", fontface = "italic",
              family = tokens$EIG_FONT_BODY_PRIMARY) +
     scale_fill_manual(values = c("offer" = GRAY,
                                  "subsidized" = COL[["eig_green_700"]]),
@@ -513,24 +590,32 @@ fig12_reservation_wage <- function() {
                        expand = expansion(mult = c(0, 0.05))) +
     coord_cartesian(clip = "off") +
     labs(
-      title = "Figure 6. How the subsidy clears\na worker's reservation wage.",
+      title = if (slide) NULL else "Figure 6. How the subsidy clears\na worker's reservation wage.",
       x = "Hourly wage", y = NULL,
-      caption = eig_caption(
+      caption = if (slide) NULL else eig_caption(
         note = "Illustrative round numbers, consistent with the $16.80 target."
       )
     ) +
-    eig_theme_ggplot(tokens = tokens, base_size = 10) +
+    eig_theme_ggplot(tokens = tokens, base_size = bs) +
     theme(panel.grid.major.y = element_blank(),
           plot.margin = margin(5.5, 12, 5.5, 5.5))
 
-  eig_save_fig(p, "fig06_reservation_wage",
-               width = 6.6, height = 3.2, root = ROOT)
+  if (slide) {
+    sp <- eig_slide_dims("fig06_reservation_wage")
+    eig_save_fig(p, "fig06_reservation_wage",
+                 width = sp$w, height = sp$h, root = ROOT, target = "slide")
+  } else {
+    eig_save_fig(p, "fig06_reservation_wage",
+                 width = 6.6, height = 3.2, root = ROOT)
+  }
 }
 
 # ===========================================================================
 # FIGURE 13 - Imputed potential wages of the non-employed
 # ===========================================================================
-fig13_pool_wage_distribution <- function() {
+fig13_pool_wage_distribution <- function(slide = FALSE) {
+  ts <- if (slide) 1.9 else 1.0   # scale absolute geom/label sizes for slides
+  bs <- if (slide) 17 else 10     # theme base_size (title/axis scale off this)
   np_full <- read_parquet(file.path(ROOT, "data", "processed", "nonemployed_pool.parquet")) %>%
     as.data.frame() %>%
     filter(!is.na(mpl), mpl >= 0)
@@ -554,34 +639,42 @@ fig13_pool_wage_distribution <- function() {
     geom_vline(xintercept = target, color = COL[["eig_teal_900"]],
                linetype = "solid", linewidth = 0.4) +
     annotate("text", x = target, y = max(dd$y) * 0.96,
-             label = "$16.80 target", hjust = -0.05, size = 2.8,
+             label = "$16.80 target", hjust = -0.05, size = 2.8 * ts,
              fontface = "bold", color = COL[["eig_teal_900"]],
              family = tokens$EIG_FONT_BODY_PRIMARY) +
     annotate("text", x = 8.4, y = max(dd$y) * 0.45,
              label = sprintf("%.1f%% of the pool\nbelow the target", below),
-             size = 2.9, color = COL[["eig_black"]],
+             size = 2.9 * ts, color = COL[["eig_black"]],
              family = tokens$EIG_FONT_BODY_PRIMARY) +
     scale_x_continuous(labels = scales::label_dollar(),
                        expand = expansion(mult = c(0.01, 0.02))) +
     scale_y_continuous(expand = expansion(mult = c(0, 0.06))) +
     labs(
-      title = "Figure 8. Imputed potential wages of the non-employed,\nrelative to the target.",
+      title = if (slide) NULL else "Figure 8. Imputed potential wages of the non-employed,\nrelative to the target.",
       x = "Imputed potential hourly wage", y = "Weighted density",
-      caption = eig_caption(
+      caption = if (slide) NULL else eig_caption(
         note = "Weighted by survey weights; potential wage (mpl) capped at $45 for display."
       )
     ) +
-    eig_theme_ggplot(tokens = tokens, base_size = 10) +
+    eig_theme_ggplot(tokens = tokens, base_size = bs) +
     theme(axis.text.y = element_blank())
 
-  eig_save_fig(p, "fig08_pool_wage_distribution",
-               width = 6.8, height = 3.8, root = ROOT)
+  if (slide) {
+    sp <- eig_slide_dims("fig08_pool_wage_distribution")
+    eig_save_fig(p, "fig08_pool_wage_distribution",
+                 width = sp$w, height = sp$h, root = ROOT, target = "slide")
+  } else {
+    eig_save_fig(p, "fig08_pool_wage_distribution",
+                 width = 6.8, height = 3.8, root = ROOT)
+  }
 }
 
 # ===========================================================================
 # FIGURE 14 - Induced entry under potential-wage uncertainty
 # ===========================================================================
-fig14_mpl_uncertainty <- function() {
+fig14_mpl_uncertainty <- function(slide = FALSE) {
+  ts <- if (slide) 1.35 else 1.0  # twocol figure: modest bump (side text carries detail)
+  bs <- if (slide) 14 else 10
   # Re-centered (2026-07-09): the full 27-cell joint decomposition of induced entry —
   #   non-employment wage penalty {0,10,20%} × offer dispersion λ {0.5,0.75,1.0} × participation
   #   elasticity {lower,central,upper} — faceted by elasticity, penalty on the y-axis, λ by color.
@@ -603,7 +696,7 @@ fig14_mpl_uncertainty <- function() {
   rng <- sprintf("%.2f–%.2f million", min(gr$induced_M), max(gr$induced_M))
 
   p <- ggplot(d, aes(x = induced_M, y = pen, color = lam)) +
-    geom_point(size = 3.2, position = position_dodge(width = 0.6)) +
+    geom_point(size = 3.2 * ts, position = position_dodge(width = 0.6)) +
     facet_wrap(~ eps, ncol = 1) +
     scale_color_manual(values = c("0.5" = COL[["eig_green_500"]],
                                   "0.75" = COL[["eig_green_700"]],
@@ -613,30 +706,38 @@ fig14_mpl_uncertainty <- function() {
                        limits = c(0, 3.5),
                        expand = expansion(mult = c(0.02, 0.05))) +
     labs(
-      title = "Figure 14. Induced entry across the\nparameter grid.",
-      subtitle = "Evidence-central 1.49M; conservative floor 1.02M; high corner 3.81M.",
+      title = if (slide) NULL else "Figure 14. Induced entry across the\nparameter grid.",
+      subtitle = if (slide) NULL else "Evidence-central 1.49M; conservative floor 1.02M; high corner 3.81M.",
       x = "Induced entrants (millions)", y = "Non-employment wage penalty",
-      caption = eig_caption(
+      caption = if (slide) NULL else eig_caption(
         note = paste0("All 27 combinations of wage penalty, offer dispersion, and participation\n",
                       "elasticity (full range ", rng, "). The evidence-central applies a status-\n",
                       "differentiated ~10% penalty at λ 0.75 and central elasticity; the floor applies\n",
                       "no penalty. Penalty anchored to Schmieder, von Wachter, and Bender (2016).")
       )
     ) +
-    eig_theme_ggplot(tokens = tokens, base_size = 10) +
+    eig_theme_ggplot(tokens = tokens, base_size = bs) +
     theme(panel.grid.major.y = element_blank(),
           legend.position = "top",
           strip.text = element_text(face = "bold", hjust = 0,
                                     color = COL[["eig_teal_900"]]))
 
-  eig_save_fig(p, "fig14_mpl_uncertainty",
-               width = 6.8, height = 6.2, root = ROOT)
+  if (slide) {
+    sp <- eig_slide_dims("fig14_mpl_uncertainty")
+    eig_save_fig(p, "fig14_mpl_uncertainty",
+                 width = sp$w, height = sp$h, root = ROOT, target = "slide")
+  } else {
+    eig_save_fig(p, "fig14_mpl_uncertainty",
+                 width = 6.8, height = 6.2, root = ROOT)
+  }
 }
 
 # ===========================================================================
 # FIGURE 15 - The intensive margin: added hours among part-time incumbents
 # ===========================================================================
-fig15_hours_margin <- function() {
+fig15_hours_margin <- function(slide = FALSE) {
+  ts <- if (slide) 1.9 else 1.0   # scale absolute geom/label sizes for slides
+  bs <- if (slide) 17 else 10     # theme base_size (title/axis scale off this)
   hm <- pop("incumbent_hours_margin")
 
   d <- hm %>%
@@ -654,31 +755,48 @@ fig15_hours_margin <- function() {
   p <- ggplot(d, aes(x = added_fte_M, y = eps_lab)) +
     geom_col(width = 0.62, fill = COL[["eig_green_700"]]) +
     geom_text(aes(label = bar_lab),
-              hjust = -0.06, size = 2.8,
+              hjust = -0.06, size = 2.8 * ts,
               family = tokens$EIG_FONT_BODY_PRIMARY,
               color = COL[["eig_black"]]) +
     scale_x_continuous(labels = scales::label_number(suffix = "M"),
                        expand = expansion(mult = c(0, 0.45))) +
     labs(
-      title = "Figure 15. The intensive margin: added hours\namong part-time incumbents.",
+      title = if (slide) NULL else "Figure 15. The intensive margin: added hours\namong part-time incumbents.",
       x = "Added full-time-equivalent workers (millions)", y = NULL,
-      caption = eig_caption(
+      caption = if (slide) NULL else eig_caption(
         note = paste0("The 80-80 pays the full per-hour subsidy on every added hour up to 40 hours per week\n",
                       "(no phase-out). ε = 0.05 is the EITC-benchmark floor; 0.20–0.33 reflects consensus\n",
                       "intensive-margin elasticities for clean wage variation (Chetty 2012).")
       )
     ) +
-    eig_theme_ggplot(tokens = tokens, base_size = 10) +
+    eig_theme_ggplot(tokens = tokens, base_size = bs) +
     theme(panel.grid.major.y = element_blank())
 
-  eig_save_fig(p, "fig15_hours_margin",
-               width = 6.6, height = 3.2, root = ROOT)
+  # Slide declutter: bars carry FTE + gross-cost labels, so the value axis is
+  # redundant (Tufte data-ink).
+  if (slide) {
+    p <- p + theme(
+      axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+      axis.title.x = element_blank(), panel.grid.major.x = element_blank()
+    )
+  }
+
+  if (slide) {
+    sp <- eig_slide_dims("fig15_hours_margin")
+    eig_save_fig(p, "fig15_hours_margin",
+                 width = sp$w, height = sp$h, root = ROOT, target = "slide")
+  } else {
+    eig_save_fig(p, "fig15_hours_margin",
+                 width = 6.6, height = 3.2, root = ROOT)
+  }
 }
 
 # ===========================================================================
 # FIGURE A1 - Hourly-wage distribution of the paid-hourly workforce
 # ===========================================================================
-figA1_wage_distribution <- function() {
+figA1_wage_distribution <- function(slide = FALSE) {
+  ts <- if (slide) 1.9 else 1.0   # scale absolute geom/label sizes for slides
+  bs <- if (slide) 17 else 10     # theme base_size (title/axis scale off this)
   # Weighted histogram of the paid-hourly workforce (the eligibility denominator).
   # Target wage is read at runtime from the pipeline JSON -- never hard-coded.
   tw <- jsonlite::fromJSON(file.path(ROOT, "data", "processed", "org_target_wage.json"))
@@ -714,17 +832,17 @@ figA1_wage_distribution <- function() {
                linetype = "dashed", linewidth = 0.5) +
     annotate("text", x = target, y = y_top,
              label = sprintf("$%.2f\ntarget wage", target),
-             hjust = 1.08, vjust = 1, size = 2.8, lineheight = 0.9,
+             hjust = 1.08, vjust = 1, size = 2.8 * ts, lineheight = 0.9,
              fontface = "bold", color = COL[["eig_teal_900"]],
              family = tokens$EIG_FONT_BODY_PRIMARY) +
     # Direct region labels in lieu of a legend.
     annotate("text", x = 10.5, y = 5.4,
              label = sprintf("Below target\n(eligible): %.0f%%", below_pct),
-             size = 2.7, lineheight = 0.9, color = COL[["eig_gold_600"]],
+             size = 2.7 * ts, lineheight = 0.9, color = COL[["eig_gold_600"]],
              fontface = "bold", family = tokens$EIG_FONT_BODY_PRIMARY) +
     annotate("text", x = 30, y = 5.4,
              label = "At or above target",
-             size = 2.7, color = COL[["eig_green_700"]],
+             size = 2.7 * ts, color = COL[["eig_green_700"]],
              fontface = "bold", family = tokens$EIG_FONT_BODY_PRIMARY) +
     scale_fill_manual(
       values = c("Below target (eligible)" = COL[["eig_gold_600"]],
@@ -737,49 +855,57 @@ figA1_wage_distribution <- function() {
                        expand = expansion(mult = c(0, 0))) +
     coord_cartesian(clip = "off") +
     labs(
-      title = "Figure A1. About one in five paid-hourly workers\nearn below the target.",
-      subtitle = sprintf("Median hourly wage $%.2f; %.1f%% earn below the $%.2f target.",
+      title = if (slide) NULL else "Figure A1. About one in five paid-hourly workers\nearn below the target.",
+      subtitle = if (slide) NULL else sprintf("Median hourly wage $%.2f; %.1f%% earn below the $%.2f target.",
                          med, below_pct, target),
       x = "Hourly wage", y = "Workers (millions)",
-      caption = eig_caption(
+      caption = if (slide) NULL else eig_caption(
         note = sprintf(paste0("Denominator is the %.1fM paid-hourly workforce (the eligibility base). The dashed line ",
                               "marks\nthe $%.2f target wage. Whole-dollar bins; a thin tail of %.1f%% earning above $%d ",
                               "is not shown."),
                       total_M, target, above_cap_pct, x_cap)
       )
     ) +
-    eig_theme_ggplot(tokens = tokens, base_size = 10)
+    eig_theme_ggplot(tokens = tokens, base_size = bs)
 
-  eig_save_fig(p, "figA1_wage_distribution",
-               width = 6.8, height = 3.8, root = ROOT)
+  if (slide) {
+    sp <- eig_slide_dims("figA1_wage_distribution")
+    eig_save_fig(p, "figA1_wage_distribution",
+                 width = sp$w, height = sp$h, root = ROOT, target = "slide")
+  } else {
+    eig_save_fig(p, "figA1_wage_distribution",
+                 width = 6.8, height = 3.8, root = ROOT)
+  }
 
   invisible(list(target = target, total_M = total_M,
                  plotted_M = plotted_M, below_pct = below_pct))
 }
 
 # ===========================================================================
-# Driver
+# Driver (skipped when sourced for slide-variant builds: EIG_FIG_NO_RUN <- TRUE)
 # ===========================================================================
-cat("Building EIG supporting figure suite (Batch 2)\n")
-cat("Repo root:", ROOT, "\n\n")
+if (!exists("EIG_FIG_NO_RUN") || !isTRUE(EIG_FIG_NO_RUN)) {
+  cat("Building EIG supporting figure suite (Batch 2)\n")
+  cat("Repo root:", ROOT, "\n\n")
 
-fig7_entry_band_by_cell()
-fig7b_entrants_by_status()
-fig8_cost_band()
-fig9_subsidy_by_wage()
-fig10_firm_capture()
-f11 <- fig11_benefit_cliff()
-anch <- fig11b_net_income_by_hours()
-fig12_reservation_wage()
-fig13_pool_wage_distribution()
-fig14_mpl_uncertainty()
-fig15_hours_margin()
-a1 <- figA1_wage_distribution()
+  fig7_entry_band_by_cell()
+  fig7b_entrants_by_status()
+  fig8_cost_band()
+  fig9_subsidy_by_wage()
+  fig10_firm_capture()
+  f11 <- fig11_benefit_cliff()
+  anch <- fig11b_net_income_by_hours()
+  fig12_reservation_wage()
+  fig13_pool_wage_distribution()
+  fig14_mpl_uncertainty()
+  fig15_hours_margin()
+  a1 <- figA1_wage_distribution()
 
-cat("\nFig 11 schedule file used:", f11, "\n")
-cat(sprintf("Fig A1  target=$%.2f (from JSON) | workforce=%.2fM | plotted<=$40=%.2fM | below-target=%.1f%%\n",
-            a1$target, a1$total_M, a1$plotted_M, a1$below_pct))
-cat(sprintf("Fig 11b anchors  H=1000: no=$%.0f sub=$%.0f | H=2000: no=$%.0f sub=$%.0f | H=3000: no=$%.0f sub=$%.0f | crossover=%.0f hrs (%.1f hr/wk)\n",
-            anch$a1000["no"], anch$a1000["sub"], anch$a2000["no"], anch$a2000["sub"],
-            anch$a3000["no"], anch$a3000["sub"], anch$crossover_hours, anch$crossover_hours / 50))
-cat("Done.\n")
+  cat("\nFig 11 schedule file used:", f11, "\n")
+  cat(sprintf("Fig A1  target=$%.2f (from JSON) | workforce=%.2fM | plotted<=$40=%.2fM | below-target=%.1f%%\n",
+              a1$target, a1$total_M, a1$plotted_M, a1$below_pct))
+  cat(sprintf("Fig 11b anchors  H=1000: no=$%.0f sub=$%.0f | H=2000: no=$%.0f sub=$%.0f | H=3000: no=$%.0f sub=$%.0f | crossover=%.0f hrs (%.1f hr/wk)\n",
+              anch$a1000["no"], anch$a1000["sub"], anch$a2000["no"], anch$a2000["sub"],
+              anch$a3000["no"], anch$a3000["sub"], anch$crossover_hours, anch$crossover_hours / 50))
+  cat("Done.\n")
+}
