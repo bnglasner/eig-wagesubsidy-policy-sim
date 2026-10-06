@@ -94,3 +94,4 @@ policyengine_us_cache/
 
 # Microsoft Office lock/owner temp files
 ~$*
+desktop.ini
